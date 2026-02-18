@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Home - Doctrine Encrypt Demo{% endblock %}
+
+{% block body %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h2 class="mb-0">Doctrine Encrypt Bundle – Demo</h2>
+    </div>
+    <div class="card-body">
+        <p class="mb-2">This demo uses <strong>Halite</strong> to encrypt the <code>message</code> field of <code>SecretMessage</code> in the database. The <code>title</code> field is stored in plain text.</p>
+        <p class="mb-0">Use the CRUD below to create, read, update and delete secret messages. Then inspect the SQLite database to see that <code>message</code> is stored as ciphertext.</p>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h3 class="mb-0">CRUD – Secret messages</h3>
+    </div>
+    <div class="card-body">
+        <p class="mb-3">Create, list, edit and delete secret messages. The <strong>message</strong> column is encrypted at rest.</p>
+        <a href="{{ path('secret_message_index') }}" class="btn btn-primary">Open Secret messages</a>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header">
+        <h3 class="mb-0">Console commands</h3>
+    </div>
+    <div class="card-body">
+        <p class="mb-2">From the project root (inside the container):</p>
+        <ul class="mb-0">
+            <li><code>php bin/console doctrine:encrypt:status</code> – List entities and encrypted properties</li>
+            <li><code>php bin/console doctrine:encrypt:generate-secret-key</code> – Generate Halite key</li>
+            <li><code>php bin/console doctrine:encrypt:database</code> – Encrypt existing data</li>
+            <li><code>php bin/console doctrine:decrypt:database</code> – Decrypt existing data</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

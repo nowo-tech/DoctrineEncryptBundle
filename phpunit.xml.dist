@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit bootstrap="./Tests/bootstrap.php"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true">
+
+    <testsuites>
+        <testsuite name="unit">
+            <directory suffix="Test.php">./Tests/Unit</directory>
+        </testsuite>
+        <testsuite name="functional">
+            <directory suffix="Test.php">./Tests/Functional/BasicQueryTest</directory>
+            <directory suffix="TestCase.php">./Tests/Functional/DoctrineEncryptSubscriber</directory>
+        </testsuite>
+    </testsuites>
+
+    <coverage>
+        <include>
+            <directory suffix=".php">./src</directory>
+        </include>
+        <exclude>
+            <directory>./src/Resources</directory>
+        </exclude>
+    </coverage>
+
+    <php>
+        <env name="KERNEL_DIR" value="./Tests/Functional/Fixtures/app" />
+        <env name="KERNEL_CLASS" value="AppKernel" />
+        <env name="SYMFONY_DEPRECATIONS_HELPER" value="weak" />
+    </php>
+</phpunit>

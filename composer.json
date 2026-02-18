@@ -1,0 +1,83 @@
+{
+  "name": "nowo-tech/doctrine-encrypt-bundle",
+  "description": "Encrypt Symfony 6|7|8 entity fields with Halite or Defuse (verified libraries).",
+  "type": "symfony-bundle",
+  "license": "MIT",
+  "keywords": [
+    "doctrine",
+    "symfony",
+    "halite",
+    "defuse",
+    "encrypt",
+    "decrypt",
+    "entity"
+  ],
+  "homepage": "https://github.com/nowo-tech/doctrine-encrypt-bundle",
+  "support": {
+    "issues": "https://github.com/nowo-tech/doctrine-encrypt-bundle/issues",
+    "source": "https://github.com/nowo-tech/doctrine-encrypt-bundle",
+    "docs": "https://github.com/nowo-tech/doctrine-encrypt-bundle/tree/main/docs"
+  },
+  "authors": [
+    {
+      "name": "Héctor Franco Aceituno",
+      "email": "hectorfranco@nowo.tech",
+      "homepage": "https://github.com/HecFranco",
+      "role": "Developer"
+    },
+    {
+      "name": "Nowo.tech",
+      "homepage": "https://nowo.tech"
+    }
+  ],
+  "require": {
+    "php": ">=8.1",
+    "doctrine/orm": "^2.15 || ^3.0",
+    "paragonie/halite": "^5.1",
+    "paragonie/sodium_compat": "^1.20",
+    "symfony/config": "^6.0 || ^7.0 || ^8.0",
+    "symfony/dependency-injection": "^6.0 || ^7.0 || ^8.0",
+    "symfony/http-kernel": "^6.0 || ^7.0 || ^8.0",
+    "symfony/property-access": "^6.0 || ^7.0 || ^8.0",
+    "symfony/yaml": "^6.0 || ^7.0 || ^8.0"
+  },
+  "require-dev": {
+    "defuse/php-encryption": "^2.1",
+    "doctrine/annotations": "^2.0",
+    "friendsofphp/php-cs-fixer": "^3.0",
+    "phpunit/phpunit": "^10.0 || ^11.0",
+    "symfony/cache": "^6.0 || ^7.0 || ^8.0"
+  },
+  "suggest": {
+    "defuse/php-encryption": "Alternative to Halite for encryption",
+    "ext-sodium": "Required to use Halite encryption library"
+  },
+  "autoload": {
+    "psr-4": {
+      "Nowo\\DoctrineEncryptBundle\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Nowo\\DoctrineEncryptBundle\\Tests\\": "Tests/"
+    }
+  },
+  "config": {
+    "sort-packages": true,
+    "allow-plugins": {
+      "composer/package-versions-deprecated": true
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "scripts": {
+    "test": "phpunit",
+    "test-coverage": "phpunit --coverage-html coverage --coverage-clover coverage.xml --coverage-text",
+    "cs-check": "php-cs-fixer fix --dry-run --diff",
+    "cs-fix": "php-cs-fixer fix",
+    "qa": [
+      "@cs-check",
+      "@test"
+    ]
+  }
+}

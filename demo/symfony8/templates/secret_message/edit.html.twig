@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit secret message #{{ secret_message.id }}{% endblock %}
+
+{% block body %}
+<div class="mb-3">
+    <a href="{{ path('secret_message_index') }}" class="btn btn-outline-secondary">← Back to list</a>
+</div>
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h2 class="mb-0 h5">Edit secret message #{{ secret_message.id }}</h2>
+    </div>
+    <div class="card-body">
+        {{ form_start(form, { attr: { class: 'needs-validation', novalidate: true } }) }}
+        <div class="mb-3">
+            {{ form_label(form.title) }}
+            {{ form_widget(form.title) }}
+            {{ form_errors(form.title) }}
+        </div>
+        <div class="mb-3">
+            {{ form_label(form.message) }}
+            {{ form_widget(form.message) }}
+            {{ form_errors(form.message) }}
+            <div class="form-text">This field is encrypted with Halite before being stored in the database.</div>
+        </div>
+        <hr class="my-4">
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Update</button>
+            <a href="{{ path('secret_message_show', { id: secret_message.id }) }}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

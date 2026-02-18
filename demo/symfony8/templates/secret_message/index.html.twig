@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Secret messages{% endblock %}
+
+{% block body %}
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">Secret messages</h2>
+        <div class="d-flex gap-2">
+            <a href="{{ path('secret_message_raw_index') }}" class="btn btn-outline-light btn-sm">Ver raw (SQL)</a>
+            <a href="{{ path('secret_message_new') }}" class="btn btn-primary">Create new</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small">
+            <strong>message</strong> is encrypted in the database (Halite). <strong>title</strong> is plain text.
+            Create or edit a message to see encryption in action; then check the SQLite DB to see ciphertext.
+        </p>
+        {% if messages|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Id</th>
+                            <th>Title</th>
+                            <th>Message (decrypted when loaded)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for msg in messages %}
+                            <tr>
+                                <td>{{ msg.id }}</td>
+                                <td>{{ msg.title ?? '–' }}</td>
+                                <td>{{ msg.message ? (msg.message|slice(0, 50)) ~ (msg.message|length > 50 ? '…' : '') : '–' }}</td>
+                                <td>
+                                    <a href="{{ path('secret_message_show', { id: msg.id }) }}" class="btn btn-sm btn-outline-secondary">Show</a>
+                                    <a href="{{ path('secret_message_edit', { id: msg.id }) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    <form method="post" action="{{ path('secret_message_delete', { id: msg.id }) }}" class="d-inline" onsubmit="return confirm('Delete this message?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ msg.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">No secret messages yet. <a href="{{ path('secret_message_new') }}">Create the first one</a>.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: doctrine-encrypt-demo-symfony7-php
+    working_dir: /app
+    ports:
+      - "${PORT:-8007}:80"
+    volumes:
+      - .:/app
+      - ../..:/var/doctrine-encrypt-bundle
+      - composer-cache:/root/.composer/cache
+    environment:
+      - COMPOSER_ALLOW_SUPERUSER=1
+      - APP_ENV=dev
+      - DATABASE_URL=sqlite:///%kernel.project_dir%/var/data.db
+    networks:
+      - doctrine-encrypt-demo-network
+
+volumes:
+  composer-cache:
+    driver: local
+
+networks:
+  doctrine-encrypt-demo-network:
+    driver: bridge

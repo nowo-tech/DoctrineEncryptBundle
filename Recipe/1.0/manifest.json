@@ -1,0 +1,12 @@
+{
+    "bundles": {
+        "Nowo\\DoctrineEncryptBundle\\NowoDoctrineEncryptBundle": ["all"]
+    },
+    "copy-from-recipe": {
+        "config/": "%CONFIG_DIR%/"
+    },
+    "gitignore": [
+        ".Halite.key",
+        ".Defuse.key"
+    ]
+}

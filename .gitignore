@@ -1,0 +1,16 @@
+.idea/
+/composer.lock
+/vendor
+
+.env
+.php-cs-fixer.cache
+.phpunit.cache
+coverage.xml
+coverage/
+var/
+public/bundles/
+public/css/
+public/js/
+public/images/
+public/favicon.ico
+public/robots.txt
