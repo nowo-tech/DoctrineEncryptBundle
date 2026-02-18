@@ -7,8 +7,6 @@ use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Console\Input\ArrayInput;
-use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Tester\CommandTester;
 
 class DoctrineEncryptStatusCommandTest extends TestCase
@@ -19,7 +17,7 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $metadata->name = User::class;
         $metadata->isMappedSuperclass = false;
 
-        $metadataFactory = new class($metadata) {
+        $metadataFactory = new class ($metadata) {
             private $meta;
 
             public function __construct($meta)
@@ -57,7 +55,7 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $metadata->name = \stdClass::class;
         $metadata->isMappedSuperclass = false;
 
-        $metadataFactory = new class($metadata) {
+        $metadataFactory = new class ($metadata) {
             private $meta;
 
             public function __construct($meta)
