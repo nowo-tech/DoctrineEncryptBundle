@@ -32,6 +32,11 @@
 
 ---
 
+## v2.0.3 (2026-02-19)
+
+- **Scope:** Allow paragonie/sodium_compat ^2.0 so the bundle installs in projects using sodium_compat 2.x.
+- **Checklist:** CHANGELOG and UPGRADING updated; tag `v2.0.3` created and pushed.
+
 ## v2.0.2 (2026-02-19)
 
 - **Scope:** Symfony Console 8.0 compatibility in command tests (setApplication); CI fix for symfony/var-exporter and functional tests (LazyGhost).

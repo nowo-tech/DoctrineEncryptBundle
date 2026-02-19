@@ -21,6 +21,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.3] - 2026-02-19
+
+### Changed
+
+- **paragonie/sodium_compat:** Constraint relaxed from `^1.20` to `^1.20 || ^2.0` so the bundle installs in projects that require `sodium_compat` 2.x (e.g. 2.5.0).
+
+No upgrade steps required from 2.0.2. See [UPGRADING.md](UPGRADING.md#upgrading-to-203).
+
+---
+
 ## [2.0.2] - 2026-02-19
 
 ### Fixed
