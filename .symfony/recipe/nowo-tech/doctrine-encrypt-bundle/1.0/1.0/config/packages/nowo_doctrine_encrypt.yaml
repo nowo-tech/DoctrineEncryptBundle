@@ -1,5 +1,5 @@
 # Doctrine Encrypt Bundle
-# https://github.com/nowo-tech/doctrine-encrypt-bundle
+# https://github.com/nowo-tech/DoctrineEncryptBundle
 # Generate secret key: php bin/console doctrine:encrypt:generate-secret-key
 # Add .Halite.key, .Defuse.key and .<encryptor>.<alias>.key to .gitignore
 

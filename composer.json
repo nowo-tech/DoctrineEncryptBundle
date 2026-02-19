@@ -12,11 +12,11 @@
     "decrypt",
     "entity"
   ],
-  "homepage": "https://github.com/nowo-tech/doctrine-encrypt-bundle",
+  "homepage": "https://github.com/nowo-tech/DoctrineEncryptBundle",
   "support": {
-    "issues": "https://github.com/nowo-tech/doctrine-encrypt-bundle/issues",
-    "source": "https://github.com/nowo-tech/doctrine-encrypt-bundle",
-    "docs": "https://github.com/nowo-tech/doctrine-encrypt-bundle/tree/main/docs"
+    "issues": "https://github.com/nowo-tech/DoctrineEncryptBundle/issues",
+    "source": "https://github.com/nowo-tech/DoctrineEncryptBundle",
+    "docs": "https://github.com/nowo-tech/DoctrineEncryptBundle/tree/main/docs"
   },
   "authors": [
     {

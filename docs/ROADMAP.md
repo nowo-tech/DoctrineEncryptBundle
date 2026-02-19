@@ -40,7 +40,7 @@ A major version would only be considered if we introduce breaking changes (e.g. 
 
 ## Community
 
-- **Issues & PRs:** [GitHub Issues](https://github.com/nowo-tech/doctrine-encrypt-bundle/issues) and Pull Requests are welcome.
+- **Issues & PRs:** [GitHub Issues](https://github.com/nowo-tech/DoctrineEncryptBundle/issues) and Pull Requests are welcome.
 - **Security:** See [SECURITY.md](SECURITY.md) for how to report vulnerabilities.
 
 If you rely on Doctrine Encrypt Bundle, consider giving it a **star** on GitHub so others can discover it more easily.

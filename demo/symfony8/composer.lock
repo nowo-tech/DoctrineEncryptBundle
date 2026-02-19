@@ -1071,7 +1071,7 @@
                 }
             ],
             "description": "Encrypt Symfony 6|7|8 entity fields with Halite or Defuse (verified libraries).",
-            "homepage": "https://github.com/nowo-tech/doctrine-encrypt-bundle",
+            "homepage": "https://github.com/nowo-tech/DoctrineEncryptBundle",
             "keywords": [
                 "decrypt",
                 "defuse",
@@ -1082,9 +1082,9 @@
                 "symfony"
             ],
             "support": {
-                "issues": "https://github.com/nowo-tech/doctrine-encrypt-bundle/issues",
-                "source": "https://github.com/nowo-tech/doctrine-encrypt-bundle",
-                "docs": "https://github.com/nowo-tech/doctrine-encrypt-bundle/tree/main/docs"
+                "issues": "https://github.com/nowo-tech/DoctrineEncryptBundle/issues",
+                "source": "https://github.com/nowo-tech/DoctrineEncryptBundle",
+                "docs": "https://github.com/nowo-tech/DoctrineEncryptBundle/tree/main/docs"
             },
             "transport-options": {
                 "relative": false
