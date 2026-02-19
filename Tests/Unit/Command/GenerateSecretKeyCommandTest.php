@@ -2,9 +2,9 @@
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Command;
 
+use Nowo\DoctrineEncryptBundle\Command\GenerateSecretKeyCommand;
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
-use Nowo\DoctrineEncryptBundle\Command\GenerateSecretKeyCommand;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use PHPUnit\Framework\TestCase;
