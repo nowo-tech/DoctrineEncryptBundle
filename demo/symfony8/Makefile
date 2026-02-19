@@ -1,7 +1,11 @@
 # Makefile for Doctrine Encrypt Bundle Demo - Symfony 8
 # FrankenPHP + Caddyfile. Run from this directory: make up, make install, etc.
 
-.PHONY: help up down build install shell logs setup db-create db-schema key cache-clear update-bundle test encrypt-status encrypt-database decrypt-database
+COMPOSE_FILE := docker-compose.yml
+COMPOSE := docker-compose -f $(COMPOSE_FILE)
+SERVICE_PHP := php
+
+.PHONY: help up down build install shell logs setup db-create db-schema key cache-clear update-bundle test encrypt-status encrypt-database decrypt-database ensure-up
 
 help:
 	@echo "Doctrine Encrypt Bundle Demo - Symfony 8"
@@ -26,53 +30,62 @@ help:
 
 up:
 	@if [ ! -f .env ]; then cp .env.example .env 2>/dev/null || (echo "APP_ENV=dev" > .env; echo "APP_SECRET=change-me" >> .env; echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/data.db" >> .env); fi
-	docker-compose up -d
+	$(COMPOSE) up -d
 	@echo "App: http://localhost:$${PORT:-8008}"
 
 down:
-	docker-compose down
+	$(COMPOSE) down
 
 build:
-	docker-compose build --no-cache
+	$(COMPOSE) build --no-cache
 
-install:
-	docker-compose exec php composer install --no-interaction
+# Ensure container is running (start if not). Used by install, setup, test, db-create, db-schema, key, etc.
+ensure-up:
+	@if ! $(COMPOSE) exec -T $(SERVICE_PHP) true 2>/dev/null; then \
+		echo "Starting container (demo docker-compose)..."; \
+		$(COMPOSE) up -d; \
+		sleep 3; \
+		$(COMPOSE) exec -T $(SERVICE_PHP) composer install --no-interaction; \
+	fi
+
+install: ensure-up
+	$(COMPOSE) exec -T $(SERVICE_PHP) composer install --no-interaction
 
 setup: install db-create db-schema key
 	@echo "Demo ready. App: http://localhost:$${PORT:-8008}"
 
-shell:
-	docker-compose exec php sh
+shell: ensure-up
+	$(COMPOSE) exec $(SERVICE_PHP) sh
 
 logs:
-	docker-compose logs -f
+	$(COMPOSE) logs -f
 
-db-create:
-	docker-compose exec -T php php bin/console doctrine:database:create --if-not-exists --no-interaction
+db-create: ensure-up
+	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:database:create --if-not-exists --no-interaction
 
-db-schema:
-	docker-compose exec -T php php bin/console doctrine:schema:update --force --no-interaction
+db-schema: ensure-up
+	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:schema:update --force --no-interaction
 
-key:
-	docker-compose exec -T php php bin/console doctrine:encrypt:generate-secret-key 2>/dev/null || true
+key: ensure-up
+	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:encrypt:generate-secret-key 2>/dev/null || true
 	@echo "Secret key generated (or already exists)."
 
-encrypt-status:
-	docker-compose exec -T php php bin/console doctrine:encrypt:status
+encrypt-status: ensure-up
+	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:encrypt:status
 
-encrypt-database:
-	docker-compose exec php php bin/console doctrine:encrypt:database
+encrypt-database: ensure-up
+	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:encrypt:database
 
-decrypt-database:
-	docker-compose exec php php bin/console doctrine:decrypt:database
+decrypt-database: ensure-up
+	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:decrypt:database
 
-cache-clear:
-	docker-compose exec -T php php bin/console cache:clear
+cache-clear: ensure-up
+	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console cache:clear
 
-update-bundle:
-	docker-compose exec php composer update nowo-tech/doctrine-encrypt-bundle --no-interaction
-	docker-compose exec -T php php bin/console cache:clear
+update-bundle: ensure-up
+	$(COMPOSE) exec $(SERVICE_PHP) composer update nowo-tech/doctrine-encrypt-bundle --no-interaction
+	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console cache:clear
 	@echo "Bundle updated."
 
-test:
-	docker-compose exec -e APP_ENV=test php composer test 2>/dev/null || docker-compose exec php php bin/console list doctrine
+test: ensure-up
+	$(COMPOSE) exec -e APP_ENV=test $(SERVICE_PHP) composer test 2>/dev/null || $(COMPOSE) exec $(SERVICE_PHP) php bin/console list doctrine

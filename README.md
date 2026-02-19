@@ -99,6 +99,7 @@ Values are encrypted on persist/update and decrypted on load. See [docs/USAGE.md
 | [**Installation**](docs/INSTALLATION.md) | Requirements, Flex and manual install, secret key, IDE (optional) |
 | [**Configuration**](docs/CONFIGURATION.md) | All options and defaults |
 | [**Usage**](docs/USAGE.md) | Encrypted attribute, embedded entities, inheritance |
+| [**Example**](docs/EXAMPLE.md) | Full example: entity, fixtures, controller, template |
 | [**Commands**](docs/COMMANDS.md) | Status, generate key, encrypt/decrypt database |
 | [**Demo**](docs/DEMO.md) | Demo projects (Symfony 6/7/8) and how to run them |
 | [**Changelog**](docs/CHANGELOG.md) | Version history |

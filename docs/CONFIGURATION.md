@@ -43,7 +43,7 @@ The secret key is stored in a file inside `secret_directory_path`:
 .Defuse.key
 ```
 
-If no key file exists, the bundle can generate one (e.g. via the `doctrine:encrypt:generate-secret-key` command, if available). See [Commands](commands.md).
+If no key file exists, the bundle can generate one (e.g. via the `doctrine:encrypt:generate-secret-key` command, if available). See [Commands](COMMANDS.md).
 
 ## Loading configuration
 
