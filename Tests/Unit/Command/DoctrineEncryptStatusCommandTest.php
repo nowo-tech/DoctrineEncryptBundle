@@ -2,13 +2,12 @@
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Command;
 
+use Doctrine\ORM\Mapping\ClassMetadataFactory;
 use Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptStatusCommand;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Console\Input\ArrayInput;
-use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Tester\CommandTester;
 
 class DoctrineEncryptStatusCommandTest extends TestCase
@@ -19,19 +18,8 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $metadata->name = User::class;
         $metadata->isMappedSuperclass = false;
 
-        $metadataFactory = new class($metadata) {
-            private $meta;
-
-            public function __construct($meta)
-            {
-                $this->meta = $meta;
-            }
-
-            public function getAllMetadata(): array
-            {
-                return [$this->meta];
-            }
-        };
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
         $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
@@ -57,19 +45,8 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $metadata->name = \stdClass::class;
         $metadata->isMappedSuperclass = false;
 
-        $metadataFactory = new class($metadata) {
-            private $meta;
-
-            public function __construct($meta)
-            {
-                $this->meta = $meta;
-            }
-
-            public function getAllMetadata(): array
-            {
-                return [$this->meta];
-            }
-        };
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
         $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);

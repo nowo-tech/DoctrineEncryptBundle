@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <phpunit bootstrap="./Tests/bootstrap.php"
-         colors="true"
-         convertErrorsToExceptions="true"
-         convertNoticesToExceptions="true"
-         convertWarningsToExceptions="true">
+         colors="true">
 
     <testsuites>
         <testsuite name="unit">
@@ -16,13 +13,19 @@
         </testsuite>
     </testsuites>
 
-    <coverage>
+    <source>
         <include>
             <directory suffix=".php">./src</directory>
         </include>
         <exclude>
             <directory>./src/Resources</directory>
         </exclude>
+    </source>
+
+    <coverage>
+        <report>
+            <text outputFile="php://stdout" showUncoveredFiles="false" showOnlySummary="false"/>
+        </report>
     </coverage>
 
     <php>

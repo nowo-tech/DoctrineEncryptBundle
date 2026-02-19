@@ -4,6 +4,7 @@
 .env
 .php-cs-fixer.cache
 .phpunit.cache
+.phpunit.result.cache
 coverage.xml
 coverage/
 var/
@@ -13,3 +14,4 @@ public/js/
 public/images/
 public/favicon.ico
 public/robots.txt
+
