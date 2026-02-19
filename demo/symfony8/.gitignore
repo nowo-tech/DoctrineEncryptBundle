@@ -13,3 +13,6 @@
 /phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
+
+.Halite.key
+.Defuse.key
