@@ -23,7 +23,11 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
     private function createCommandWithApplication(DoctrineDecryptDatabaseCommand $command): DoctrineDecryptDatabaseCommand
     {
         $application = new Application();
-        $application->add($command);
+        if (method_exists($application, 'addCommand')) {
+            $application->addCommand($command);
+        } else {
+            $application->add($command);
+        }
         return $command;
     }
 
