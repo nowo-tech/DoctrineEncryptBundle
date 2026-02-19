@@ -14,9 +14,11 @@ class HaliteEncryptorTest extends TestCase
         if (! extension_loaded('sodium')) {
             $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
         }
-        $keyfile = __DIR__ . '/fixtures/halite.key';
-        $key = file_get_contents($keyfile);
+        $keyfile = sys_get_temp_dir() . '/halite-test-' . uniqid('', true) . '.key';
         $halite = new HaliteEncryptor($keyfile);
+        $halite->encrypt(self::DATA); // ensure key file exists
+        $key = file_get_contents($keyfile);
+        $this->assertNotFalse($key, 'Key file must be readable');
 
         $encrypted = $halite->encrypt(self::DATA);
         $this->assertNotSame(self::DATA, $encrypted);
@@ -25,6 +27,7 @@ class HaliteEncryptorTest extends TestCase
         $this->assertSame(self::DATA, $decrypted);
         $newkey = file_get_contents($keyfile);
         $this->assertSame($key, $newkey, 'The key must not be modified');
+        @unlink($keyfile);
     }
 
     public function testGenerateKey(): void
@@ -51,7 +54,7 @@ class HaliteEncryptorTest extends TestCase
         if (extension_loaded('sodium')) {
             $this->markTestSkipped('This only runs when the sodium extension is disabled.');
         }
-        $keyfile = __DIR__ . '/fixtures/halite.key';
+        $keyfile = sys_get_temp_dir() . '/halite-test-' . uniqid('', true) . '.key';
         $halite = new HaliteEncryptor($keyfile);
 
         $this->expectException(\SodiumException::class);
@@ -63,13 +66,15 @@ class HaliteEncryptorTest extends TestCase
         if (!extension_loaded('sodium')) {
             $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
         }
-        $keyfile = __DIR__ . '/fixtures/halite.key';
+        $keyfile = sys_get_temp_dir() . '/halite-test-' . uniqid('', true) . '.key';
         $halite = new HaliteEncryptor($keyfile);
+        $halite->encrypt(''); // ensure key exists
 
         $encrypted = $halite->encrypt('');
         $this->assertNotSame('', $encrypted);
         $decrypted = $halite->decrypt($encrypted);
         $this->assertSame('', $decrypted);
+        @unlink($keyfile);
     }
 
     public function testDecryptInvalidCiphertextThrows(): void
@@ -77,8 +82,9 @@ class HaliteEncryptorTest extends TestCase
         if (!extension_loaded('sodium')) {
             $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
         }
-        $keyfile = __DIR__ . '/fixtures/halite.key';
+        $keyfile = sys_get_temp_dir() . '/halite-test-' . uniqid('', true) . '.key';
         $halite = new HaliteEncryptor($keyfile);
+        $halite->encrypt(self::DATA); // ensure key exists
 
         $this->expectException(\ParagonIE\Halite\Alerts\InvalidMessage::class);
         $halite->decrypt('not-valid-ciphertext');
@@ -89,8 +95,9 @@ class HaliteEncryptorTest extends TestCase
         if (!extension_loaded('sodium')) {
             $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
         }
-        $keyfile = __DIR__ . '/fixtures/halite.key';
+        $keyfile = sys_get_temp_dir() . '/halite-test-' . uniqid('', true) . '.key';
         $halite = new HaliteEncryptor($keyfile);
+        $halite->encrypt(self::DATA); // ensure key exists
 
         $c1 = $halite->encrypt(self::DATA);
         $c2 = $halite->encrypt(self::DATA);
@@ -98,5 +105,6 @@ class HaliteEncryptorTest extends TestCase
         $this->assertNotSame($c1, $c2);
         $this->assertSame(self::DATA, $halite->decrypt($c1));
         $this->assertSame(self::DATA, $halite->decrypt($c2));
+        @unlink($keyfile);
     }
 }
