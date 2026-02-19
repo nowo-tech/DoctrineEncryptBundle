@@ -23,7 +23,9 @@
   },
   "require-dev": {
     "doctrine/doctrine-fixtures-bundle": "^3.0",
-    "phpunit/phpunit": "^10.0 || ^11.0"
+    "phpunit/phpunit": "^10.0 || ^11.0",
+    "symfony/debug-bundle": "7.0.*",
+    "symfony/web-profiler-bundle": "7.0.*"
   },
   "config": {
     "allow-plugins": {
@@ -55,7 +57,8 @@
   "scripts": {
     "test": "phpunit",
     "auto-scripts": {
-      "cache:clear": "symfony-cmd"
+      "cache:clear": "symfony-cmd",
+      "assets:install %PUBLIC_DIR%": "symfony-cmd"
     },
     "post-install-cmd": ["@auto-scripts"],
     "post-update-cmd": ["@auto-scripts"]

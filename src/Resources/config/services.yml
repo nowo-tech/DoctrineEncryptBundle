@@ -3,16 +3,35 @@ services:
     autowire: true
     autoconfigure: true
 
-  Nowo\DoctrineEncryptBundle\Subscribers\:
-    resource: '../../Subscribers/*'
+  Nowo\DoctrineEncryptBundle\Command\:
+    resource: '../../Command/*'
+    exclude: '../../Command/AbstractCommand.php'
 
-  nowo_doctrine_attribute_reader:
-    class: Nowo\DoctrineEncryptBundle\Mapping\AttributeReader
+  Nowo\DoctrineEncryptBundle\Command\GenerateSecretKeyCommand:
+    arguments:
+      $secretKeyPath: '%nowo_doctrine_encrypt.secret_key_path%'
 
   nowo_doctrine_encrypt.encryptor_registry:
     class: Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry
     arguments: [[], 'default']
     # Arguments are overwritten by DoctrineEncryptExtension (legacy: one encryptor; configs: map of encryptors)
+
+  Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry: '@nowo_doctrine_encrypt.encryptor_registry'
+  
+  Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface: '@nowo_doctrine_encrypt.encryptor'
+
+  nowo_doctrine_encrypt.encryptor:
+    class: "%nowo_doctrine_encrypt.encryptor_class_name%"
+    arguments:
+      - "%nowo_doctrine_encrypt.secret_key_path%"
+
+  nowo_doctrine_attribute_reader:
+    class: Nowo\DoctrineEncryptBundle\Mapping\AttributeReader
+
+  Nowo\DoctrineEncryptBundle\Mapping\AttributeReader: '@nowo_doctrine_attribute_reader'
+
+  Nowo\DoctrineEncryptBundle\Subscribers\:
+    resource: '../../Subscribers/*'
 
   nowo_doctrine_encrypt.orm_subscriber:
     class: Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber
@@ -25,45 +44,11 @@ services:
       - { name: 'doctrine.event_listener', event: 'preFlush', priority: 500, connection: 'default' }
       - { name: 'doctrine.event_listener', event: 'postFlush', priority: 500, connection: 'default' }
 
-  Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface: '@nowo_doctrine_encrypt.encryptor'
-
-  nowo_doctrine_encrypt.encryptor:
-    class: "%nowo_doctrine_encrypt.encryptor_class_name%"
-    arguments:
-      - "%nowo_doctrine_encrypt.secret_key_path%"
-
   nowo_doctrine_encrypt.subscriber:
     alias: nowo_doctrine_encrypt.orm_subscriber
 
-  nowo_doctrine_encrypt.command.decrypt.database:
-    class: Nowo\DoctrineEncryptBundle\Command\DoctrineDecryptDatabaseCommand
-    tags: ['console.command']
-    arguments:
-      - "@doctrine.orm.entity_manager"
-      - "@nowo_doctrine_attribute_reader"
-      - "@nowo_doctrine_encrypt.subscriber"
+  Nowo\DoctrineEncryptBundle\Twig\:
+    resource: '../../Twig/*'
 
-  nowo_doctrine_encrypt.command.encrypt.database:
-    class: Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptDatabaseCommand
-    tags: ['console.command']
-    arguments:
-      - "@doctrine.orm.entity_manager"
-      - "@nowo_doctrine_attribute_reader"
-      - "@nowo_doctrine_encrypt.subscriber"
-
-  nowo_doctrine_encrypt.command.encrypt.status:
-    class: Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptStatusCommand
-    tags: ['console.command']
-    arguments:
-      - "@doctrine.orm.entity_manager"
-      - "@nowo_doctrine_attribute_reader"
-      - "@nowo_doctrine_encrypt.subscriber"
-
-  nowo_doctrine_encrypt.command.encrypt.generate_secret_key:
-    class: Nowo\DoctrineEncryptBundle\Command\GenerateSecretKeyCommand
-    tags: ['console.command']
-    arguments:
-      - "@doctrine.orm.entity_manager"
-      - "@nowo_doctrine_attribute_reader"
-      - "@nowo_doctrine_encrypt.subscriber"
-      - "%nowo_doctrine_encrypt.secret_key_path%"
+  Nowo\DoctrineEncryptBundle\Util\:
+    resource: '../../Util/*'

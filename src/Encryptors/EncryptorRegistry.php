@@ -2,9 +2,13 @@
 
 namespace Nowo\DoctrineEncryptBundle\Encryptors;
 
+use Symfony\Component\DependencyInjection\Attribute\AsAlias;
+
 /**
  * Registry of named encryptors. Used when multiple encryptor configs are defined (e.g. personal_data, financial_data).
+ * Arguments are set at compile time by DoctrineEncryptExtension.
  */
+#[AsAlias(id: self::class, public: true)]
 final class EncryptorRegistry
 {
     /** @var array<string, EncryptorInterface> */

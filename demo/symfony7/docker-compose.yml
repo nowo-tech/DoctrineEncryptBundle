@@ -21,6 +21,10 @@ services:
 
 volumes:
   composer-cache:
+
+###> doctrine/doctrine-bundle ###
+  database_data:
+###< doctrine/doctrine-bundle ###
     driver: local
 
 networks:
