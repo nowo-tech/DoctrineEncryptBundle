@@ -18,8 +18,18 @@
         <h3 class="mb-0">CRUD – Secret messages</h3>
     </div>
     <div class="card-body">
-        <p class="mb-3">Create, list, edit and delete secret messages. The <strong>message</strong> column is encrypted at rest.</p>
+        <p class="mb-3">Create, list, edit and delete secret messages. The <strong>message</strong> column is encrypted at rest (default config).</p>
         <a href="{{ path('secret_message_index') }}" class="btn btn-primary">Open Secret messages</a>
+    </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+    <div class="card-header">
+        <h3 class="mb-0">CRUD – Sensitive records (multiple encryptors)</h3>
+    </div>
+    <div class="card-body">
+        <p class="mb-3">Entity with two configs: <strong>personal note</strong> (Halite) and <strong>financial note</strong> (Defuse). Each field uses a different encryptor.</p>
+        <a href="{{ path('sensitive_record_index') }}" class="btn btn-primary">Open Sensitive records</a>
     </div>
 </div>
 

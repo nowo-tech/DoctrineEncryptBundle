@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit sensitive record #{{ sensitive_record.id }}{% endblock %}
+
+{% block body %}
+<div class="mb-3">
+    <a href="{{ path('sensitive_record_index') }}" class="btn btn-outline-secondary">← Back to list</a>
+</div>
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h2 class="mb-0 h5">Edit sensitive record #{{ sensitive_record.id }}</h2>
+    </div>
+    <div class="card-body">
+        {{ form_start(form, { attr: { class: 'needs-validation', novalidate: true } }) }}
+        <div class="mb-3">
+            {{ form_label(form.personalNote) }}
+            {{ form_widget(form.personalNote) }}
+            {{ form_errors(form.personalNote) }}
+        </div>
+        <div class="mb-3">
+            {{ form_label(form.financialNote) }}
+            {{ form_widget(form.financialNote) }}
+            {{ form_errors(form.financialNote) }}
+        </div>
+        <hr class="my-4">
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Update</button>
+            <a href="{{ path('sensitive_record_show', { id: sensitive_record.id }) }}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

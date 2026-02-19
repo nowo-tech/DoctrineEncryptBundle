@@ -16,8 +16,8 @@ use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 // encryptorInterface
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
-// property access
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use ReflectionClass;
 use ReflectionProperty;
 // attributes
@@ -49,11 +49,15 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
      */
     public const ENCRYPTED_ANN_NAME = Encrypted::class;// 'Ambta\DoctrineEncryptBundle\Configuration\Encrypted';
 
-    /**
-     * Used for restoring the encryptor after changing it
-     * @var EncryptorInterface|null
-     */
-    private ?EncryptorInterface $restoreEncryptor;
+    private ?EncryptorRegistry $registry = null;
+
+    /** When set, use this encryptor (or null to disable); when unset, use registry default. */
+    private ?EncryptorInterface $encryptorOverride = null;
+
+    private bool $encryptorOverrideSet = false;
+
+    /** Used for restoring after override. */
+    private ?EncryptorInterface $restoreEncryptor = null;
 
     /**
      * Count amount of decrypted values in this service
@@ -71,13 +75,20 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
     private array $cachedDecryptions = [];
 
     /**
-     * Initialization of subscriber
-     *
-     * @param EncryptorInterface $encryptor (Optional)  An EncryptorInterface.
+     * @param EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor Registry (normal DI), a single encryptor (BC/tests), or null.
      */
-    public function __construct(public ?EncryptorInterface $encryptor = null)
+    public function __construct(EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor = null)
     {
-        $this->restoreEncryptor = $this->encryptor;
+        if ($registryOrEncryptor instanceof EncryptorInterface) {
+            $this->registry = new EncryptorRegistry(['default' => $registryOrEncryptor], 'default');
+        } elseif ($registryOrEncryptor instanceof EncryptorRegistry) {
+            $this->registry = $registryOrEncryptor;
+        } else {
+            $this->registry = null;
+        }
+        if ($this->registry !== null) {
+            $this->restoreEncryptor = $this->registry->getDefault();
+        }
     }
 
     /*
@@ -94,32 +105,27 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
     }
     */
 
-    /**
-     * Change the encryptor
-     *
-     * @param EncryptorInterface|null $encryptor
-     */
-    public function setEncryptor(?EncryptorInterface $encryptor = null)
+    /** Temporarily override encryptor (used by encrypt/decrypt database commands). Pass null to disable encryption. */
+    public function setEncryptor(?EncryptorInterface $encryptor = null): void
     {
-        $this->encryptor = $encryptor;
+        $this->encryptorOverride = $encryptor;
+        $this->encryptorOverrideSet = true;
     }
 
-    /**
-     * Get the current encryptor
-     *
-     * @return EncryptorInterface|null returns the encryptor class or null
-     */
+    /** Current encryptor: override if set (including null), otherwise default from registry. */
     public function getEncryptor(): ?EncryptorInterface
     {
-        return $this->encryptor;
+        if ($this->encryptorOverrideSet) {
+            return $this->encryptorOverride;
+        }
+        return $this->registry?->getDefault();
     }
 
-    /**
-     * Restore encryptor to the one set in the constructor.
-     */
-    public function restoreEncryptor()
+    /** Restore after override (used by decrypt command). */
+    public function restoreEncryptor(): void
     {
-        $this->encryptor = $this->restoreEncryptor;
+        $this->encryptorOverride = null;
+        $this->encryptorOverrideSet = false;
     }
 
     /**
@@ -227,58 +233,68 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
      */
     public function processFields(object $entity, bool $isEncryptOperation = true): ?object
     {
-        if (!empty($this->encryptor)) {
-            // Check which operation to be used
-            $encryptorMethod = $isEncryptOperation ? 'encrypt' : 'decrypt';
-
-            $realClass = $this->getRealClass($entity);
-
-            // Get ReflectionClass of our entity
-            $properties = $this->getClassProperties($realClass);
-
-            // Foreach property in the reflection class
-            foreach ($properties as $refProperty) {
-                $attributes = $refProperty->getAttributes();
-                $isEmbebed = $this->defineAtributeType($attributes, 'Doctrine\ORM\Mapping\Embedded');
-                if ($isEmbebed) {
-                    $this->handleEmbeddedAnnotation($entity, $refProperty, $isEncryptOperation);
-                    continue;
-                }
-
-                /**
-                 * If property is an normal value and contains the Encrypt tag, lets encrypt/decrypt that property
-                 */
-                $isEncrypetdAnnName = $this->defineAtributeType($attributes, self::ENCRYPTED_ANN_NAME);
-                if ($isEncrypetdAnnName) {
-                    $pac = PropertyAccess::createPropertyAccessor();
-                    $value = $pac->getValue($entity, $refProperty->getName());
-                    if ($encryptorMethod == 'decrypt') {
-                        if (!is_null($value) and !empty($value)) {
-                            if (substr($value, -strlen(self::ENCRYPTION_MARKER)) == self::ENCRYPTION_MARKER) {
-                                $this->decryptCounter++;
-                                $currentPropValue = $this->encryptor->decrypt(substr($value, 0, -5));
-                                $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
-                                $this->cachedDecryptions[get_class($entity)][spl_object_id($entity)][$refProperty->getName()][$currentPropValue] = $value;
-                            }
-                        }
-                    } else {
-                        if (!is_null($value) and !empty($value)) {
-                            if (isset($this->cachedDecryptions[get_class($entity)][spl_object_id($entity)][$refProperty->getName()][$value])) {
-                                $pac->setValue($entity, $refProperty->getName(), $this->cachedDecryptions[get_class($entity)][spl_object_id($entity)][$refProperty->getName()][$value]);
-                            } elseif (substr($value, -strlen(self::ENCRYPTION_MARKER)) != self::ENCRYPTION_MARKER) {
-                                $this->encryptCounter++;
-                                $currentPropValue = $this->encryptor->encrypt($value) . self::ENCRYPTION_MARKER;
-                                $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
-                            }
-                        }
-                    }
-                }
-            }
-
+        $encryptor = $this->getEncryptor();
+        if ($encryptor === null) {
             return $entity;
         }
 
+        $encryptorMethod = $isEncryptOperation ? 'encrypt' : 'decrypt';
+        $realClass = $this->getRealClass($entity);
+        $properties = $this->getClassProperties($realClass);
+
+        foreach ($properties as $refProperty) {
+            $attributes = $refProperty->getAttributes();
+            $isEmbebed = $this->defineAtributeType($attributes, 'Doctrine\ORM\Mapping\Embedded');
+            if ($isEmbebed) {
+                $this->handleEmbeddedAnnotation($entity, $refProperty, $isEncryptOperation);
+                continue;
+            }
+
+            $encryptedAttr = $this->getEncryptedAttributeInstance($attributes);
+            if ($encryptedAttr === null) {
+                continue;
+            }
+
+            $propertyEncryptor = $this->encryptorOverride !== null
+                ? $encryptor
+                : $this->registry->get($encryptedAttr->config);
+
+            $pac = PropertyAccess::createPropertyAccessor();
+            $value = $pac->getValue($entity, $refProperty->getName());
+            if ($encryptorMethod === 'decrypt') {
+                if ($value !== null && $value !== '') {
+                    if (str_ends_with($value, self::ENCRYPTION_MARKER)) {
+                        $this->decryptCounter++;
+                        $currentPropValue = $propertyEncryptor->decrypt(substr($value, 0, -strlen(self::ENCRYPTION_MARKER)));
+                        $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
+                        $this->cachedDecryptions[get_class($entity)][spl_object_id($entity)][$refProperty->getName()][$currentPropValue] = $value;
+                    }
+                }
+            } else {
+                if ($value !== null && $value !== '') {
+                    if (isset($this->cachedDecryptions[get_class($entity)][spl_object_id($entity)][$refProperty->getName()][$value])) {
+                        $pac->setValue($entity, $refProperty->getName(), $this->cachedDecryptions[get_class($entity)][spl_object_id($entity)][$refProperty->getName()][$value]);
+                    } elseif (!str_ends_with($value, self::ENCRYPTION_MARKER)) {
+                        $this->encryptCounter++;
+                        $currentPropValue = $propertyEncryptor->encrypt($value) . self::ENCRYPTION_MARKER;
+                        $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
+                    }
+                }
+            }
+        }
+
         return $entity;
+    }
+
+    private function getEncryptedAttributeInstance(array $attributes): ?Encrypted
+    {
+        foreach ($attributes as $attribute) {
+            if ($attribute->getName() === self::ENCRYPTED_ANN_NAME) {
+                $instance = $attribute->newInstance();
+                return $instance instanceof Encrypted ? $instance : null;
+            }
+        }
+        return null;
     }
 
     private function handleEmbeddedAnnotation($entity, ReflectionProperty $embeddedProperty, bool $isEncryptOperation = true)

@@ -7,7 +7,7 @@ Documentation for **Doctrine Encrypt Bundle**.
 | Document | Description |
 |----------|-------------|
 | [Installation](INSTALLATION.md) | Requirements, Composer, bundle registration, secret key |
-| [Configuration](CONFIGURATION.md) | All options, encryptors, key files |
+| [Configuration](CONFIGURATION.md) | All options, single or multiple encryptor configs, key files |
 | [Usage](USAGE.md) | Marking properties as encrypted, embedded entities |
 | [Example](EXAMPLE.md) | Full example: entity, fixtures, controller, template, DB output |
 | [Commands](COMMANDS.md) | Status, encrypt/decrypt database, generate secret key |

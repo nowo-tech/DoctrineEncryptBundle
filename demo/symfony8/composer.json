@@ -5,6 +5,7 @@
   "license": "MIT",
   "require": {
     "php": ">=8.4,<8.6",
+    "defuse/php-encryption": "^2.1",
     "nowo-tech/doctrine-encrypt-bundle": "@dev",
     "doctrine/doctrine-bundle": "^3.2",
     "doctrine/orm": "^3.0",

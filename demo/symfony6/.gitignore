@@ -14,4 +14,7 @@
 /.phpunit.cache/
 ###< phpunit/phpunit ###
 
-*.key
+.Halite.key
+.Defuse.key
+.Halite.*.key
+.Defuse.*.key

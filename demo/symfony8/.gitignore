@@ -16,3 +16,6 @@
 
 .Halite.key
 .Defuse.key
+.Halite.*.key
+.Defuse.*.key
+

@@ -9,9 +9,14 @@ services:
   nowo_doctrine_attribute_reader:
     class: Nowo\DoctrineEncryptBundle\Mapping\AttributeReader
 
+  nowo_doctrine_encrypt.encryptor_registry:
+    class: Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry
+    arguments: [[], 'default']
+    # Arguments are overwritten by DoctrineEncryptExtension (legacy: one encryptor; configs: map of encryptors)
+
   nowo_doctrine_encrypt.orm_subscriber:
     class: Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber
-    arguments: ["@nowo_doctrine_encrypt.encryptor"]
+    arguments: ["@nowo_doctrine_encrypt.encryptor_registry"]
     tags:
       - { name: 'doctrine.event_listener', event: 'postUpdate', priority: 500, connection: 'default' }
       - { name: 'doctrine.event_listener', event: 'preUpdate', priority: 500, connection: 'default' }

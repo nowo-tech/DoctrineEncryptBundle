@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sensitive records (raw SQL){% endblock %}
+
+{% block body %}
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">Sensitive records – Raw SQL</h2>
+        <div class="d-flex gap-2">
+            <a href="{{ path('sensitive_record_index') }}" class="btn btn-outline-light btn-sm">View with Doctrine (decrypted)</a>
+            <a href="{{ path('sensitive_record_new') }}" class="btn btn-primary">Create new</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small">
+            Data loaded with <strong>raw SQL</strong>. <strong>personal_note</strong> and <strong>financial_note</strong> show ciphertext as stored (Halite / Defuse).
+        </p>
+        {% if rows|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Id</th>
+                            <th>Personal note (raw)</th>
+                            <th>Financial note (raw)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                <td>{{ row.id }}</td>
+                                <td><code class="small text-break">{{ row.personal_note is not empty ? (row.personal_note|slice(0, 60)) ~ '…' : '–' }}</code></td>
+                                <td><code class="small text-break">{{ row.financial_note is not empty ? (row.financial_note|slice(0, 60)) ~ '…' : '–' }}</code></td>
+                                <td>
+                                    <a href="{{ path('sensitive_record_show', { id: row.id }) }}" class="btn btn-sm btn-outline-secondary">Show</a>
+                                    <a href="{{ path('sensitive_record_edit', { id: row.id }) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    <form method="post" action="{{ path('sensitive_record_delete', { id: row.id }) }}" class="d-inline" onsubmit="return confirm('Delete?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ row.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">No rows. <a href="{{ path('sensitive_record_new') }}">Create one</a> or load fixtures.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

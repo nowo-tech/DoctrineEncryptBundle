@@ -62,6 +62,9 @@
       "Nowo\\DoctrineEncryptBundle\\Tests\\": "Tests/"
     }
   },
+  "archive": {
+    "exclude": ["/demo"]
+  },
   "config": {
     "sort-packages": true,
     "allow-plugins": {

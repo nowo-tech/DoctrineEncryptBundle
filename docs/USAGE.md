@@ -48,6 +48,22 @@ The bundle will:
 
 An `<ENC>` marker is appended to stored values so the bundle can tell encrypted from plain text; existing unencrypted data can still be read and will be encrypted on the next update.
 
+## Multiple encryptors
+
+When you define [multiple configs](CONFIGURATION.md#multiple-encryptors-configs) (e.g. `personal_data`, `financial_data`), specify which config to use per property with the attribute’s config parameter:
+
+```php
+#[ORM\Column(type: 'string')]
+#[Encrypted('personal_data')]
+private ?string $email = null;
+
+#[ORM\Column(type: 'string')]
+#[Encrypted('financial_data')]
+private ?string $iban = null;
+```
+
+Omit the parameter or use `#[Encrypted]` / `#[Encrypted('default')]` to use the default config.
+
 ## Embedded entities
 
 Encrypted properties inside embedded entities are supported: mark the property in the embedded class with `Encrypted` and ensure the embeddable is correctly mapped.

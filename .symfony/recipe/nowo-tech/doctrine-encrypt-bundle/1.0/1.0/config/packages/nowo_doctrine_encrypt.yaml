@@ -1,8 +1,12 @@
-# Doctrine Encrypt Bundle - default configuration
+# Doctrine Encrypt Bundle
 # https://github.com/nowo-tech/doctrine-encrypt-bundle
 # Generate secret key: php bin/console doctrine:encrypt:generate-secret-key
-# Add .Halite.key and .Defuse.key to .gitignore
+# Add .Halite.key, .Defuse.key and .<encryptor>.<alias>.key to .gitignore
 
 nowo_doctrine_encrypt:
-    encryptor_class: Halite   # or Defuse (requires: composer require defuse/php-encryption ^2.1)
-    secret_directory_path: '%kernel.project_dir%'
+    default_config: default
+    configs:
+        default:
+            encryptor_class: Halite   # or Defuse (requires: composer require defuse/php-encryption ^2.1)
+            secret_directory_path: '%kernel.project_dir%'
+    # Optional: add more configs (e.g. personal_data, financial_data) - see docs/CONFIGURATION.md

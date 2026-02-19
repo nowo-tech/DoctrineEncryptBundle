@@ -5,7 +5,7 @@ COMPOSE_FILE := docker-compose.yml
 COMPOSE := docker-compose -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
-.PHONY: help up down build install shell logs setup db-create db-schema key cache-clear update-bundle test encrypt-status encrypt-database decrypt-database ensure-up
+.PHONY: help up down build install shell logs setup db-create db-schema key fixtures cache-clear update-bundle test encrypt-status encrypt-database decrypt-database ensure-up
 
 help:
 	@echo "Doctrine Encrypt Bundle Demo - Symfony 8"
@@ -14,12 +14,13 @@ help:
 	@echo "  make down               Stop containers"
 	@echo "  make build              Build image (no cache)"
 	@echo "  make install            Install dependencies in container"
-	@echo "  make setup              install + db-create + db-schema + key"
+	@echo "  make setup              install + db-create + db-schema + key + fixtures"
 	@echo "  make shell              Open shell in PHP container"
 	@echo "  make logs               Show container logs"
 	@echo "  make db-create          Create SQLite DB"
 	@echo "  make db-schema          Update schema"
 	@echo "  make key                Generate encryption secret key"
+	@echo "  make fixtures           Load data fixtures (SecretMessage + SensitiveRecord)"
 	@echo "  make encrypt-status     List entities and encrypted properties"
 	@echo "  make encrypt-database   Encrypt existing data (interactive)"
 	@echo "  make decrypt-database   Decrypt existing data (interactive)"
@@ -51,8 +52,12 @@ ensure-up:
 install: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) composer install --no-interaction
 
-setup: install db-create db-schema key
+setup: install db-create db-schema key fixtures
 	@echo "Demo ready. App: http://localhost:$${PORT:-8008}"
+
+fixtures: ensure-up
+	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:fixtures:load --no-interaction
+	@echo "Fixtures loaded (SecretMessage + SensitiveRecord)."
 
 shell: ensure-up
 	$(COMPOSE) exec $(SERVICE_PHP) sh
@@ -69,7 +74,7 @@ db-schema: ensure-up
 
 key: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:encrypt:generate-secret-key 2>/dev/null || true
-	@echo "Secret key generated (or already exists)."
+	@echo "Halite key for personal_data generated (or exists). Defuse creates .Defuse.financial_data.key on first use."
 
 encrypt-status: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:encrypt:status

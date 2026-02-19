@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New sensitive record{% endblock %}
+
+{% block body %}
+<div class="mb-3">
+    <a href="{{ path('sensitive_record_index') }}" class="btn btn-outline-secondary">← Back to list</a>
+</div>
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h2 class="mb-0 h5">Create sensitive record</h2>
+    </div>
+    <div class="card-body">
+        {{ form_start(form, { attr: { class: 'needs-validation', novalidate: true } }) }}
+        <div class="mb-3">
+            {{ form_label(form.personalNote) }}
+            {{ form_widget(form.personalNote) }}
+            {{ form_errors(form.personalNote) }}
+            <div class="form-text">Stored encrypted with Halite (config: personal_data).</div>
+        </div>
+        <div class="mb-3">
+            {{ form_label(form.financialNote) }}
+            {{ form_widget(form.financialNote) }}
+            {{ form_errors(form.financialNote) }}
+            <div class="form-text">Stored encrypted with Defuse (config: financial_data).</div>
+        </div>
+        <hr class="my-4">
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Create</button>
+            <a href="{{ path('sensitive_record_index') }}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

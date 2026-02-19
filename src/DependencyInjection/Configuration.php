@@ -33,14 +33,22 @@ class Configuration implements ConfigurationInterface
             $rootNode = $treeBuilder->root(self::ALIAS);
         }
 
-        // Grammar of config tree
+        // Grammar of config tree: legacy (encryptor_class + secret_directory_path) or configs (alias => options)
         $rootNode
-          ->children()
-          ->scalarNode('encryptor_class')->defaultValue('Halite')
-          ->end()
-          ->scalarNode('secret_directory_path')->defaultValue('%kernel.project_dir%')
-          ->end()
-          ->end();
+            ->children()
+                ->scalarNode('encryptor_class')->defaultValue('Halite')->end()
+                ->scalarNode('secret_directory_path')->defaultValue('%kernel.project_dir%')->end()
+                ->scalarNode('default_config')->defaultValue('default')->end()
+                ->arrayNode('configs')
+                    ->useAttributeAsKey('name')
+                    ->arrayPrototype()
+                        ->children()
+                            ->scalarNode('encryptor_class')->defaultValue('Halite')->end()
+                            ->scalarNode('secret_directory_path')->defaultValue('%kernel.project_dir%')->end()
+                        ->end()
+                    ->end()
+                ->end()
+            ->end();
         //
         return $treeBuilder;
     }

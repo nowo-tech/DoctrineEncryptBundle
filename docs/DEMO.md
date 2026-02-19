@@ -36,10 +36,10 @@ Then open **http://localhost:8008** (or the port shown by `make up`).
 - **down** – Stop containers.
 - **build** – Rebuild image (no cache).
 - **install** – `composer install` in container.
-- **setup** – install + `doctrine:database:create` + `doctrine:schema:update` + `doctrine:encrypt:generate-secret-key`.
+- **setup** – install + db create + schema update + secret key + fixtures.
 - **shell** – Shell in PHP container.
 - **logs** – Container logs.
-- **db-create**, **db-schema**, **key** – Database and encryption key.
+- **db-create**, **db-schema**, **key**, **fixtures** – Database, encryption key, and sample data.
 - **cache-clear**, **update-bundle**, **test** – Cache, bundle update, tests.
 
 Change port: `PORT=9008 make up`.
@@ -56,3 +56,17 @@ Change port: `PORT=9008 make up`.
 - **src/Controller/DemoController.php** – Simple home route.
 
 The bundle is installed via Composer **path repository** pointing to `/var/doctrine-encrypt-bundle` (mounted from the repo root). See **demo/README.md** for more detail.
+
+## Multiple encryptors (Symfony 8 demo)
+
+The **Symfony 8** demo illustrates **multiple encryptor configs**. In `demo/symfony8/config/packages/nowo_doctrine_encrypt.yaml` you’ll find:
+
+- **configs:** `personal_data` (Halite) and `financial_data` (Defuse), each with its own key file.
+- **default_config:** `personal_data` (used by `#[Encrypted]` without a config name).
+
+**SecretMessage** uses the default config. **SensitiveRecord** uses both:
+
+- `personal_note` → `#[Encrypted('personal_data')]`
+- `financial_note` → `#[Encrypted('financial_data')]`
+
+Run `make encrypt-status` in the demo directory to see entities and encrypted properties per config. Full reference: [Configuration – Multiple encryptors](CONFIGURATION.md#multiple-encryptors-configs), [Usage – Multiple encryptors](USAGE.md#multiple-encryptors).

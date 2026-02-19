@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New sensitive record{% endblock %}
+
+{% block body %}
+<div class="mb-3"><a href="{{ path('sensitive_record_index') }}" class="btn btn-outline-secondary">← Back</a></div>
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white"><h2 class="mb-0 h5">Create sensitive record</h2></div>
+    <div class="card-body">
+        {{ form_start(form) }}
+        {{ form_row(form.personalNote) }}
+        {{ form_row(form.financialNote) }}
+        <button type="submit" class="btn btn-primary">Create</button>
+        <a href="{{ path('sensitive_record_index') }}" class="btn btn-outline-secondary">Cancel</a>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

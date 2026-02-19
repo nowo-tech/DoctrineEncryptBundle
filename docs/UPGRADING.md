@@ -29,6 +29,14 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 1.0.0
+
+This is the first release of `nowo-tech/doctrine-encrypt-bundle`. If you are migrating from `ambta/doctrine-encrypt-bundle` or `hec-franco/doctrine-encrypt-bundle`, see the section below.
+
+If you are already on this package (e.g. from dev), ensure you use the new config root `nowo_doctrine_encrypt` and register `NowoDoctrineEncryptBundle`. You can keep a single-encryptor config or switch to **multiple encryptors** via `configs` and `default_config`; see [CONFIGURATION.md](CONFIGURATION.md).
+
+---
+
 ## Upgrading from ambta/doctrine-encrypt-bundle or hec-franco/doctrine-encrypt-bundle
 
 **Breaking changes when moving to nowo-tech/doctrine-encrypt-bundle:**
@@ -65,6 +73,8 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
    ```
 
 5. **Secret key files**  
-   Key file names are unchanged (e.g. `.Halite.key`, `.Defuse.key`). If you stored them in the same path as before (`secret_directory_path`), no change is needed.
+   With a single-encryptor config, key file names are unchanged (e.g. `.Halite.key`, `.Defuse.key`). If you later switch to `configs`, each config uses a key file like `.{Encryptor}.{alias}.key` (e.g. `.Halite.personal_data.key`). See [CONFIGURATION.md](CONFIGURATION.md).
+
+**Optional:** You can adopt the multi-encryptor setup (`configs` + `default_config`) to use different encryptors per entity property; the bundle remains backward compatible with the single-encryptor format above.
 
 After making these changes, run your test suite and the bundle’s console commands to ensure everything works.

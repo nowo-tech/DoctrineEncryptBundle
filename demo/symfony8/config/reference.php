@@ -902,6 +902,11 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  * @psalm-type NowoDoctrineEncryptConfig = array{
  *     encryptor_class?: scalar|Param|null, // Default: "Halite"
  *     secret_directory_path?: scalar|Param|null, // Default: "%kernel.project_dir%"
+ *     default_config?: scalar|Param|null, // Default: "default"
+ *     configs?: array<string, array{ // Default: []
+ *         encryptor_class?: scalar|Param|null, // Default: "Halite"
+ *         secret_directory_path?: scalar|Param|null, // Default: "%kernel.project_dir%"
+ *     }>,
  * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,

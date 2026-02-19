@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sensitive record #{{ sensitive_record.id }}{% endblock %}
+
+{% block body %}
+<div class="mb-3"><a href="{{ path('sensitive_record_index') }}" class="btn btn-outline-secondary">← Back</a></div>
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between">
+        <h2 class="mb-0">Record #{{ sensitive_record.id }}</h2>
+        <a href="{{ path('sensitive_record_edit', { id: sensitive_record.id }) }}" class="btn btn-primary">Edit</a>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Personal note</dt><dd class="col-sm-9">{{ sensitive_record.personalNote ?? '–' }}</dd>
+            <dt class="col-sm-3">Financial note</dt><dd class="col-sm-9">{{ sensitive_record.financialNote ?? '–' }}</dd>
+        </dl>
+        <form method="post" action="{{ path('sensitive_record_delete', { id: sensitive_record.id }) }}" class="d-inline" onsubmit="return confirm('Delete?');">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ sensitive_record.id) }}">
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
