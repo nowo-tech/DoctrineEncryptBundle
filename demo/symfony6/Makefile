@@ -60,8 +60,9 @@ shell: ensure-up
 logs:
 	$(COMPOSE) logs -f
 
+# SQLite: doctrine:database:create is not supported (getListDatabasesSQL). Ensure var/ and DB file exist.
 db-create: ensure-up
-	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:database:create --if-not-exists --no-interaction
+	$(COMPOSE) exec -T $(SERVICE_PHP) sh -c 'mkdir -p var && touch var/data.db'
 
 db-schema: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:schema:update --force --no-interaction
