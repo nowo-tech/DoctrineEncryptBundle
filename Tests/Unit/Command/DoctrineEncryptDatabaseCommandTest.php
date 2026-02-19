@@ -23,7 +23,7 @@ class DoctrineEncryptDatabaseCommandTest extends TestCase
     private function createCommandWithApplication(DoctrineEncryptDatabaseCommand $command): DoctrineEncryptDatabaseCommand
     {
         $application = new Application();
-        $application->add($command);
+        $command->setApplication($application);
         return $command;
     }
 
