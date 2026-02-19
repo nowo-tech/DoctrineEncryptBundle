@@ -11,20 +11,28 @@ class DefuseEncryptorTest extends TestCase
 
     public function testEncrypt(): void
     {
-        $keyfile = sys_get_temp_dir() . '/defuse-test-' . uniqid('', true) . '.key';
-        $defuse = new DefuseEncryptor($keyfile);
-        $defuse->encrypt(self::DATA); // ensure key file exists
-        $key = file_get_contents($keyfile);
-        $this->assertNotFalse($key, 'Key file must be readable');
-
-        $encrypted = $defuse->encrypt(self::DATA);
-        $this->assertNotSame(self::DATA, $encrypted);
-        $decrypted = $defuse->decrypt($encrypted);
-
-        $this->assertSame(self::DATA, $decrypted);
-        $newkey = file_get_contents($keyfile);
-        $this->assertSame($key, $newkey, 'The key must not be modified');
-        @unlink($keyfile);
+        $dir = __DIR__ . '/fixtures';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $keyfile = $dir . '/defuse-test-' . uniqid('', true) . '.key';
+        $key = bin2hex(random_bytes(64));
+        file_put_contents($keyfile, $key);
+        $this->assertNotFalse(file_get_contents($keyfile), 'Key file must be readable after write');
+        try {
+            $defuse = new DefuseEncryptor($keyfile);
+            $encrypted = $defuse->encrypt(self::DATA);
+            $this->assertNotSame(self::DATA, $encrypted);
+            $decrypted = $defuse->decrypt($encrypted);
+            $this->assertSame(self::DATA, $decrypted);
+            $newkey = file_get_contents($keyfile);
+            $this->assertNotFalse($newkey, 'Key file must still be readable after encrypt/decrypt');
+            $this->assertSame($key, $newkey, 'The key must not be modified');
+        } finally {
+            if (file_exists($keyfile)) {
+                unlink($keyfile);
+            }
+        }
     }
 
     public function testGenerateKey(): void

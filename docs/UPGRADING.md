@@ -29,6 +29,17 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.0.1
+
+No breaking changes. Update and run tests as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+---
+
 ## Upgrading to 2.0.0
 
 **Breaking change:** Symfony 6.x is no longer supported. The bundle requires **Symfony ^7.0 || ^8.0**.

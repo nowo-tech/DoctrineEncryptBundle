@@ -6,14 +6,14 @@ This document outlines the direction of Doctrine Encrypt Bundle and helps contri
 
 Doctrine Encrypt Bundle aims to provide **simple, secure field-level encryption** for Doctrine ORM entities in Symfony applications, using well-audited libraries (Halite, Defuse) and a clear upgrade path when moving from older or custom encryptors.
 
-## Current focus (1.x)
+## Current focus (2.x)
 
-- **Stability & compatibility:** Support Symfony 7.x, 8.x and Doctrine ORM 2.x/3.x. Fix regressions and deprecations as they appear.
+- **Stability & compatibility:** The bundle is compatible with **Symfony 7 and 8** and Doctrine ORM 2.x/3.x. Fix regressions and deprecations as they appear.
 - **Documentation:** Clear install, config, upgrade, and command docs so new users can adopt the bundle quickly.
 - **Testing:** Maintain test coverage and CI (PHP × Symfony matrix, code style).
 - **Recipe:** Get the Flex recipe merged in [symfony/recipes-contrib](https://github.com/symfony/recipes-contrib) so `composer require nowo-tech/doctrine-encrypt-bundle` registers the bundle and config automatically.
 
-No breaking changes are planned for the 1.x line; new options will be additive where possible.
+No breaking changes are planned for the 2.x line; new options will be additive where possible.
 
 ## Short term (next releases)
 

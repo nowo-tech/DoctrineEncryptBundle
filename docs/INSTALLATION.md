@@ -4,6 +4,8 @@ This guide covers installing Doctrine Encrypt Bundle in a Symfony application.
 
 ## Requirements
 
+The bundle is **compatible with Symfony 7 and 8** (and PHP 8.1+).
+
 - **PHP** >= 8.1
 - **Symfony** ^7.0 || ^8.0
 - **Doctrine ORM** ^2.15 || ^3.0

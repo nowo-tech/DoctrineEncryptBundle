@@ -3,6 +3,7 @@
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Encryptors;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
+use ParagonIE\Halite\KeyFactory;
 use PHPUnit\Framework\TestCase;
 
 class HaliteEncryptorTest extends TestCase
@@ -14,20 +15,29 @@ class HaliteEncryptorTest extends TestCase
         if (! extension_loaded('sodium')) {
             $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
         }
-        $keyfile = sys_get_temp_dir() . '/halite-test-' . uniqid('', true) . '.key';
-        $halite = new HaliteEncryptor($keyfile);
-        $halite->encrypt(self::DATA); // ensure key file exists
+        $dir = __DIR__ . '/fixtures';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $keyfile = $dir . '/halite-test-' . uniqid('', true) . '.key';
+        $keyObj = KeyFactory::generateEncryptionKey();
+        KeyFactory::save($keyObj, $keyfile);
         $key = file_get_contents($keyfile);
-        $this->assertNotFalse($key, 'Key file must be readable');
-
-        $encrypted = $halite->encrypt(self::DATA);
-        $this->assertNotSame(self::DATA, $encrypted);
-        $decrypted = $halite->decrypt($encrypted);
-
-        $this->assertSame(self::DATA, $decrypted);
-        $newkey = file_get_contents($keyfile);
-        $this->assertSame($key, $newkey, 'The key must not be modified');
-        @unlink($keyfile);
+        $this->assertNotFalse($key, 'Key file must be readable after write');
+        try {
+            $halite = new HaliteEncryptor($keyfile);
+            $encrypted = $halite->encrypt(self::DATA);
+            $this->assertNotSame(self::DATA, $encrypted);
+            $decrypted = $halite->decrypt($encrypted);
+            $this->assertSame(self::DATA, $decrypted);
+            $newkey = file_get_contents($keyfile);
+            $this->assertNotFalse($newkey, 'Key file must still be readable after encrypt/decrypt');
+            $this->assertSame($key, $newkey, 'The key must not be modified');
+        } finally {
+            if (file_exists($keyfile)) {
+                unlink($keyfile);
+            }
+        }
     }
 
     public function testGenerateKey(): void

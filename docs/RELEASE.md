@@ -32,6 +32,11 @@
 
 ---
 
+## v2.0.1 (2026-02-19)
+
+- **Scope:** Test fixes (encryptor unit tests), add `symfony/var-exporter` for Doctrine ORM LazyGhost in functional tests.
+- **Checklist:** CHANGELOG and UPGRADING updated; tag `v2.0.1` created and pushed.
+
 ## v2.0.0 (2026-02-19)
 
 - **Scope:** Drop Symfony 6 support and remove demo/symfony6; require Symfony ^7.0 || ^8.0.

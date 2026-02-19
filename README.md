@@ -32,7 +32,7 @@ Looking for **Doctrine encryption**, **encrypt entity fields**, **Halite Symfony
 - ✅ Works with **embedded entities** and **inheritance**
 - ✅ Console commands: status, generate secret key, encrypt/decrypt database
 - ✅ **Symfony Flex** recipe (register bundle + config; see [Recipe/](Recipe/README.md))
-- ✅ Compatible with **Doctrine ORM 2.x and 3.x**
+- ✅ Compatible with **Symfony 7 and 8** and **Doctrine ORM 2.x and 3.x**
 
 ## Installation
 
@@ -150,7 +150,7 @@ Values are encrypted on persist/update and decrypted on load. See [docs/USAGE.md
 ## Requirements
 
 - PHP >= 8.1
-- Symfony ^7.0 \|\| ^8.0
+- **Symfony 7 or 8** (^7.0 \|\| ^8.0). The bundle is compatible with Symfony 7 and 8 only; for Symfony 6 use `^1.0` of this bundle.
 - Doctrine ORM ^2.15 \|\| ^3.0
 - paragonie/halite (included); for Defuse: `defuse/php-encryption ^2.1`
 - ext-sodium recommended for Halite (or sodium_compat)
