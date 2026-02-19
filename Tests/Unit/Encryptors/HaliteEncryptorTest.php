@@ -17,7 +17,7 @@ class HaliteEncryptorTest extends TestCase
         }
         $dir = __DIR__ . '/fixtures';
         if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
+            mkdir($dir, 0o777, true);
         }
         $keyfile = $dir . '/halite-test-' . uniqid('', true) . '.key';
         $keyObj = KeyFactory::generateEncryptionKey();

@@ -13,7 +13,7 @@ class DefuseEncryptorTest extends TestCase
     {
         $dir = __DIR__ . '/fixtures';
         if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
+            mkdir($dir, 0o777, true);
         }
         $keyfile = $dir . '/defuse-test-' . uniqid('', true) . '.key';
         $key = bin2hex(random_bytes(64));

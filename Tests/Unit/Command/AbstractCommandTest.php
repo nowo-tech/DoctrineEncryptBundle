@@ -33,7 +33,7 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -63,7 +63,7 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -91,7 +91,7 @@ class AbstractCommandTest extends TestCase
             ->with('SELECT o FROM ' . User::class . ' o')
             ->willReturn($query);
 
-        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -119,7 +119,7 @@ class AbstractCommandTest extends TestCase
             ->with('SELECT COUNT(o) FROM ' . User::class . ' o')
             ->willReturn($query);
 
-        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
