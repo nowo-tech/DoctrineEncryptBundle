@@ -8,7 +8,7 @@ Doctrine Encrypt Bundle aims to provide **simple, secure field-level encryption*
 
 ## Current focus (1.x)
 
-- **Stability & compatibility:** Support Symfony 6.x, 7.x, 8.x and Doctrine ORM 2.x/3.x. Fix regressions and deprecations as they appear.
+- **Stability & compatibility:** Support Symfony 7.x, 8.x and Doctrine ORM 2.x/3.x. Fix regressions and deprecations as they appear.
 - **Documentation:** Clear install, config, upgrade, and command docs so new users can adopt the bundle quickly.
 - **Testing:** Maintain test coverage and CI (PHP × Symfony matrix, code style).
 - **Recipe:** Get the Flex recipe merged in [symfony/recipes-contrib](https://github.com/symfony/recipes-contrib) so `composer require nowo-tech/doctrine-encrypt-bundle` registers the bundle and config automatically.
@@ -19,7 +19,7 @@ No breaking changes are planned for the 1.x line; new options will be additive w
 
 - **Key rotation:** Document a safe workflow (backup → decrypt with old key → re-encrypt with new key using existing commands, or a dedicated command) and add it to the docs.
 - **Code coverage:** Keep or raise coverage (e.g. ≥90%) and ensure coverage runs in CI (e.g. PCOV in Docker/CI).
-- **Demos:** Keep demos (Symfony 6/7/8) working and referenced from the docs.
+- **Demos:** Keep demos (Symfony 7/8) working and referenced from the docs.
 
 ## Possible future (ideas, not committed)
 

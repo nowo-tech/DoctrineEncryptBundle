@@ -33,12 +33,13 @@ class Configuration implements ConfigurationInterface
             $rootNode = $treeBuilder->root(self::ALIAS);
         }
 
-        // Grammar of config tree: legacy (encryptor_class + secret_directory_path) or configs (alias => options)
+        // Single grammar: default_config + configs. When #[Encrypted] has no alias (or "default"), the encryptor for default_config is used.
         $rootNode
             ->children()
-                ->scalarNode('encryptor_class')->defaultValue('Halite')->end()
-                ->scalarNode('secret_directory_path')->defaultValue('%kernel.project_dir%')->end()
-                ->scalarNode('default_config')->defaultValue('default')->end()
+                ->scalarNode('default_config')
+                    ->defaultValue('default')
+                    ->info('Config alias to use when #[Encrypted] has no alias or uses "default".')
+                ->end()
                 ->arrayNode('configs')
                     ->useAttributeAsKey('name')
                     ->arrayPrototype()
@@ -47,6 +48,7 @@ class Configuration implements ConfigurationInterface
                             ->scalarNode('secret_directory_path')->defaultValue('%kernel.project_dir%')->end()
                         ->end()
                     ->end()
+                    ->info('Map of config alias => { encryptor_class, secret_directory_path }.')
                 ->end()
             ->end();
         //

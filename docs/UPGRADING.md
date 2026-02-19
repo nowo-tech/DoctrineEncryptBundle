@@ -29,11 +29,26 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.0.0
+
+**Breaking change:** Symfony 6.x is no longer supported. The bundle requires **Symfony ^7.0 || ^8.0**.
+
+- If your application runs on **Symfony 6.x**, either:
+  - Stay on `nowo-tech/doctrine-encrypt-bundle` **^1.0** (e.g. `composer require nowo-tech/doctrine-encrypt-bundle:^1.0`), or
+  - Upgrade your application to Symfony 7 or 8, then upgrade the bundle to ^2.0.
+- If you are already on **Symfony 7 or 8**, you can upgrade to 2.0 with:
+  ```bash
+  composer update nowo-tech/doctrine-encrypt-bundle
+  ```
+  No configuration or code changes are required; only the dropped Symfony 6 support and the removal of the Symfony 6 demo affect this release.
+
+---
+
 ## Upgrading to 1.0.0
 
 This is the first release of `nowo-tech/doctrine-encrypt-bundle`. If you are migrating from `ambta/doctrine-encrypt-bundle` or `hec-franco/doctrine-encrypt-bundle`, see the section below.
 
-If you are already on this package (e.g. from dev), ensure you use the new config root `nowo_doctrine_encrypt` and register `NowoDoctrineEncryptBundle`. You can keep a single-encryptor config or switch to **multiple encryptors** via `configs` and `default_config`; see [CONFIGURATION.md](CONFIGURATION.md).
+If you are already on this package (e.g. from dev), ensure you use the new config root `nowo_doctrine_encrypt` and register `NowoDoctrineEncryptBundle`. Use `default_config` and `configs` (one entry for a single encryptor, or several for multiple encryptors); see [CONFIGURATION.md](CONFIGURATION.md).
 
 ---
 
@@ -66,15 +81,18 @@ If you are already on this package (e.g. from dev), ensure you use the new confi
        encryptor_class: Halite
        secret_directory_path: '%kernel.project_dir%'
 
-   # After
+   # After (single encryptor = one config named "default")
    nowo_doctrine_encrypt:
-       encryptor_class: Halite
-       secret_directory_path: '%kernel.project_dir%'
+       default_config: default
+       configs:
+           default:
+               encryptor_class: Halite
+               secret_directory_path: '%kernel.project_dir%'
    ```
 
 5. **Secret key files**  
-   With a single-encryptor config, key file names are unchanged (e.g. `.Halite.key`, `.Defuse.key`). If you later switch to `configs`, each config uses a key file like `.{Encryptor}.{alias}.key` (e.g. `.Halite.personal_data.key`). See [CONFIGURATION.md](CONFIGURATION.md).
+   With the single config above, the key file is `.Halite.default.key`. Each config uses `.{Encryptor}.{alias}.key` (e.g. `.Halite.personal_data.key`). See [CONFIGURATION.md](CONFIGURATION.md).
 
-**Optional:** You can adopt the multi-encryptor setup (`configs` + `default_config`) to use different encryptors per entity property; the bundle remains backward compatible with the single-encryptor format above.
+**Optional:** You can add more entries under `configs` and set `default_config` to choose which one is used for `#[Encrypted]` without an alias.
 
 After making these changes, run your test suite and the bundle’s console commands to ensure everything works.

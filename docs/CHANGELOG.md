@@ -21,6 +21,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.0] - 2026-02-19
+
+### Removed
+
+- **Symfony 6 support.** The bundle now requires Symfony ^7.0 || ^8.0. If you are on Symfony 6.x, stay on `nowo-tech/doctrine-encrypt-bundle` ^1.0 or upgrade your application to Symfony 7 or 8.
+- **Demo for Symfony 6.** The `demo/symfony6` project has been removed. Demos for Symfony 7 and 8 remain in `demo/symfony7` and `demo/symfony8`.
+
+### Changed
+
+- Composer requirements: all `symfony/*` constraints updated from `^6.0 || ^7.0 || ^8.0` to `^7.0 || ^8.0`.
+- CI (GitHub Actions) and documentation now target only Symfony 7.0 and 8.0.
+
+For upgrade steps, see [UPGRADING.md](UPGRADING.md#upgrading-to-200).
+
+---
+
 ## [1.0.0] - 2025-02-19
 
 First release under **nowo-tech**. Fork from `hec-franco/doctrine-encrypt-bundle` with Halite and Defuse encryptors, Doctrine ORM 2.x/3.x, and attribute/annotation support.
@@ -28,12 +44,12 @@ First release under **nowo-tech**. Fork from `hec-franco/doctrine-encrypt-bundle
 ### Added
 
 - **nowo-tech fork:** Bundle in namespace `Nowo\DoctrineEncryptBundle` and package `nowo-tech/doctrine-encrypt-bundle`.
-- Support for Symfony 6, 7 and 8; PHP 8.1+.
+- Support for Symfony 7 and 8; PHP 8.1+.
 - **Multiple encryptors:** Config key `configs` (e.g. `personal_data`, `financial_data`) with `default_config`; each config has its own encryptor and key file (`.{Encryptor}.{alias}.key`, e.g. `.Halite.personal_data.key`).
 - Attribute `#[Encrypted('alias')]` to assign a field to a named config; use `"default"` for the default config.
 - Documentation in `docs/` (CHANGELOG, UPGRADING, RELEASE, CONFIGURATION, INSTALLATION, USAGE, COMMANDS, DEMO, custom_encryptor, etc.).
 - Makefile and Docker setup for development (`test`, `cs-check`, `cs-fix`, `qa`).
-- Demo applications for Symfony 6, 7 and 8 (entity `SensitiveRecord`, CRUD, fixtures, Halite + Defuse).
+- Demo applications for Symfony 7 and 8 (entity `SensitiveRecord`, CRUD, fixtures, Halite + Defuse).
 - Symfony Flex recipe (config with `configs` only); demo apps excluded from the distributed package (`archive.exclude`, `export-ignore`).
 
 ### Changed

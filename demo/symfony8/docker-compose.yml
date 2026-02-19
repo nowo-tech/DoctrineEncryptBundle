@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: doctrine-encrypt-demo-symfony8-php
     working_dir: /app
+    restart: unless-stopped
     ports:
       - "${PORT:-8008}:80"
     volumes:

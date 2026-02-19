@@ -1,6 +1,6 @@
 {
   "name": "nowo-tech/doctrine-encrypt-bundle",
-  "description": "Encrypt Symfony 6|7|8 entity fields with Halite or Defuse (verified libraries).",
+  "description": "Encrypt Symfony 7|8 entity fields with Halite or Defuse (verified libraries).",
   "type": "symfony-bundle",
   "license": "MIT",
   "keywords": [
@@ -35,18 +35,18 @@
     "doctrine/orm": "^2.15 || ^3.0",
     "paragonie/halite": "^5.1",
     "paragonie/sodium_compat": "^1.20",
-    "symfony/config": "^6.0 || ^7.0 || ^8.0",
-    "symfony/dependency-injection": "^6.0 || ^7.0 || ^8.0",
-    "symfony/http-kernel": "^6.0 || ^7.0 || ^8.0",
-    "symfony/property-access": "^6.0 || ^7.0 || ^8.0",
-    "symfony/yaml": "^6.0 || ^7.0 || ^8.0"
+    "symfony/config": "^7.0 || ^8.0",
+    "symfony/dependency-injection": "^7.0 || ^8.0",
+    "symfony/http-kernel": "^7.0 || ^8.0",
+    "symfony/property-access": "^7.0 || ^8.0",
+    "symfony/yaml": "^7.0 || ^8.0"
   },
   "require-dev": {
     "defuse/php-encryption": "^2.1",
     "doctrine/annotations": "^2.0",
     "friendsofphp/php-cs-fixer": "^3.0",
     "phpunit/phpunit": "^10.0 || ^11.0",
-    "symfony/cache": "^6.0 || ^7.0 || ^8.0"
+    "symfony/cache": "^7.0 || ^8.0"
   },
   "suggest": {
     "defuse/php-encryption": "Alternative to Halite for encryption",

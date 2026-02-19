@@ -1,31 +1,33 @@
 # Configuration
 
-The bundle is configured under the root key `nowo_doctrine_encrypt`. All options are optional.
+The bundle is configured under the root key `nowo_doctrine_encrypt`. You define one or more **configs** (each with its own encryptor and key path) and a **default_config**. When `#[Encrypted]` has no alias (or uses `"default"`), the encryptor for `default_config` is used.
 
-You can either use a **single encryptor** (legacy style) or **multiple named configs** (e.g. one for personal data, another for financial data).
-
-## Single encryptor (default)
+## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `encryptor_class` | `string` | `Halite` | Encryptor: `Halite` or `Defuse`, or a custom class (see [Custom encryptor](custom_encryptor.md)). |
-| `secret_directory_path` | `string` | `%kernel.project_dir%` | Directory where the secret key file is stored (e.g. `.Halite.key` or `.Defuse.key`). |
+| `configs` | `array` | `[]` (normalized to one `default` config) | Map of alias => options. Each alias (e.g. `default`, `personal_data`, `financial_data`) has `encryptor_class` and `secret_directory_path`. |
+| `default_config` | `string` | `default` | Which config to use when the attribute has no alias or uses `"default"`. |
+
+If `configs` is empty, the bundle behaves as if you had defined a single config named `default` with Halite and `%kernel.project_dir%`.
+
+## Example: single encryptor (default)
+
+Omit the config file or define only the default config:
 
 ```yaml
 # config/packages/nowo_doctrine_encrypt.yaml
 nowo_doctrine_encrypt:
-    encryptor_class: Halite   # or Defuse
-    secret_directory_path: '%kernel.project_dir%'
+    default_config: default
+    configs:
+        default:
+            encryptor_class: Halite   # or Defuse
+            secret_directory_path: '%kernel.project_dir%'
 ```
 
-## Multiple encryptors (configs)
+Then use `#[Encrypted]` or `#[Encrypted('default')]` on properties; they will use this encryptor.
 
-To use different encryptors for different entity properties (e.g. `personal_data` with Halite, `financial_data` with Defuse), define **configs** and optionally a **default_config**:
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `configs` | `array` | `[]` | Map of alias => options. Each alias (e.g. `personal_data`, `financial_data`) has `encryptor_class` and `secret_directory_path`. |
-| `default_config` | `string` | first key in `configs` | Which config to use when the attribute has no config or uses `"default"`. |
+## Example: multiple encryptors
 
 ```yaml
 # config/packages/nowo_doctrine_encrypt.yaml
@@ -40,7 +42,10 @@ nowo_doctrine_encrypt:
             secret_directory_path: '%kernel.project_dir%/var/secrets'
 ```
 
-Each config gets its own key file: `.{encryptor_class}.{alias}.key` (e.g. `.Halite.personal_data.key`, `.Defuse.financial_data.key`). Add them to `.gitignore`. Then in entities, use the attribute with the config name: `#[Encrypted('personal_data')]` or `#[Encrypted('financial_data')]`. See [Usage](USAGE.md#multiple-encryptors).
+- Properties with `#[Encrypted]` or `#[Encrypted('default')]` use the encryptor for **personal_data** (default_config).
+- Properties with `#[Encrypted('personal_data')]` or `#[Encrypted('financial_data')]` use the corresponding config.
+
+Each config has its own key file: `.{encryptor_class}.{alias}.key` (e.g. `.Halite.personal_data.key`, `.Defuse.financial_data.key`). Add them to `.gitignore`. See [Usage](USAGE.md#multiple-encryptors).
 
 ## Encryptors
 
@@ -55,8 +60,7 @@ Each config gets its own key file: `.{encryptor_class}.{alias}.key` (e.g. `.Hali
 
 ## Secret key files
 
-- **Single encryptor:** key file is `.{encryptor_class}.key` (e.g. `.Halite.key`, `.Defuse.key`) inside `secret_directory_path`.
-- **With configs:** key file per config is `.{encryptor_class}.{alias}.key` (e.g. `.Halite.personal_data.key`, `.Defuse.financial_data.key`) inside that config’s `secret_directory_path`.
+Key file per config: `.{encryptor_class}.{alias}.key` (e.g. `.Halite.default.key`, `.Halite.personal_data.key`, `.Defuse.financial_data.key`) inside that config’s `secret_directory_path`.
 
 **Important:** Add key files to `.gitignore` so they are never committed:
 
@@ -76,4 +80,4 @@ Symfony loads configuration from:
 - `config/packages/nowo_doctrine_encrypt.yaml` (all environments)
 - `config/packages/{env}/nowo_doctrine_encrypt.yaml` (per environment)
 
-If no config file exists, defaults from the bundle’s `Configuration` class are used.
+If no config file exists, the bundle uses one default config (Halite, `%kernel.project_dir%`).

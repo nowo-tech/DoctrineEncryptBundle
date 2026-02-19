@@ -41,25 +41,14 @@ class DoctrineEncryptExtension extends Extension
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
 
-        $hasConfigs = isset($config['configs']) && count($config['configs']) > 0;
-
-        if ($hasConfigs) {
-            $this->registerConfigs($container, $config);
-        } else {
-            $this->registerLegacy($container, $config);
+        $configs = $config['configs'];
+        if (count($configs) === 0) {
+            $configs = ['default' => ['encryptor_class' => 'Halite', 'secret_directory_path' => '%kernel.project_dir%']];
+            $config['default_config'] = 'default';
         }
-    }
+        $config['configs'] = $configs;
 
-    private function registerLegacy(ContainerBuilder $container, array $config): void
-    {
-        $encryptorClass = $this->resolveEncryptorClass($config['encryptor_class']);
-        $secretKeyPath = $config['secret_directory_path'] . '/.' . $config['encryptor_class'] . '.key';
-
-        $container->setParameter('nowo_doctrine_encrypt.encryptor_class_name', $encryptorClass);
-        $container->setParameter('nowo_doctrine_encrypt.secret_key_path', $secretKeyPath);
-
-        $container->getDefinition('nowo_doctrine_encrypt.encryptor_registry')
-            ->setArguments([['default' => new Reference('nowo_doctrine_encrypt.encryptor')], 'default']);
+        $this->registerConfigs($container, $config);
     }
 
     private function registerConfigs(ContainerBuilder $container, array $config): void

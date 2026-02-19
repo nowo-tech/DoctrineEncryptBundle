@@ -12,9 +12,12 @@ use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\UnitOfWork;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
+use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\EntityWithConfigAlias;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\ExtendedUser;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
+use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\WithOptionalUser;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\WithUser;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -61,6 +64,23 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->assertSame($replaceEncryptor, $this->subscriber->getEncryptor());
         $this->subscriber->restoreEncryptor();
         $this->assertSame($this->encryptor, $this->subscriber->getEncryptor());
+    }
+
+    /** Covers processFields when encryptorOverride is set (uses override instead of registry->get). */
+    public function testProcessFieldsEncryptUsesOverrideEncryptor(): void
+    {
+        $overrideEncryptor = $this->createMock(EncryptorInterface::class);
+        $overrideEncryptor->expects($this->exactly(2))
+            ->method('encrypt')
+            ->willReturnCallback(fn (string $s) => 'OVR-' . $s);
+
+        $this->subscriber->setEncryptor($overrideEncryptor);
+
+        $user = new User('David', 'Switzerland');
+        $this->subscriber->processFields($user, true);
+
+        $this->assertSame('OVR-David<ENC>', $user->name);
+        $this->assertSame('OVR-Switzerland<ENC>', $user->getAddress());
     }
 
     public function testProcessFieldsEncrypt(): void
@@ -169,6 +189,22 @@ class DoctrineEncryptSubscriberTest extends TestCase
 
         $this->assertSame('encrypted-David', $user->name);
         $this->assertSame('encrypted-Switzerland', $user->getAddress());
+    }
+
+    /** Covers the cache path in processFields: after decrypt, encrypt uses cached value and does not call encryptor again. */
+    public function testProcessFieldsEncryptUsesCachedDecryptionWhenValueWasDecrypted(): void
+    {
+        $user = new User('encrypted-David<ENC>', 'encrypted-Switzerland<ENC>');
+
+        $this->subscriber->processFields($user, false);
+        $this->assertSame('David', $user->name);
+        $this->assertSame('Switzerland', $user->getAddress());
+
+        $this->encryptor->expects($this->never())->method('encrypt');
+        $this->subscriber->processFields($user, true);
+
+        $this->assertSame('encrypted-David<ENC>', $user->name);
+        $this->assertSame('encrypted-Switzerland<ENC>', $user->getAddress());
     }
 
     /**
@@ -351,6 +387,28 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->assertStringStartsWith('encrypted-', $user->name);
     }
 
+    public function testOnFlushDoesNotRecomputeChangeSetWhenNoEncryptionOccurs(): void
+    {
+        $user = new User('', '');
+        $uow = $this->createMock(UnitOfWork::class);
+        $uow->expects($this->any())
+            ->method('getScheduledEntityInsertions')
+            ->willReturn([$user]);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->any())
+            ->method('getUnitOfWork')
+            ->willReturn($uow);
+        $em->expects($this->never())
+            ->method('getClassMetadata');
+        $uow->expects($this->never())
+            ->method('recomputeSingleEntityChangeSet');
+
+        $this->subscriber->onFlush(new OnFlushEventArgs($em));
+
+        $this->assertSame('', $user->name);
+        $this->assertSame('', $user->getAddress());
+    }
+
     public function testEncryptionMarkerConstant(): void
     {
         $this->assertSame('<ENC>', DoctrineEncryptSubscriber::ENCRYPTION_MARKER);
@@ -374,5 +432,74 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $result = $subscriber->processFields($user, true);
 
         $this->assertSame($user, $result);
+    }
+
+    public function testConstructorWithEncryptorRegistryUsesDefaultEncryptor(): void
+    {
+        $defaultEncryptor = $this->createMock(EncryptorInterface::class);
+        $defaultEncryptor->method('encrypt')->willReturn('from-default');
+        $registry = new EncryptorRegistry(['default' => $defaultEncryptor], 'default');
+        $subscriber = new DoctrineEncryptSubscriber($registry);
+
+        $this->assertSame($defaultEncryptor, $subscriber->getEncryptor());
+    }
+
+    public function testConstructorWithNullRegistryGetEncryptorReturnsNull(): void
+    {
+        $subscriber = new DoctrineEncryptSubscriber(null);
+
+        $this->assertNull($subscriber->getEncryptor());
+    }
+
+    public function testProcessFieldsReturnsEntityWhenRegistryIsNull(): void
+    {
+        $subscriber = new DoctrineEncryptSubscriber(null);
+        $user = new User('David', 'Switzerland');
+
+        $result = $subscriber->processFields($user, true);
+
+        $this->assertSame($user, $result);
+        $this->assertSame('David', $user->name);
+    }
+
+    public function testProcessFieldsWithRegistryUsesEncryptorPerConfigAlias(): void
+    {
+        $defaultEncryptor = $this->createMock(EncryptorInterface::class);
+        $defaultEncryptor->method('encrypt')->willReturn('enc-default');
+        $otherEncryptor = $this->createMock(EncryptorInterface::class);
+        $otherEncryptor->method('encrypt')->willReturn('enc-other');
+        $registry = new EncryptorRegistry([
+            'default' => $defaultEncryptor,
+            'other_config' => $otherEncryptor,
+        ], 'default');
+        $subscriber = new DoctrineEncryptSubscriber($registry);
+
+        $entity = new EntityWithConfigAlias('a', 'b');
+        $subscriber->processFields($entity, true);
+
+        $this->assertStringStartsWith('enc-default', $entity->defaultField);
+        $this->assertStringStartsWith('enc-other', $entity->otherField);
+    }
+
+    public function testProcessFieldsEncryptRestoresFromCacheWhenValueWasDecrypted(): void
+    {
+        $user = new User('encrypted-David<ENC>', 'encrypted-Switzerland<ENC>');
+        $this->subscriber->processFields($user, false);
+        $this->assertSame('David', $user->name);
+
+        $this->subscriber->processFields($user, true);
+
+        $this->assertStringEndsWith('<ENC>', $user->name);
+        $this->assertStringEndsWith('<ENC>', $user->getAddress());
+    }
+
+    public function testProcessFieldsHandleEmbeddedWhenEmbeddedIsNull(): void
+    {
+        $withUser = new WithOptionalUser('Thing', null);
+
+        $this->subscriber->processFields($withUser, true);
+
+        $this->assertStringStartsWith('encrypted-', $withUser->name);
+        $this->assertNull($withUser->user);
     }
 }

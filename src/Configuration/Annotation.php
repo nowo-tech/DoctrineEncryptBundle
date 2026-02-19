@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Configuration;
 
 /**
+ * Marker interface for PHP 8 attribute classes that the bundle treats as encryption-related.
+ *
+ * The bundle only uses PHP 8 attributes (e.g. #[Encrypted]). AttributeReader filters
+ * ReflectionAttribute instances by this interface so only our attributes are processed;
+ * other attributes on the same property (e.g. #[ORM\Column]) are ignored.
+ *
  * @internal
- * The interface Annotation is defining a contract for classes that represent annotations in the
- * Nowo\DoctrineEncryptBundle\Configuration namespace. This interface can be implemented by classes
- * that want to represent specific annotations and provide their own implementation for the methods
- * defined in the interface.
  */
 interface Annotation
 {

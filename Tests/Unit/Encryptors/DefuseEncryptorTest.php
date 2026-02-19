@@ -11,9 +11,11 @@ class DefuseEncryptorTest extends TestCase
 
     public function testEncrypt(): void
     {
-        $keyfile = __DIR__ . '/fixtures/defuse.key';
-        $key = file_get_contents($keyfile);
+        $keyfile = sys_get_temp_dir() . '/defuse-test-' . uniqid('', true) . '.key';
         $defuse = new DefuseEncryptor($keyfile);
+        $defuse->encrypt(self::DATA); // ensure key file exists
+        $key = file_get_contents($keyfile);
+        $this->assertNotFalse($key, 'Key file must be readable');
 
         $encrypted = $defuse->encrypt(self::DATA);
         $this->assertNotSame(self::DATA, $encrypted);
@@ -22,6 +24,7 @@ class DefuseEncryptorTest extends TestCase
         $this->assertSame(self::DATA, $decrypted);
         $newkey = file_get_contents($keyfile);
         $this->assertSame($key, $newkey, 'The key must not be modified');
+        @unlink($keyfile);
     }
 
     public function testGenerateKey(): void
@@ -41,28 +44,33 @@ class DefuseEncryptorTest extends TestCase
 
     public function testEncryptDecryptEmptyString(): void
     {
-        $keyfile = __DIR__ . '/fixtures/defuse.key';
+        $keyfile = sys_get_temp_dir() . '/defuse-test-' . uniqid('', true) . '.key';
         $defuse = new DefuseEncryptor($keyfile);
+        $defuse->encrypt(''); // ensure key exists
 
         $encrypted = $defuse->encrypt('');
         $this->assertNotSame('', $encrypted);
         $decrypted = $defuse->decrypt($encrypted);
         $this->assertSame('', $decrypted);
+        @unlink($keyfile);
     }
 
     public function testDecryptInvalidCiphertextThrows(): void
     {
-        $keyfile = __DIR__ . '/fixtures/defuse.key';
+        $keyfile = sys_get_temp_dir() . '/defuse-test-' . uniqid('', true) . '.key';
         $defuse = new DefuseEncryptor($keyfile);
+        $defuse->encrypt(self::DATA); // ensure key exists
 
         $this->expectException(\Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException::class);
         $defuse->decrypt('not-valid-ciphertext');
+        @unlink($keyfile);
     }
 
     public function testEncryptingSamePlaintextTwiceProducesDifferentCiphertext(): void
     {
-        $keyfile = __DIR__ . '/fixtures/defuse.key';
+        $keyfile = sys_get_temp_dir() . '/defuse-test-' . uniqid('', true) . '.key';
         $defuse = new DefuseEncryptor($keyfile);
+        $defuse->encrypt(self::DATA); // ensure key exists
 
         $c1 = $defuse->encrypt(self::DATA);
         $c2 = $defuse->encrypt(self::DATA);
@@ -70,5 +78,6 @@ class DefuseEncryptorTest extends TestCase
         $this->assertNotSame($c1, $c2);
         $this->assertSame(self::DATA, $defuse->decrypt($c1));
         $this->assertSame(self::DATA, $defuse->decrypt($c2));
+        @unlink($keyfile);
     }
 }

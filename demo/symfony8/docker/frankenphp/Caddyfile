@@ -6,6 +6,6 @@
 	root * /app/public
 	encode zstd br gzip
 	php_server {
-		worker /app/public/index.php
+		worker /app/public/index.php 2
 	}
 }

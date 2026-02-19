@@ -1,8 +1,4 @@
-# Single encryptor (default) - uncomment to use only one encryptor:
-# nowo_doctrine_encrypt:
-#   encryptor_class: Halite
-#   secret_directory_path: '%kernel.project_dir%'
-
+# Single encryptor: use default_config + one entry in configs (e.g. configs.default).
 # Multiple encryptors (see docs/CONFIGURATION.md) - SecretMessage (default), SensitiveRecord (personal_data + financial_data)
 # Halite and Defuse (requires: composer require defuse/php-encryption ^2.1)
 nowo_doctrine_encrypt:

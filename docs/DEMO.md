@@ -1,6 +1,6 @@
 # Demo Projects
 
-The bundle includes three **dockerized** demo projects, one per supported Symfony version. Each runs on **FrankenPHP** with a custom **Caddyfile** and has its own **Makefile**.
+The bundle includes two **dockerized** demo projects (Symfony 7 and 8). Each runs on **FrankenPHP** with a custom **Caddyfile** and has its own **Makefile**.
 
 ## Screenshots
 
@@ -14,7 +14,6 @@ The bundle includes three **dockerized** demo projects, one per supported Symfon
 
 | Demo      | Path            | Default port | PHP |
 |-----------|-----------------|--------------|-----|
-| Symfony 6 | `demo/symfony6/` | 8006         | 8.2 |
 | Symfony 7 | `demo/symfony7/` | 8007         | 8.2 |
 | Symfony 8 | `demo/symfony8/` | 8008         | 8.4 |
 

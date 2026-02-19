@@ -12,22 +12,63 @@ class ConfigurationTest extends TestCase
     {
         $config = $this->process([]);
 
-        $this->assertSame('Halite', $config['encryptor_class']);
-        $this->assertSame('%kernel.project_dir%', $config['secret_directory_path']);
+        $this->assertSame('default', $config['default_config']);
+        $this->assertSame([], $config['configs']);
     }
 
-    public function testCustomEncryptorClass(): void
+    public function testSingleConfigWithCustomEncryptor(): void
     {
-        $config = $this->process(['encryptor_class' => 'Defuse']);
+        $config = $this->process([
+            'configs' => [
+                'default' => ['encryptor_class' => 'Defuse'],
+            ],
+        ]);
 
-        $this->assertSame('Defuse', $config['encryptor_class']);
+        $this->assertSame('Defuse', $config['configs']['default']['encryptor_class']);
+        $this->assertSame('%kernel.project_dir%', $config['configs']['default']['secret_directory_path']);
     }
 
-    public function testCustomSecretDirectoryPath(): void
+    public function testSingleConfigWithCustomSecretDirectoryPath(): void
     {
-        $config = $this->process(['secret_directory_path' => '/var/secrets']);
+        $config = $this->process([
+            'configs' => [
+                'default' => ['secret_directory_path' => '/var/secrets'],
+            ],
+        ]);
 
-        $this->assertSame('/var/secrets', $config['secret_directory_path']);
+        $this->assertSame('/var/secrets', $config['configs']['default']['secret_directory_path']);
+    }
+
+    public function testConfigsAndDefaultConfig(): void
+    {
+        $config = $this->process([
+            'default_config' => 'financial_data',
+            'configs' => [
+                'personal_data' => [
+                    'encryptor_class' => 'Halite',
+                    'secret_directory_path' => '%kernel.project_dir%',
+                ],
+                'financial_data' => [
+                    'encryptor_class' => 'Defuse',
+                    'secret_directory_path' => '/var/secrets',
+                ],
+            ],
+        ]);
+
+        $this->assertSame('financial_data', $config['default_config']);
+        $this->assertArrayHasKey('personal_data', $config['configs']);
+        $this->assertSame('Halite', $config['configs']['personal_data']['encryptor_class']);
+        $this->assertArrayHasKey('financial_data', $config['configs']);
+        $this->assertSame('Defuse', $config['configs']['financial_data']['encryptor_class']);
+    }
+
+    public function testGetConfigTreeBuilderReturnsTreeWithExpectedStructure(): void
+    {
+        $configuration = new Configuration();
+        $treeBuilder = $configuration->getConfigTreeBuilder();
+
+        $this->assertInstanceOf(\Symfony\Component\Config\Definition\Builder\TreeBuilder::class, $treeBuilder);
+        $this->assertNotNull($treeBuilder->getRootNode());
     }
 
     private function process(array $config): array

@@ -62,7 +62,8 @@ class DoctrineEncryptDatabaseCommand extends AbstractCommand
                 $this->subscriber->setEncryptor($encryptor);
             } else {
                 if (class_exists($input->getArgument('encryptor'))) {
-                    $this->subscriber->setEncryptor($input->getArgument('encryptor'));
+                    $reflection = new \ReflectionClass($input->getArgument('encryptor'));
+                    $this->subscriber->setEncryptor($reflection->newInstance());
                 } else {
                     $output->writeln('Given encryptor does not exists');
                     $output->writeln('Supported encryptors: ' . implode(', ', array_keys($supportedExtensions)));

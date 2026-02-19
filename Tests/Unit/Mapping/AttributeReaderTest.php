@@ -4,6 +4,12 @@ namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Mapping;
 
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
+use Nowo\DoctrineEncryptBundle\Tests\Unit\Mapping\fixtures\ClassLevelTestAnnotation;
+use Nowo\DoctrineEncryptBundle\Tests\Unit\Mapping\fixtures\ClassWithRepeatableAttribute;
+use Nowo\DoctrineEncryptBundle\Tests\Unit\Mapping\fixtures\ClassWithTestAnnotation;
+use Nowo\DoctrineEncryptBundle\Tests\Unit\Mapping\fixtures\PropertyWithEncryptedAndNonAnnotation;
+use Nowo\DoctrineEncryptBundle\Tests\Unit\Mapping\fixtures\PropertyWithoutEncrypted;
+use Nowo\DoctrineEncryptBundle\Tests\Unit\Mapping\fixtures\RepeatableTestAnnotation;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -86,10 +92,51 @@ class AttributeReaderTest extends TestCase
 
         $this->assertArrayNotHasKey(Encrypted::class, $annotations);
     }
-}
 
-/** @internal */
-class PropertyWithoutEncrypted
-{
-    public string $plain = '';
+    public function testGetClassAnnotationReturnsAnnotationWhenClassHasMatchingAnnotation(): void
+    {
+        $ref = new ReflectionClass(ClassWithTestAnnotation::class);
+
+        $annotation = $this->reader->getClassAnnotation($ref, ClassLevelTestAnnotation::class);
+
+        $this->assertInstanceOf(ClassLevelTestAnnotation::class, $annotation);
+    }
+
+    public function testGetClassAnnotationsReturnsClassLevelAnnotations(): void
+    {
+        $ref = new ReflectionClass(ClassWithTestAnnotation::class);
+
+        $annotations = $this->reader->getClassAnnotations($ref);
+
+        $this->assertArrayHasKey(ClassLevelTestAnnotation::class, $annotations);
+        $this->assertInstanceOf(ClassLevelTestAnnotation::class, $annotations[ClassLevelTestAnnotation::class]);
+    }
+
+    public function testGetPropertyAnnotationsReturnsArrayForRepeatableAttribute(): void
+    {
+        $ref = new ReflectionClass(ClassWithRepeatableAttribute::class);
+        $prop = $ref->getProperty('multi');
+
+        $annotations = $this->reader->getPropertyAnnotations($prop);
+
+        $this->assertArrayHasKey(RepeatableTestAnnotation::class, $annotations);
+        $this->assertIsArray($annotations[RepeatableTestAnnotation::class]);
+        $this->assertCount(2, $annotations[RepeatableTestAnnotation::class]);
+        $this->assertInstanceOf(RepeatableTestAnnotation::class, $annotations[RepeatableTestAnnotation::class][0]);
+        $this->assertInstanceOf(RepeatableTestAnnotation::class, $annotations[RepeatableTestAnnotation::class][1]);
+        $this->assertSame('a', $annotations[RepeatableTestAnnotation::class][0]->value);
+        $this->assertSame('b', $annotations[RepeatableTestAnnotation::class][1]->value);
+    }
+
+    public function testGetPropertyAnnotationsSkipsNonAnnotationAttributes(): void
+    {
+        $ref = new ReflectionClass(PropertyWithEncryptedAndNonAnnotation::class);
+        $prop = $ref->getProperty('value');
+
+        $annotations = $this->reader->getPropertyAnnotations($prop);
+
+        $this->assertArrayHasKey(Encrypted::class, $annotations);
+        $this->assertInstanceOf(Encrypted::class, $annotations[Encrypted::class]);
+        $this->assertCount(1, $annotations);
+    }
 }

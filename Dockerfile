@@ -1,4 +1,4 @@
-# PHP 8.2+ for Doctrine Encrypt Bundle (Symfony 6|7|8)
+# PHP 8.2+ for Doctrine Encrypt Bundle (Symfony 7|8)
 FROM php:8.2-cli-alpine
 
 RUN apk add --no-cache \

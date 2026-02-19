@@ -29,3 +29,10 @@
 
 - Keep `## [Unreleased]` at the top of [CHANGELOG.md](CHANGELOG.md) for the next version; add new changes there.
 - Optionally bump a dev version in `composer.json` for development.
+
+---
+
+## v2.0.0 (2026-02-19)
+
+- **Scope:** Drop Symfony 6 support and remove demo/symfony6; require Symfony ^7.0 || ^8.0.
+- **Checklist:** CHANGELOG and UPGRADING updated; tag `v2.0.0` created and pushed.

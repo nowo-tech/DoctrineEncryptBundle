@@ -67,4 +67,6 @@ Generate a new secret key file for the configured encryptor:
 php bin/console doctrine:encrypt:generate-secret-key
 ```
 
-Run this before first use if no key file exists, or when rotating keys (follow a safe key-rotation procedure).
+Run this before first use if no key file exists, or when rotating keys.
+
+For a full **key rotation** procedure (backup → decrypt → change keys → re-encrypt), see [Key rotation](KEY_ROTATION.md).

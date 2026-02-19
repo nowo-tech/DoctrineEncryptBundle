@@ -4,7 +4,6 @@ Cada demo es una app Symfony mínima con **FrankenPHP** y un **Caddyfile** propi
 
 | Demo        | Puerto por defecto | PHP   |
 |------------|--------------------|-------|
-| symfony6   | 8006               | 8.2   |
 | symfony7   | 8007               | 8.2   |
 | symfony8   | 8008               | 8.4   |
 

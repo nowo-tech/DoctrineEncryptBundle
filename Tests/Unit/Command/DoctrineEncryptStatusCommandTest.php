@@ -62,4 +62,59 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $this->assertSame(0, $tester->getStatusCode());
         $this->assertStringContainsString('no properties which are encrypted', $tester->getDisplay());
     }
+
+    public function testExecuteOutputsSummaryWithEntityAndPropertyCounts(): void
+    {
+        $metadata = new \stdClass();
+        $metadata->name = User::class;
+        $metadata->isMappedSuperclass = false;
+
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
+
+        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+
+        $attributeReader = new AttributeReader();
+        $subscriber = $this->createMock(DoctrineEncryptSubscriber::class);
+
+        $command = new DoctrineEncryptStatusCommand($em, $attributeReader, $subscriber);
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $display = $tester->getDisplay();
+        $this->assertMatchesRegularExpression('/\d+ entities found which are containing \d+ encrypted properties\./', $display);
+    }
+
+    public function testExecuteSkipsMappedSuperclassAndOutputsOthers(): void
+    {
+        $metadataSuper = new \stdClass();
+        $metadataSuper->name = 'BaseEntity';
+        $metadataSuper->isMappedSuperclass = true;
+
+        $metadataEntity = new \stdClass();
+        $metadataEntity->name = User::class;
+        $metadataEntity->isMappedSuperclass = false;
+
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([$metadataSuper, $metadataEntity]);
+
+        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+
+        $attributeReader = new AttributeReader();
+        $subscriber = $this->createMock(DoctrineEncryptSubscriber::class);
+
+        $command = new DoctrineEncryptStatusCommand($em, $attributeReader, $subscriber);
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString(User::class, $display);
+        $this->assertStringNotContainsString('BaseEntity', $display);
+    }
 }

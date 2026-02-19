@@ -1,10 +1,10 @@
 # Doctrine Encrypt Bundle
 
-[![CI](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml/badge.svg)](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml) [![Packagist Version](https://img.shields.io/packagist/v/nowo-tech/doctrine-encrypt-bundle.svg?style=flat)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![Packagist Downloads](https://img.shields.io/packagist/dt/nowo-tech/doctrine-encrypt-bundle.svg)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php)](https://php.net) [![Symfony](https://img.shields.io/badge/Symfony-6%20%7C%207%20%7C%208-000000?logo=symfony)](https://symfony.com) [![GitHub stars](https://img.shields.io/github/stars/nowo-tech/doctrine-encrypt-bundle.svg?style=social&label=Star)](https://github.com/nowo-tech/DoctrineEncryptBundle)
+[![CI](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml/badge.svg)](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml) [![Packagist Version](https://img.shields.io/packagist/v/nowo-tech/doctrine-encrypt-bundle.svg?style=flat)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![Packagist Downloads](https://img.shields.io/packagist/dt/nowo-tech/doctrine-encrypt-bundle.svg)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php)](https://php.net) [![Symfony](https://img.shields.io/badge/Symfony-7%20%7C%208-000000?logo=symfony)](https://symfony.com) [![GitHub stars](https://img.shields.io/github/stars/nowo-tech/doctrine-encrypt-bundle.svg?style=social&label=Star)](https://github.com/nowo-tech/DoctrineEncryptBundle)
 
 > ⭐ **Found this useful?** [Install from Packagist](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) · Give it a **star** on [GitHub](https://github.com/nowo-tech/DoctrineEncryptBundle) so more developers can find it.
 
-**Doctrine Encrypt Bundle** — Encrypt Doctrine entity fields with [Halite](https://github.com/paragonie/halite) or [Defuse](https://github.com/defuse/php-encryption). Uses verified, standardized libraries (no custom crypto). For Symfony 6, 7 and 8 · PHP 8.1+.
+**Doctrine Encrypt Bundle** — Encrypt Doctrine entity fields with [Halite](https://github.com/paragonie/halite) or [Defuse](https://github.com/defuse/php-encryption). Uses verified, standardized libraries (no custom crypto). For Symfony 7 and 8 · PHP 8.1+.
 
 ## Table of contents
 
@@ -26,7 +26,8 @@ Looking for **Doctrine encryption**, **encrypt entity fields**, **Halite Symfony
 ## Features
 
 - ✅ Encrypt and decrypt entity properties with a single attribute
-- ✅ **Halite** (default) and **Defuse** — audited crypto libraries, no custom algorithms
+- ✅ **Multiple encryptor configs** — e.g. `personal_data` (Halite) and `financial_data` (Defuse) in the same app, each with its own key
+- ✅ **Halite** and **Defuse** — audited crypto libraries, no custom algorithms
 - ✅ Transparent: encrypt on persist/update, decrypt on load
 - ✅ Works with **embedded entities** and **inheritance**
 - ✅ Console commands: status, generate secret key, encrypt/decrypt database
@@ -56,7 +57,38 @@ return [
 
 ## Configuration
 
-Create `config/packages/nowo_doctrine_encrypt.yaml` (all keys optional):
+Create `config/packages/nowo_doctrine_encrypt.yaml`. You can use **one encryptor** (legacy) or **multiple named configs** (recommended).
+
+### Multiple configs (recommended)
+
+Use different encryptors and keys per kind of data (e.g. personal vs financial):
+
+```yaml
+nowo_doctrine_encrypt:
+    default_config: personal_data   # used when attribute has no config or uses "default"
+    configs:
+        personal_data:
+            encryptor_class: Halite
+            secret_directory_path: '%kernel.project_dir%'
+        financial_data:
+            encryptor_class: Defuse
+            secret_directory_path: '%kernel.project_dir%'
+```
+
+**Defuse:** `composer require defuse/php-encryption ^2.1`
+
+Key files: one per config, e.g. `.Halite.personal_data.key`, `.Defuse.financial_data.key` in the config’s `secret_directory_path`. Add to `.gitignore`:
+
+```gitignore
+.Halite.key
+.Defuse.key
+.Halite.*.key
+.Defuse.*.key
+```
+
+Generate the default key: `php bin/console doctrine:encrypt:generate-secret-key` (Halite only). See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) and [docs/COMMANDS.md](docs/COMMANDS.md).
+
+### Single encryptor (legacy)
 
 ```yaml
 nowo_doctrine_encrypt:
@@ -64,19 +96,11 @@ nowo_doctrine_encrypt:
     secret_directory_path: '%kernel.project_dir%'
 ```
 
-**Using Defuse:** `composer require defuse/php-encryption ^2.1`
-
-**Secret key:** Add `.Halite.key` and `.Defuse.key` to `.gitignore`. Generate with:
-
-```bash
-php bin/console doctrine:encrypt:generate-secret-key
-```
-
-Full options: [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
+Key file: `.Halite.key` or `.Defuse.key`. Full options: [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
 
 ## Usage
 
-Mark entity properties with the `Encrypted` attribute:
+Mark entity properties with the `Encrypted` attribute. Use no argument (or `"default"`) for the default config, or the config name when using multiple configs:
 
 ```php
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
@@ -85,12 +109,24 @@ use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 class User
 {
     #[ORM\Column(type: 'string')]
-    #[Encrypted]
+    #[Encrypted]   // or #[Encrypted('default')] — uses default_config
     private ?string $email = null;
 }
 ```
 
-Values are encrypted on persist/update and decrypted on load. See [docs/USAGE.md](docs/USAGE.md) for embedded entities, inheritance, and examples.
+With **multiple configs**, pass the config alias per property:
+
+```php
+#[ORM\Column(type: 'string')]
+#[Encrypted('personal_data')]
+private ?string $email = null;
+
+#[ORM\Column(type: 'string')]
+#[Encrypted('financial_data')]
+private ?string $iban = null;
+```
+
+Values are encrypted on persist/update and decrypted on load. See [docs/USAGE.md](docs/USAGE.md) for embedded entities, inheritance, and more examples.
 
 ## Documentation
 
@@ -101,7 +137,8 @@ Values are encrypted on persist/update and decrypted on load. See [docs/USAGE.md
 | [**Usage**](docs/USAGE.md) | Encrypted attribute, embedded entities, inheritance |
 | [**Example**](docs/EXAMPLE.md) | Full example: entity, fixtures, controller, template |
 | [**Commands**](docs/COMMANDS.md) | Status, generate key, encrypt/decrypt database |
-| [**Demo**](docs/DEMO.md) | Demo projects (Symfony 6/7/8) and how to run them |
+| [**Key rotation**](docs/KEY_ROTATION.md) | Strategy to change keys: backup, decrypt, replace keys, re-encrypt |
+| [**Demo**](docs/DEMO.md) | Demo projects (Symfony 7/8) and how to run them |
 | [**Changelog**](docs/CHANGELOG.md) | Version history |
 | [**Upgrading**](docs/UPGRADING.md) | Upgrade notes between versions |
 | [**Roadmap**](docs/ROADMAP.md) | Vision and future ideas |
@@ -113,7 +150,7 @@ Values are encrypted on persist/update and decrypted on load. See [docs/USAGE.md
 ## Requirements
 
 - PHP >= 8.1
-- Symfony ^6.0 \|\| ^7.0 \|\| ^8.0
+- Symfony ^7.0 \|\| ^8.0
 - Doctrine ORM ^2.15 \|\| ^3.0
 - paragonie/halite (included); for Defuse: `defuse/php-encryption ^2.1`
 - ext-sodium recommended for Halite (or sodium_compat)
@@ -122,7 +159,7 @@ See [docs/INSTALLATION.md](docs/INSTALLATION.md#requirements) and [docs/UPGRADIN
 
 ## Demo
 
-Demos for Symfony 6, 7 and 8 are in `demo/symfony6`, `demo/symfony7`, `demo/symfony8`. Each runs with **FrankenPHP** and **Caddy**. Quick start: [docs/DEMO.md](docs/DEMO.md).
+Demos for Symfony 7 and 8 are in `demo/symfony7`, `demo/symfony8`. Each runs with **FrankenPHP** and **Caddy**. Quick start: [docs/DEMO.md](docs/DEMO.md).
 
 ## Development
 
