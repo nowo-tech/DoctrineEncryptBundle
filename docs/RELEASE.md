@@ -32,6 +32,11 @@
 
 ---
 
+## v2.0.2 (2026-02-19)
+
+- **Scope:** Symfony Console 8.0 compatibility in command tests (setApplication); CI fix for symfony/var-exporter and functional tests (LazyGhost).
+- **Checklist:** CHANGELOG and UPGRADING updated; tag `v2.0.2` created and pushed.
+
 ## v2.0.1 (2026-02-19)
 
 - **Scope:** Test fixes (encryptor unit tests), add `symfony/var-exporter` for Doctrine ORM LazyGhost in functional tests.
