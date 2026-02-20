@@ -75,7 +75,7 @@ class DecryptExtensionTest extends TestCase
         $registry = new EncryptorRegistry([], 'default');
         $ext = new DecryptExtension($registry);
 
-        $value = new class() {
+        $value = new class () {
             public function __toString(): string
             {
                 return '';
