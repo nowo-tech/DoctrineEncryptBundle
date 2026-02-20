@@ -39,6 +39,7 @@
     "symfony/dependency-injection": "^7.0 || ^8.0",
     "symfony/http-kernel": "^7.0 || ^8.0",
     "symfony/property-access": "^7.0 || ^8.0",
+    "symfony/var-exporter": "^7.0 || ^8.0",
     "symfony/yaml": "^7.0 || ^8.0",
     "twig/twig": "^3.2"
   },
@@ -47,8 +48,7 @@
     "doctrine/annotations": "^2.0",
     "friendsofphp/php-cs-fixer": "^3.0",
     "phpunit/phpunit": "^10.0 || ^11.0",
-    "symfony/cache": "^7.0 || ^8.0",
-    "symfony/var-exporter": "^7.0 || ^8.0"
+    "symfony/cache": "^7.0 || ^8.0"
   },
   "suggest": {
     "defuse/php-encryption": "Alternative to Halite for encryption",
