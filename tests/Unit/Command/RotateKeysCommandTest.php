@@ -37,7 +37,7 @@ class RotateKeysCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $registry = $registry ?? new EncryptorRegistry(
+        $registry ??= new EncryptorRegistry(
             ['default' => $this->createMock(EncryptorInterface::class)],
             'default'
         );
