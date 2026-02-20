@@ -5,7 +5,7 @@ COMPOSE_FILE := docker-compose.yml
 COMPOSE := docker-compose -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
-.PHONY: help up down build shell install test test-coverage cs-check cs-fix qa clean ensure-up
+.PHONY: help up down build shell install validate test test-coverage cs-check cs-fix qa clean ensure-up
 
 help:
 	@echo "Doctrine Encrypt Bundle - Development Commands"
@@ -18,11 +18,12 @@ help:
 	@echo "  build         Rebuild Docker image (no cache)"
 	@echo "  shell         Open shell in container"
 	@echo "  install       Install Composer dependencies"
+	@echo "  validate      Run composer validate --strict"
 	@echo "  test          Run PHPUnit tests (starts container if needed)"
 	@echo "  test-coverage Run tests with code coverage; target 95%% (needs PCOV: run 'make build' if you see 'No code coverage driver')"
 	@echo "  cs-check      Check code style"
 	@echo "  cs-fix        Fix code style"
-	@echo "  qa            Run all QA checks (cs-check + test)"
+	@echo "  qa            Run all QA checks (validate + cs-check + test)"
 	@echo "  clean         Remove vendor and cache"
 	@echo ""
 
@@ -42,7 +43,7 @@ build:
 shell:
 	$(COMPOSE) exec $(SERVICE_PHP) sh
 
-# Ensure root container is running (start if not). Used by cs-fix, cs-check, qa, install, test, test-coverage.
+# Ensure root container is running (start if not). Used by cs-fix, cs-check, qa, install, validate, test, test-coverage.
 ensure-up:
 	@if ! $(COMPOSE) exec -T $(SERVICE_PHP) true 2>/dev/null; then \
 		echo "Starting container (root docker-compose)..."; \
@@ -53,6 +54,9 @@ ensure-up:
 
 install: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) composer install
+
+validate: ensure-up
+	$(COMPOSE) exec -T $(SERVICE_PHP) composer validate --strict
 
 test: ensure-up
 	$(COMPOSE) exec $(SERVICE_PHP) composer test
@@ -66,7 +70,7 @@ cs-check: ensure-up
 cs-fix: ensure-up
 	$(COMPOSE) exec $(SERVICE_PHP) composer cs-fix
 
-qa: ensure-up
+qa: ensure-up validate
 	$(COMPOSE) exec $(SERVICE_PHP) composer qa
 
 clean:
