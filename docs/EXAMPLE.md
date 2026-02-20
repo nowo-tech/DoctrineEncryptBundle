@@ -97,7 +97,7 @@ class DemoController extends AbstractController
 </div>
 ```
 
-When you open `/show-user/{id}`, the entity is loaded, encrypted fields are decrypted automatically, and you see plain values in the template. If you ever need to decrypt a value that is still encrypted in a variable (e.g. from an API), use the Twig filter: `{{ value|decrypt }}` or `{{ value|decrypt('financial_data') }}`. See [Usage – Twig filter](USAGE.md#twig-filter-decrypt). In the database, encrypted columns store ciphertext with an `<ENC>` suffix so the bundle can tell encrypted from plain text.
+When you open `/show-user/{id}`, the entity is loaded, encrypted fields are decrypted automatically, and you see plain values in the template. If you need to decrypt a value that is still encrypted in a variable (e.g. from an API), use the Twig filter: `{{ value|decrypt }}` or `{{ value|decrypt('financial_data') }}`. To mask sensitive data for display (e.g. show only the last 4 digits), use `{{ value|mask(4) }}` or chain `{{ value|decrypt|mask(4) }}`. See [Usage](USAGE.md) for **EncryptUtil**, **MaskUtil**, and the Twig filters (`|decrypt`, `|mask`). In the database, encrypted columns store ciphertext with an `<ENC>` suffix so the bundle can tell encrypted from plain text.
 
 ## What you see in the database
 
@@ -115,6 +115,6 @@ Without the secret key file (e.g. `.Halite.key`), this data cannot be decrypted.
 
 ## See also
 
-- [Usage](USAGE.md) — attribute/annotation and embedded entities
+- [Usage](USAGE.md) — Encrypted attribute, EncryptUtil, MaskUtil, Twig filters (decrypt, mask), embedded entities
 - [Commands](COMMANDS.md) — encrypt/decrypt existing data
 - [Demo](DEMO.md) — runnable demo apps

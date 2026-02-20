@@ -30,7 +30,8 @@ Looking for **Doctrine encryption**, **encrypt entity fields**, **Halite Symfony
 - ✅ **Halite** and **Defuse** — audited crypto libraries, no custom algorithms
 - ✅ Transparent: encrypt on persist/update, decrypt on load
 - ✅ **EncryptUtil** — programmatic `encrypt()` / `decrypt()` with optional config name (default or e.g. `financial_data`)
-- ✅ **Twig filter** `|decrypt` — decrypt in templates; optional config argument: `{{ value|decrypt }}` or `{{ value|decrypt('financial_data') }}`
+- ✅ **MaskUtil** — mask sensitive values in PHP (e.g. show only last N chars); usable in services
+- ✅ **Twig filters** — `|decrypt` (decrypt in templates; optional config: `{{ value|decrypt }}` or `{{ value|decrypt('financial_data') }}`) and `|mask` (mask for display: `{{ value|mask(4) }}` or `{{ value|decrypt|mask(4) }}`)
 - ✅ Works with **embedded entities** and **inheritance**
 - ✅ Console commands: status, generate secret key, encrypt/decrypt database
 - ✅ **Key rotation** — decrypt, replace keys, re-encrypt; combinable with [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for GDPR-compliant anonymization and erasure
@@ -134,7 +135,7 @@ private ?string $email = null;
 private ?string $iban = null;
 ```
 
-Values are encrypted on persist/update and decrypted on load. For **programmatic encrypt/decrypt** (e.g. in a service or API) use **EncryptUtil**; in Twig use the **`|decrypt`** filter when you need to decrypt a value in a template. See [docs/USAGE.md](docs/USAGE.md) for EncryptUtil, Twig filter, embedded entities, and inheritance.
+Values are encrypted on persist/update and decrypted on load. For **programmatic** use: **EncryptUtil** (encrypt/decrypt) and **MaskUtil** (mask for display). In Twig use the **`|decrypt`** and **`|mask`** filters. See [docs/USAGE.md](docs/USAGE.md) for EncryptUtil, MaskUtil, Twig filters, embedded entities, and inheritance.
 
 ## Documentation
 
@@ -142,7 +143,7 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 |----------|-------------|
 | [**Installation**](docs/INSTALLATION.md) | Requirements, Flex and manual install, secret key, IDE (optional) |
 | [**Configuration**](docs/CONFIGURATION.md) | All options and defaults |
-| [**Usage**](docs/USAGE.md) | Encrypted attribute, embedded entities, inheritance |
+| [**Usage**](docs/USAGE.md) | Encrypted attribute, EncryptUtil, MaskUtil, Twig filters (decrypt, mask), embedded entities, inheritance |
 | [**Example**](docs/EXAMPLE.md) | Full example: entity, fixtures, controller, template |
 | [**Commands**](docs/COMMANDS.md) | Status, generate key, encrypt/decrypt database |
 | [**Key rotation**](docs/KEY_ROTATION.md) | Strategy to change keys: backup, decrypt, replace keys, re-encrypt. Supports GDPR compliance; combinable with Nowo\AnonymizedBundle. |

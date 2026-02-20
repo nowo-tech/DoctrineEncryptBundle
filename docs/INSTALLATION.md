@@ -93,5 +93,5 @@ php bin/console doctrine:encrypt:generate-secret-key
 ## Next steps
 
 - [Configuration](CONFIGURATION.md) — all options explained.
-- [Usage](USAGE.md) — how to mark entity properties as encrypted.
+- [Usage](USAGE.md) — mark entity properties as encrypted; **EncryptUtil** and **MaskUtil** (PHP); Twig filters **`|decrypt`** and **`|mask`**; embedded entities.
 - [Commands](COMMANDS.md) — encrypt/decrypt database and status.

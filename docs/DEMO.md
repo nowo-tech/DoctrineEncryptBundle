@@ -54,7 +54,7 @@ Change port: `PORT=9008 make up`.
 - **src/Entity/SecretMessage.php** – Example entity with `#[Encrypted]` property.
 - **src/Entity/SensitiveRecord.php** – Entity with two configs: `personal_data` and `financial_data`.
 - **src/Controller/DemoController.php** – Home route.
-- **src/Controller/EncryptUtilDemoController.php** – Page that uses **EncryptUtil** and the Twig **`|decrypt`** filter.
+- **src/Controller/EncryptUtilDemoController.php** – Page that uses **EncryptUtil**, **MaskUtil**, and the Twig filters **`|decrypt`** and **`|mask`**.
 - **Templates** – CRUD for Secret messages and Sensitive records, plus the EncryptUtil & Twig demo page.
 
 The bundle is installed via Composer **path repository** pointing to `/var/doctrine-encrypt-bundle` (mounted from the repo root). See **demo/README.md** for more detail.
@@ -71,4 +71,4 @@ The bundle is installed via Composer **path repository** pointing to `/var/doctr
 - `personal_note` → `#[Encrypted('personal_data')]`
 - `financial_note` → `#[Encrypted('financial_data')]`
 
-The **"EncryptUtil & Twig"** page demonstrates programmatic encrypt/decrypt via `EncryptUtil` and the Twig filter `|decrypt` with default and config-specific usage. Run `make encrypt-status` (or `php bin/console doctrine:encrypt:status`) in the demo directory to see entities and encrypted properties. Full reference: [Configuration](CONFIGURATION.md#example-multiple-encryptors), [Usage – EncryptUtil and Twig](USAGE.md#encryptutil-programmatic-encryptdecrypt).
+The **"EncryptUtil & Twig"** page demonstrates programmatic encrypt/decrypt via **EncryptUtil**, masking via **MaskUtil**, and the Twig filters **`|decrypt`** and **`|mask`** (default and config-specific usage). Run `make encrypt-status` (or `php bin/console doctrine:encrypt:status`) in the demo directory to see entities and encrypted properties. Full reference: [Configuration](CONFIGURATION.md#example-multiple-encryptors), [Usage](USAGE.md) (EncryptUtil, MaskUtil, Twig filters).

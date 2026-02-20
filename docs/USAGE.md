@@ -96,7 +96,41 @@ With a **specific config** (when using multiple encryptors):
 
 If the value does not end with the encryption marker, the filter returns it unchanged. For a full example see the demo page “EncryptUtil & Twig” in `demo/symfony7` or `demo/symfony8` for a full example.
 
-To **decrypt and then mask** for safe display (e.g. show only last 4 characters), chain the filters: `{{ value|decrypt('personal_data')|mask(4) }}`. The `|mask` filter is from **MaskExtension** (e.g. `|mask(4)` or `|mask(2, '••••')`).
+## Twig filter `|mask`
+
+The bundle provides a **`mask`** Twig filter (**MaskExtension**) to mask sensitive values for display: it shows a replacement string (e.g. `****`) plus the last N characters. Useful after decrypting or for any plain value you do not want to show in full.
+
+```twig
+{{ value|mask }}
+{{ value|mask(4) }}
+{{ value|mask(2, '••••') }}
+```
+
+- **`|mask`** — same as `|mask(4)` (default: last 4 chars visible, prefix `****`).
+- **`|mask(visibleLast)`** — number of characters to leave visible at the end (e.g. `4` → `****5678`).
+- **`|mask(visibleLast, replacement)`** — custom replacement string (e.g. `|mask(2, '••••')`).
+
+To **decrypt and then mask** in one go, chain the filters:
+
+```twig
+{{ value|decrypt('personal_data')|mask(4) }}
+```
+
+## MaskUtil (masking in PHP)
+
+When you need to mask a value in PHP (e.g. in a service or API response), use **`Nowo\DoctrineEncryptBundle\Util\MaskUtil`**. The class exposes a static method and is also registered as a public service (`nowo_doctrine_encrypt.mask_util`):
+
+```php
+use Nowo\DoctrineEncryptBundle\Util\MaskUtil;
+
+// Static call
+$masked = MaskUtil::mask('12345678', 4);           // '****5678'
+$masked = MaskUtil::mask('12345678', 2, '••••');  // '••••78'
+```
+
+- **`MaskUtil::mask(?string $value, ?int $visibleLast = 4, ?string $replacement = '****'): ?string`** — returns the masked string, or `null` if `$value` is null. If `$visibleLast` is 0 or the value length is less than or equal to `$visibleLast`, returns only `$replacement`.
+
+You can inject the service by type-hinting `MaskUtil` (or the alias `nowo_doctrine_encrypt.mask_util`) where needed.
 
 ## Embedded entities
 
