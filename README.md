@@ -33,10 +33,11 @@ Looking for **Doctrine encryption**, **encrypt entity fields**, **Halite Symfony
 - ✅ **MaskUtil** — mask sensitive values in PHP (e.g. show only last N chars); usable in services
 - ✅ **Twig filters** — `|decrypt` (decrypt in templates; optional config: `{{ value|decrypt }}` or `{{ value|decrypt('financial_data') }}`) and `|mask` (mask for display: `{{ value|mask(4) }}` or `{{ value|decrypt|mask(4) }}`)
 - ✅ Works with **embedded entities** and **inheritance**
-- ✅ Console commands: status, generate secret key, encrypt/decrypt database
-- ✅ **Key rotation** — decrypt, replace keys, re-encrypt; combinable with [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for GDPR-compliant anonymization and erasure
+- ✅ Console commands: status, generate secret key, encrypt/decrypt database, **rotate keys** (backup, decrypt, change keys, re-encrypt with confirmations)
+- ✅ **Key rotation** — one command or manual steps; combinable with [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for GDPR-compliant anonymization and erasure
 - ✅ **Symfony Flex** recipe (register bundle + config; see [docs/INSTALLATION.md](docs/INSTALLATION.md))
 - ✅ Compatible with **Symfony 7 and 8** and **Doctrine ORM 2.x and 3.x**
+- ✅ Compatible with **FrankenPHP** (runtime and worker mode; see [Installation → FrankenPHP](docs/INSTALLATION.md#frankenphp-runtime-and-worker-mode))
 
 ## Installation
 
@@ -141,11 +142,11 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 
 | Document | Description |
 |----------|-------------|
-| [**Installation**](docs/INSTALLATION.md) | Requirements, Flex and manual install, secret key, IDE (optional) |
+| [**Installation**](docs/INSTALLATION.md) | Requirements, Flex and manual install, secret key, **FrankenPHP (runtime & worker)**, IDE (optional) |
 | [**Configuration**](docs/CONFIGURATION.md) | All options and defaults |
 | [**Usage**](docs/USAGE.md) | Encrypted attribute, EncryptUtil, MaskUtil, Twig filters (decrypt, mask), embedded entities, inheritance |
 | [**Example**](docs/EXAMPLE.md) | Full example: entity, fixtures, controller, template |
-| [**Commands**](docs/COMMANDS.md) | Status, generate key, encrypt/decrypt database |
+| [**Commands**](docs/COMMANDS.md) | Status (per-entity properties and configs), generate key, encrypt/decrypt database, rotate keys |
 | [**Key rotation**](docs/KEY_ROTATION.md) | Strategy to change keys: backup, decrypt, replace keys, re-encrypt. Supports GDPR compliance; combinable with Nowo\AnonymizedBundle. |
 | [**Demo**](docs/DEMO.md) | Demo projects (Symfony 7/8) and how to run them |
 | [**Changelog**](docs/CHANGELOG.md) | Version history |

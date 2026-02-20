@@ -116,5 +116,5 @@ Without the secret key file (e.g. `.Halite.key`), this data cannot be decrypted.
 ## See also
 
 - [Usage](USAGE.md) — Encrypted attribute, EncryptUtil, MaskUtil, Twig filters (decrypt, mask), embedded entities
-- [Commands](COMMANDS.md) — encrypt/decrypt existing data
+- [Commands](COMMANDS.md) — status, encrypt/decrypt database, generate key, rotate keys
 - [Demo](DEMO.md) — runnable demo apps

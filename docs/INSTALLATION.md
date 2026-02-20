@@ -90,8 +90,25 @@ php bin/console doctrine:encrypt:generate-secret-key
 .Defuse.*.key
 ```
 
+## FrankenPHP (runtime and worker mode)
+
+The bundle is **compatible with FrankenPHP** in both modes:
+
+- **Runtime (HTTP)**  
+  Works like with PHP-FPM or any other SAPI: encryption/decryption runs on Doctrine lifecycle events (postLoad, preFlush, etc.). No request or session state is used; encryptors are stateless beyond loading the key (file or env) at first use.
+
+- **Worker mode**  
+  Also supported. The bundle does not rely on `$_GET`/`$_POST`/session or on per-request globals. The subscriber’s internal decryption cache is cleared on `postFlush`, so it does not grow across requests. Encryptors load the key once and keep it in memory, which is suitable for long-lived workers.
+
+**Recommendations for worker mode:**
+
+- Follow Symfony/FrankenPHP good practice: limit the number of requests per worker (e.g. `frankenphp_loop_max` or `MAX_REQUESTS`) so workers are recycled and memory is released.
+- If you run Messenger (or other job consumers) in the same worker process, keep resetting or clearing the EntityManager between messages to avoid leaking entity state; the bundle does not add extra requirements beyond that.
+
+No extra configuration or code is required for FrankenPHP.
+
 ## Next steps
 
 - [Configuration](CONFIGURATION.md) — all options explained.
 - [Usage](USAGE.md) — mark entity properties as encrypted; **EncryptUtil** and **MaskUtil** (PHP); Twig filters **`|decrypt`** and **`|mask`**; embedded entities.
-- [Commands](COMMANDS.md) — encrypt/decrypt database and status.
+- [Commands](COMMANDS.md) — status, encrypt/decrypt database, generate secret key, rotate keys.

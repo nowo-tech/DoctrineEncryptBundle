@@ -109,6 +109,7 @@ class DoctrineEncryptExtension extends Extension
         }
         $container->setParameter('nowo_doctrine_encrypt.encryptor_class_name', $this->resolveEncryptorClass($configs[$defaultConfig]['encryptor_class']));
         $container->setParameter('nowo_doctrine_encrypt.secret_key_path', $secretKeyPathDefault);
+        $container->setParameter('nowo_doctrine_encrypt.batch_size', $config['batch_size'] ?? 5);
     }
 
     /**

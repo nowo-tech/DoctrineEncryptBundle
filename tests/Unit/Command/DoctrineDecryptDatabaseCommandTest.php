@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Command;
 
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Result;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadataFactory;
-use Doctrine\ORM\Query;
 use Nowo\DoctrineEncryptBundle\Command\DoctrineDecryptDatabaseCommand;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
@@ -20,6 +22,45 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class DoctrineDecryptDatabaseCommandTest extends TestCase
 {
+    /**
+     * Creates a metadata-like object for commands that use raw SQL (getEncryptedTableInfo).
+     * Must have getTableName(), getIdentifierFieldNames(), getColumnName() and ->name, ->isMappedSuperclass.
+     */
+    private function createMetadataForUser(): object
+    {
+        return new class () {
+            public string $name = User::class;
+            public bool $isMappedSuperclass = false;
+
+            public function getTableName(): string
+            {
+                return 'user';
+            }
+
+            /** @return list<string> */
+            public function getIdentifierFieldNames(): array
+            {
+                return ['id'];
+            }
+
+            public function getColumnName(string $fieldName): string
+            {
+                return $fieldName;
+            }
+        };
+    }
+
+    private function createConnectionMock(array $rows = []): Connection
+    {
+        $result = $this->createMock(Result::class);
+        $result->method('fetchAllAssociative')->willReturn($rows);
+        $platform = $this->createMock(AbstractPlatform::class);
+        $platform->method('quoteIdentifier')->willReturnCallback(static fn (string $s): string => '"' . $s . '"');
+        $conn = $this->createMock(Connection::class);
+        $conn->method('getDatabasePlatform')->willReturn($platform);
+        $conn->method('executeQuery')->willReturn($result);
+        return $conn;
+    }
     private function createCommandWithApplication(DoctrineDecryptDatabaseCommand $command): DoctrineDecryptDatabaseCommand
     {
         $application = new Application();
@@ -125,27 +166,13 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
 
     public function testExecuteRunsDecryptionLoopWhenUserConfirms(): void
     {
-        $metadata = new \stdClass();
-        $metadata->name = User::class;
-        $metadata->isMappedSuperclass = false;
-
+        $metadata = $this->createMetadataForUser();
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
-        $user = new User('u', 'a');
-        $querySelect = $this->createMock(Query::class);
-        $querySelect->method('toIterable')->willReturn(new \ArrayIterator([[$user]]));
-        $queryCount = $this->createMock(Query::class);
-        $queryCount->method('getSingleScalarResult')->willReturn(1);
-
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
-        $em->method('createQuery')
-            ->willReturnCallback(function (string $dql) use ($querySelect, $queryCount) {
-                return str_contains($dql, 'COUNT') ? $queryCount : $querySelect;
-            });
-        $em->expects($this->atLeastOnce())->method('flush');
-        $em->expects($this->atLeastOnce())->method('clear');
+        $em->method('getConnection')->willReturn($this->createConnectionMock());
 
         $encryptor = $this->createMock(EncryptorInterface::class);
         $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
@@ -208,24 +235,13 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
 
     public function testExecuteUsesCustomBatchSizeWhenProvided(): void
     {
-        $metadata = new \stdClass();
-        $metadata->name = User::class;
-        $metadata->isMappedSuperclass = false;
-
+        $metadata = $this->createMetadataForUser();
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
-        $querySelect = $this->createMock(Query::class);
-        $querySelect->method('toIterable')->willReturn(new \ArrayIterator([]));
-        $queryCount = $this->createMock(Query::class);
-        $queryCount->method('getSingleScalarResult')->willReturn(0);
-
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
-        $em->method('createQuery')
-            ->willReturnCallback(function (string $dql) use ($querySelect, $queryCount) {
-                return str_contains($dql, 'COUNT') ? $queryCount : $querySelect;
-            });
+        $em->method('getConnection')->willReturn($this->createConnectionMock());
 
         $registry = new EncryptorRegistry(['default' => new DummyEncryptorForCommand()], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
@@ -285,6 +301,108 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $def = $command->getDefinition();
         $this->assertTrue($def->hasArgument('config'));
         $this->assertTrue($def->hasArgument('batchSize'));
-        $this->assertSame(20, $def->getArgument('batchSize')->getDefault());
+        $this->assertSame(5, $def->getArgument('batchSize')->getDefault());
+    }
+
+    public function testExecuteDecryptLoopCallsExecuteStatementWhenRowHasEncryptedValue(): void
+    {
+        $metadata = $this->createMetadataForUser();
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
+
+        $encryptedValue = 'ciphertext' . DoctrineEncryptSubscriber::ENCRYPTION_MARKER;
+        $rows = [['id' => 1, 'name' => $encryptedValue, 'address' => null]];
+        $conn = $this->createConnectionMock($rows);
+        $conn->expects($this->once())->method('executeStatement')->with(
+            $this->stringContains('UPDATE'),
+            $this->callback(function (array $params): bool {
+                return count($params) >= 2 && $params[0] === 'decrypted_plain';
+            }),
+            $this->anything()
+        );
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+        $em->method('getConnection')->willReturn($conn);
+
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $encryptor->method('decrypt')->with('ciphertext')->willReturn('decrypted_plain');
+        $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
+        $subscriber = new DoctrineEncryptSubscriber($registry);
+
+        $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
+        $this->createCommandWithApplication($command);
+        $tester = new CommandTester($command);
+        $tester->setInputs(['yes']);
+
+        $tester->execute(['config' => 'default'], ['interactive' => true]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertStringContainsString('Values decrypted: 1', $tester->getDisplay());
+    }
+
+    public function testExecuteDecryptLoopSkipsRowWhenIdIsNull(): void
+    {
+        $metadata = $this->createMetadataForUser();
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
+
+        $rows = [['id' => null, 'name' => 'encrypted' . DoctrineEncryptSubscriber::ENCRYPTION_MARKER, 'address' => null]];
+        $conn = $this->createConnectionMock($rows);
+        $conn->expects($this->never())->method('executeStatement');
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+        $em->method('getConnection')->willReturn($conn);
+
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
+        $subscriber = new DoctrineEncryptSubscriber($registry);
+
+        $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
+        $this->createCommandWithApplication($command);
+        $tester = new CommandTester($command);
+        $tester->setInputs(['yes']);
+
+        $tester->execute(['config' => 'default'], ['interactive' => true]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertStringContainsString('Values decrypted: 0', $tester->getDisplay());
+    }
+
+    public function testExecuteDecryptLoopUsesCiphertextAsPlainWhenDecryptThrows(): void
+    {
+        $metadata = $this->createMetadataForUser();
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
+
+        $encryptedValue = 'badcipher' . DoctrineEncryptSubscriber::ENCRYPTION_MARKER;
+        $rows = [['id' => 2, 'name' => $encryptedValue, 'address' => null]];
+        $conn = $this->createConnectionMock($rows);
+        $conn->expects($this->once())->method('executeStatement')->with(
+            $this->stringContains('UPDATE'),
+            $this->callback(function (array $params): bool {
+                return count($params) >= 2 && $params[0] === 'badcipher';
+            }),
+            $this->anything()
+        );
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+        $em->method('getConnection')->willReturn($conn);
+
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $encryptor->method('decrypt')->with('badcipher')->willThrowException(new \RuntimeException('Invalid cipher'));
+        $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
+        $subscriber = new DoctrineEncryptSubscriber($registry);
+
+        $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
+        $this->createCommandWithApplication($command);
+        $tester = new CommandTester($command);
+        $tester->setInputs(['yes']);
+
+        $tester->execute(['config' => 'default'], ['interactive' => true]);
+
+        $this->assertSame(0, $tester->getStatusCode());
     }
 }

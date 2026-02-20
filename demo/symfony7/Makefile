@@ -7,6 +7,7 @@ SERVICE_PHP := php
 
 .PHONY: help up down build install shell logs setup db-create db-schema key fixtures cache-clear update-bundle test encrypt-status encrypt-database decrypt-database ensure-up
 .PHONY: encrypt-database-all decrypt-database-all encrypt-database-personal_data decrypt-database-personal_data encrypt-database-financial_data decrypt-database-financial_data encrypt-database-env_var decrypt-database-env_var
+.PHONY: rotate-keys rotate-keys-backup
 
 help:
 	@echo "Doctrine Encrypt Bundle Demo - Symfony 7"
@@ -33,6 +34,8 @@ help:
 	@echo "  make decrypt-database-personal_data  Decrypt: config personal_data"
 	@echo "  make decrypt-database-financial_data Decrypt: config financial_data"
 	@echo "  make decrypt-database-env_var       Decrypt: config env_var"
+	@echo "  make rotate-keys        Rotate keys: decrypt → change keys → re-encrypt (interactive)"
+	@echo "  make rotate-keys-backup Same with --backup (DB + keys to var/encrypt_rotation_backup_*)"
 	@echo "  make cache-clear        Clear Symfony cache"
 	@echo "  make update-bundle      Update bundle from path repo"
 	@echo "  make test               Run tests"
@@ -115,6 +118,14 @@ decrypt-database-financial_data: ensure-up
 
 decrypt-database-env_var: ensure-up
 	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:decrypt:database env_var
+
+# Rotate keys: decrypt → change keys (generate new key files) → re-encrypt. Interactive (confirm each step).
+rotate-keys: ensure-up
+	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:encrypt:rotate-keys
+
+# Same with backup of DB (SQLite → var/encrypt_rotation_backup_*/database.sqlite.gz) and key files.
+rotate-keys-backup: ensure-up
+	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:encrypt:rotate-keys --backup
 
 cache-clear: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console cache:clear

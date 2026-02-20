@@ -170,6 +170,21 @@ class GenerateSecretKeyCommandTest extends TestCase
         $this->assertStringContainsString('default', $tester->getDisplay());
     }
 
+    public function testExecuteWithConfigArgumentWhenEncryptorNotSupportedReturnsFailure(): void
+    {
+        $keyPaths = [
+            'custom' => ['path' => '/tmp/custom.key', 'encryptor_class' => 'CustomEncryptor'],
+        ];
+        $command = $this->createCommand($keyPaths);
+        $tester = new CommandTester($command);
+
+        $tester->execute(['config' => 'custom']);
+
+        $this->assertSame(1, $tester->getStatusCode());
+        $this->assertStringContainsString('Key generation is only supported for Halite and Defuse', $tester->getDisplay());
+        $this->assertStringContainsString('CustomEncryptor', $tester->getDisplay());
+    }
+
     public function testExecuteWithoutArgumentCreatesDefuseKeyWhenMissing(): void
     {
         $keyPath = sys_get_temp_dir() . '/nowo-test-defuse-' . uniqid() . '.key';

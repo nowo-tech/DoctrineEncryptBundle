@@ -1,12 +1,22 @@
+# IDE / editor
 .idea/
+
+# Dependencies
 /vendor
 
+# Environment and secrets
 .env
+
+# Cache (code style, PHPUnit)
 .php-cs-fixer.cache
 .phpunit.cache
 .phpunit.result.cache
+
+# Test coverage
 coverage.xml
 coverage/
+
+# Runtime and build output
 var/
 public/bundles/
 public/css/
@@ -14,4 +24,3 @@ public/js/
 public/images/
 public/favicon.ico
 public/robots.txt
-

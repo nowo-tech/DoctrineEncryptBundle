@@ -5,6 +5,7 @@
 
 nowo_doctrine_encrypt:
     default_config: default
+    # batch_size: 5   # optional; default batch for doctrine:decrypt:database and doctrine:encrypt:database (raw SQL)
     configs:
         default:
             encryptor_class: Halite   # or Defuse (requires: composer require defuse/php-encryption ^2.1)

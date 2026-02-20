@@ -43,10 +43,16 @@ Then open **http://localhost:8008** (or the port shown by `make up`).
 
 Change port: `PORT=9008 make up`.
 
+## FrankenPHP (runtime and worker mode)
+
+Both demos run with **FrankenPHP in worker mode** (boot once, handle requests in memory). The bundle is compatible with this setup: no request/session state, encryptors are stateless after loading the key, and the subscriber’s cache is cleared on `postFlush`. **No extra configuration or code** is required in the demos for FrankenPHP.
+
+For production or long‑running workers, see the recommendations in [Installation → FrankenPHP](INSTALLATION.md#frankenphp-runtime-and-worker-mode) (e.g. limiting requests per worker when possible).
+
 ## What each demo includes
 
 - **Dockerfile** – FrankenPHP (Alpine), extensions: zip, intl, sodium, pdo_sqlite; custom Caddyfile.
-- **docker/frankenphp/Caddyfile** – Root `/app/public`, worker `index.php`, encoding (zstd, br, gzip).
+- **docker/frankenphp/Caddyfile** – Root `/app/public`, worker `index.php` (2 workers), encoding (zstd, br, gzip).
 - **docker-compose.yml** – Service `php`, volumes: demo dir + bundle root as `/var/doctrine-encrypt-bundle`.
 - **Makefile** – Targets above.
 - **public/index.php** – Symfony front controller.

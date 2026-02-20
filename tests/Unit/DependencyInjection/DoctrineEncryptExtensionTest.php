@@ -38,6 +38,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->extension->load([[]], $container);
 
         $this->assertSame(HaliteEncryptor::class, $container->getParameter('nowo_doctrine_encrypt.encryptor_class_name'));
+        $this->assertSame(5, $container->getParameter('nowo_doctrine_encrypt.batch_size'));
     }
 
     public function testConfigLoadDefuse(): void
@@ -99,7 +100,7 @@ class DoctrineEncryptExtensionTest extends TestCase
 
     /**
      * Checks that all services defined by the bundle exist in the container
-     * (por namespace/clase y por alias), como al ejecutar "php bin/console debug:container".
+     * (by namespace/class and by alias), as when running "php bin/console debug:container".
      */
     public function testBundleServicesExistInContainer(): void
     {
@@ -299,10 +300,12 @@ class DoctrineEncryptExtensionTest extends TestCase
 
         $this->assertArrayHasKey('$encryptorRegistry', $args);
         $this->assertArrayHasKey('$defaultEncryptor', $args);
+        $this->assertArrayHasKey('$defaultBatchSize', $args);
         $this->assertInstanceOf(Reference::class, $args['$encryptorRegistry']);
         $this->assertInstanceOf(Reference::class, $args['$defaultEncryptor']);
         $this->assertSame('nowo_doctrine_encrypt.encryptor_registry', (string) $args['$encryptorRegistry']);
         $this->assertSame('nowo_doctrine_encrypt.encryptor', (string) $args['$defaultEncryptor']);
+        $this->assertSame('%nowo_doctrine_encrypt.batch_size%', $args['$defaultBatchSize']);
     }
 
     public function testDecryptDatabaseCommandReceivesRegistryAndDefaultEncryptor(): void
@@ -315,8 +318,10 @@ class DoctrineEncryptExtensionTest extends TestCase
 
         $this->assertArrayHasKey('$encryptorRegistry', $args);
         $this->assertArrayHasKey('$defaultEncryptor', $args);
+        $this->assertArrayHasKey('$defaultBatchSize', $args);
         $this->assertSame('nowo_doctrine_encrypt.encryptor_registry', (string) $args['$encryptorRegistry']);
         $this->assertSame('nowo_doctrine_encrypt.encryptor', (string) $args['$defaultEncryptor']);
+        $this->assertSame('%nowo_doctrine_encrypt.batch_size%', $args['$defaultBatchSize']);
     }
 
     public function testSubscriberReceivesEncryptorRegistry(): void

@@ -8,6 +8,7 @@ use ParagonIE\Halite\KeyFactory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\HttpKernel\KernelInterface;
@@ -50,6 +51,9 @@ class GenerateSecretKeyCommand extends AbstractCommand
         if (!$def->hasArgument('config')) {
             $this->addArgument('config', InputArgument::OPTIONAL, 'Config alias to generate key for (e.g. default, personal_data). If omitted, keys are created for all configs where the key file is missing.');
         }
+        if (!$def->hasOption('force')) {
+            $this->addOption('force', null, InputOption::VALUE_NONE, 'Overwrite existing key file(s) without asking.');
+        }
     }
 
     /**
@@ -74,7 +78,7 @@ class GenerateSecretKeyCommand extends AbstractCommand
                 $output->writeln('<error>Unknown config "' . $configArg . '". Available: ' . implode(', ', array_keys($resolved)) . '</error>');
                 return self::FAILURE;
             }
-            return $this->generateForConfig($configArg, $resolved[$configArg], $input, $output);
+            return $this->generateForConfig($configArg, $resolved[$configArg], $input, $output, $input->getOption('force'));
         }
 
         $created = 0;
@@ -111,7 +115,7 @@ class GenerateSecretKeyCommand extends AbstractCommand
      * @param OutputInterface $output     Console output
      * @return int
      */
-    private function generateForConfig(string $configName, array $info, InputInterface $input, OutputInterface $output): int
+    private function generateForConfig(string $configName, array $info, InputInterface $input, OutputInterface $output, bool $force = false): int
     {
         $path = $info['path'];
         $encryptorClass = $info['encryptor_class'];
@@ -125,7 +129,7 @@ class GenerateSecretKeyCommand extends AbstractCommand
             return self::FAILURE;
         }
 
-        if (file_exists($path)) {
+        if (file_exists($path) && !$force) {
             $helper = $this->getHelper('question');
             $question = new ConfirmationQuestion(sprintf('Key file already exists at %s. Overwrite? (y/yes) ', $path), false);
             if (!$helper->ask($input, $output, $question)) {

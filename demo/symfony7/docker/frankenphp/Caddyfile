@@ -2,6 +2,9 @@
 	skip_install_trust
 }
 
+# Worker mode: app boots once, handles requests in memory. DoctrineEncryptBundle is compatible
+# (no extra config). For production, consider limiting requests per worker when possible; see
+# docs/INSTALLATION.md § FrankenPHP.
 :80 {
 	root * /app/public
 	encode zstd br gzip

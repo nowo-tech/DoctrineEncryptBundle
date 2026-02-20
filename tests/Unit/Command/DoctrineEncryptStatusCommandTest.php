@@ -4,6 +4,7 @@ namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Command;
 
 use Doctrine\ORM\Mapping\ClassMetadataFactory;
 use Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptStatusCommand;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\EntityWithConfigAlias;
@@ -170,5 +171,61 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $this->assertStringContainsString(User::class, $display);
         $this->assertStringContainsString(EntityWithConfigAlias::class, $display);
         $this->assertMatchesRegularExpression('/\d+ entit\(y\/ies\) with encryption, \d+ encrypted properties in total/', $display);
+    }
+
+    public function testExecuteOutputsRegistryNotAvailableWhenRegistryNull(): void
+    {
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([]);
+        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+
+        $command = new DoctrineEncryptStatusCommand($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class), null, null, []);
+        $tester = new CommandTester($command);
+        $tester->execute([]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertStringContainsString('(registry not available)', $tester->getDisplay());
+    }
+
+    public function testExecuteOutputsConfiguredConfigsWithEncryptorClassAndDefaultLabel(): void
+    {
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([]);
+        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+
+        $registry = new EncryptorRegistry(
+            ['default' => $this->createMock(\Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface::class)],
+            'default'
+        );
+        $keyPaths = [
+            'default' => ['path' => null, 'encryptor_class' => 'Nowo\\DoctrineEncryptBundle\\Encryptors\\HaliteEncryptor'],
+        ];
+        $command = new DoctrineEncryptStatusCommand($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class), null, $registry, $keyPaths);
+        $tester = new CommandTester($command);
+        $tester->execute([]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('Configured encryptor configs:', $display);
+        $this->assertStringContainsString('HaliteEncryptor', $display);
+        $this->assertStringContainsString('[default]', $display);
+    }
+
+    public function testExecuteOutputsNoneWhenRegistryHasNoConfigNames(): void
+    {
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([]);
+        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+
+        $registry = new EncryptorRegistry([], 'default');
+        $command = new DoctrineEncryptStatusCommand($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class), null, $registry, []);
+        $tester = new CommandTester($command);
+        $tester->execute([]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertStringContainsString('(none)', $tester->getDisplay());
     }
 }

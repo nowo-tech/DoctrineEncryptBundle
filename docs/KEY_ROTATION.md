@@ -2,6 +2,8 @@
 
 This guide describes a safe procedure to **rotate encryption keys**: back up the current state, decrypt data with the old key, replace the key file(s), then re-encrypt with the new key(s). Use it when you need to change the secret key (e.g. for compliance, after a suspected compromise, or periodic rotation).
 
+**One-command rotation:** You can run **`doctrine:encrypt:rotate-keys`** to perform the full flow (optional backup of database and key files, decrypt, change keys, re-encrypt) with step-by-step confirmation. Use `--backup` to back up the database and key files first (SQLite is backed up automatically; for MySQL/PostgreSQL use `--backup-db-cmd=your:command`), and `--no-interaction` to skip prompts. See [Commands – Rotate keys](COMMANDS.md#rotate-keys).
+
 **GDPR and compliance.** Encrypting personal data at rest helps meet data protection and security requirements (e.g. GDPR Art. 32). Key rotation is part of a sound security practice and can support compliance with retention and “right to erasure” scenarios when combined with data anonymization. This bundle can be used together with **[Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle)** (or similar): you can decrypt data with this bundle, anonymize or delete it with the anonymization bundle for GDPR compliance, then re-encrypt with new keys if needed. That workflow supports both key rotation and fulfilment of data subject rights.
 
 **Important:** Key rotation touches all encrypted data. Plan the steps, run them in a maintenance window, and verify backups before starting.
@@ -17,7 +19,7 @@ The bundle does not support “in-place” re-encryption with a new key; decrypt
 
 ## Prerequisites
 
-- Console commands: [Commands](COMMANDS.md) (`doctrine:encrypt:status`, `doctrine:decrypt:database`, `doctrine:encrypt:database`, `doctrine:encrypt:generate-secret-key`).
+- Console commands: [Commands](COMMANDS.md) (`doctrine:encrypt:status`, `doctrine:decrypt:database`, `doctrine:encrypt:database`, `doctrine:encrypt:generate-secret-key`, `doctrine:encrypt:rotate-keys`).
 - Configuration: [Configuration](CONFIGURATION.md) (single encryptor or multiple configs and key file paths).
 
 ## Step 1: Back up the current state
@@ -90,6 +92,8 @@ Confirm that encryption succeeded (e.g. run the status command and spot-check th
 - Keep the new key(s) only in secure storage and in the configured path(s) used by the application.
 
 ## Summary checklist
+
+**Alternative:** Run **`doctrine:encrypt:rotate-keys`** (optionally with `--backup`) to perform the flow with step-by-step prompts; see [Commands – Rotate keys](COMMANDS.md#rotate-keys).
 
 | Step | Action |
 |------|--------|

@@ -901,6 +901,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  * }
  * @psalm-type NowoDoctrineEncryptConfig = array{
  *     default_config?: scalar|Param|null, // Config alias to use when #[Encrypted] has no alias or uses "default". // Default: "default"
+ *     batch_size?: int|Param, // Default batch size for doctrine:decrypt:database and doctrine:encrypt:database (raw SQL). Overridable per run via the batchSize argument. // Default: 5
  *     configs?: array<string, array{ // Default: []
  *         encryptor_class?: scalar|Param|null, // Default: "Halite"
  *         secret_directory_path?: scalar|Param|null, // Directory for the key file. Required unless secret_key_env_var is set. // Default: null

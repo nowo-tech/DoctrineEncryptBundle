@@ -250,4 +250,218 @@ class AbstractCommandTest extends TestCase
         $propertiesPlain = $command->exposeGetEncryptionableProperties($metadataPlain);
         $this->assertCount(0, $propertiesPlain);
     }
+
+    public function testGetEncryptedTableInfoReturnsTableIdColumnsAndEncryptedColumns(): void
+    {
+        $metadata = new class () {
+            public string $name = User::class;
+            public bool $isMappedSuperclass = false;
+
+            public function getTableName(): string
+            {
+                return 'user';
+            }
+
+            public function getIdentifierFieldNames(): array
+            {
+                return ['id'];
+            }
+
+            public function getColumnName(string $fieldName): string
+            {
+                return $fieldName;
+            }
+        };
+
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+
+        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+            protected function execute(InputInterface $input, OutputInterface $output): int
+            {
+                return 0;
+            }
+
+            public function exposeGetEncryptedTableInfo($entityMetaData, string $configName, string $defaultConfigName): array
+            {
+                return $this->getEncryptedTableInfo($entityMetaData, $configName, $defaultConfigName);
+            }
+        };
+
+        $info = $command->exposeGetEncryptedTableInfo($metadata, 'default', 'default');
+        $this->assertSame('user', $info['table']);
+        $this->assertSame(['id'], $info['idColumns']);
+        $this->assertCount(2, $info['columns']);
+        $columns = array_column($info['columns'], 'column', 'field');
+        $this->assertSame('name', $columns['name']);
+        $this->assertSame('address', $columns['address']);
+    }
+
+    public function testGetEncryptedTableInfoUsesGetIdentifierColumnNamesWhenGetIdentifierFieldNamesNotPresent(): void
+    {
+        $metadata = new class () {
+            public string $name = User::class;
+            public bool $isMappedSuperclass = false;
+
+            public function getTableName(): string
+            {
+                return 'tbl_user';
+            }
+
+            public function getIdentifierColumnNames(): array
+            {
+                return ['id_col'];
+            }
+
+            public function getColumnName(string $fieldName): string
+            {
+                return $fieldName;
+            }
+        };
+
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+
+        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+            protected function execute(InputInterface $input, OutputInterface $output): int
+            {
+                return 0;
+            }
+
+            public function exposeGetEncryptedTableInfo($entityMetaData, string $configName, string $defaultConfigName): array
+            {
+                return $this->getEncryptedTableInfo($entityMetaData, $configName, $defaultConfigName);
+            }
+        };
+
+        $info = $command->exposeGetEncryptedTableInfo($metadata, 'default', 'default');
+        $this->assertSame('tbl_user', $info['table']);
+        $this->assertSame(['id_col'], $info['idColumns']);
+    }
+
+    public function testGetColumnNameFromMetadataUsesGetFieldMappingWhenGetColumnNameNotPresent(): void
+    {
+        $metadata = new class () {
+            public string $name = User::class;
+
+            public function getFieldMapping(string $fieldName): array
+            {
+                return ['columnName' => 'mapped_' . $fieldName];
+            }
+        };
+
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+
+        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+            protected function execute(InputInterface $input, OutputInterface $output): int
+            {
+                return 0;
+            }
+
+            public function exposeGetColumnNameFromMetadata($entityMetaData, string $fieldName): string
+            {
+                return $this->getColumnNameFromMetadata($entityMetaData, $fieldName);
+            }
+        };
+
+        $this->assertSame('mapped_name', $command->exposeGetColumnNameFromMetadata($metadata, 'name'));
+    }
+
+    public function testGetColumnNameFromMetadataUsesFieldNameWhenMappingHasNoColumnName(): void
+    {
+        $metadata = new class () {
+            public function getFieldMapping(string $fieldName): array
+            {
+                return [];
+            }
+        };
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($this->createMock(ClassMetadataFactory::class));
+
+        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+            protected function execute(InputInterface $input, OutputInterface $output): int
+            {
+                return 0;
+            }
+
+            public function exposeGetColumnNameFromMetadata($entityMetaData, string $fieldName): string
+            {
+                return $this->getColumnNameFromMetadata($entityMetaData, $fieldName);
+            }
+        };
+
+        $this->assertSame('name', $command->exposeGetColumnNameFromMetadata($metadata, 'name'));
+    }
+
+    public function testGetRowValueReturnsValueByExactKey(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($this->createMock(ClassMetadataFactory::class));
+
+        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+            protected function execute(InputInterface $input, OutputInterface $output): int
+            {
+                return 0;
+            }
+
+            public function exposeGetRowValue(array $row, string $columnName): mixed
+            {
+                return $this->getRowValue($row, $columnName);
+            }
+        };
+
+        $row = ['id' => 1, 'name' => 'Alice'];
+        $this->assertSame(1, $command->exposeGetRowValue($row, 'id'));
+        $this->assertSame('Alice', $command->exposeGetRowValue($row, 'name'));
+    }
+
+    public function testGetRowValueReturnsValueByCaseInsensitiveKey(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($this->createMock(ClassMetadataFactory::class));
+
+        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+            protected function execute(InputInterface $input, OutputInterface $output): int
+            {
+                return 0;
+            }
+
+            public function exposeGetRowValue(array $row, string $columnName): mixed
+            {
+                return $this->getRowValue($row, $columnName);
+            }
+        };
+
+        $row = ['ID' => 42, 'Name' => 'Bob'];
+        $this->assertSame(42, $command->exposeGetRowValue($row, 'id'));
+        $this->assertSame('Bob', $command->exposeGetRowValue($row, 'name'));
+    }
+
+    public function testGetRowValueReturnsNullWhenColumnMissing(): void
+    {
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($this->createMock(ClassMetadataFactory::class));
+
+        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+            protected function execute(InputInterface $input, OutputInterface $output): int
+            {
+                return 0;
+            }
+
+            public function exposeGetRowValue(array $row, string $columnName): mixed
+            {
+                return $this->getRowValue($row, $columnName);
+            }
+        };
+
+        $this->assertNull($command->exposeGetRowValue(['a' => 1], 'missing'));
+    }
 }

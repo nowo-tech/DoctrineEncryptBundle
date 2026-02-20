@@ -17,14 +17,13 @@ No breaking changes are planned for the 2.x line; new options will be additive w
 
 ## Short term (next releases)
 
-- **Key rotation:** Document a safe workflow (backup → decrypt with old key → re-encrypt with new key using existing commands, or a dedicated command) and add it to the docs.
+- **Key rotation:** Done. The bundle provides `doctrine:encrypt:rotate-keys` (optional backup, decrypt, change keys, re-encrypt with confirmations) and [KEY_ROTATION.md](KEY_ROTATION.md) for a manual step-by-step procedure.
 - **Code coverage:** Keep or raise coverage (e.g. ≥90%) and ensure coverage runs in CI (e.g. PCOV in Docker/CI).
 - **Demos:** Keep demos (Symfony 7/8) working and referenced from the docs.
 
 ## Possible future (ideas, not committed)
 
 - **Additional encryptors:** Optional support for other audited libraries, behind optional dependencies.
-- **Key rotation tooling:** Optional command or script to re-encrypt all data with a new key (building on current encrypt/decrypt commands).
 - **Performance:** Optional in-request caching of decrypted values where safe (same entity, same request) to avoid repeated decrypt in loops.
 - **Search / querying:** Document that encrypted fields cannot be searched or ordered at the DB level; optional “deterministic” or searchable encryption could be explored only if we can do it without weakening security (no commitment).
 - **Ecosystem:** Compatibility with future PHP and Symfony versions (e.g. PHP 8.4+, Symfony 9) when released.

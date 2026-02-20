@@ -29,6 +29,24 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.0.7 (unreleased)
+
+No breaking changes. New features:
+
+- **doctrine:encrypt:status** now lists each encrypted property and its config per entity, and shows configured encryptor configs at the end.
+- **doctrine:encrypt:rotate-keys** runs the full key rotation (optional backup, decrypt, change keys, re-encrypt) with step-by-step confirmation; use `--backup` and/or `--no-interaction` as needed.
+- **doctrine:encrypt:generate-secret-key** accepts **`--force`** to overwrite existing key files without asking.
+- **doctrine:decrypt:database** and **doctrine:encrypt:database** accept **`--force`** to skip the confirmation prompt.
+
+Update as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+---
+
 ## Upgrading to 2.0.6
 
 No breaking changes. Update as usual:

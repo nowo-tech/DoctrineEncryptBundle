@@ -32,6 +32,13 @@
 
 ---
 
+## v2.0.7 (unreleased)
+
+- **Scope:** (1) doctrine:encrypt:status: list encrypted properties and config per entity; show configured encryptor configs at end. (2) New command doctrine:encrypt:rotate-keys (optional backup, decrypt, change keys, re-encrypt; --backup, --no-interaction). (3) --force on generate-secret-key (overwrite without asking), decrypt:database and encrypt:database (skip confirmation). (4) Docs: COMMANDS, KEY_ROTATION, SECURITY, INSTALLATION, ROADMAP, CHANGELOG, UPGRADING updated.
+- **Checklist:** CHANGELOG and UPGRADING updated; tag `v2.0.7` when ready.
+
+---
+
 ## v2.0.6 (2026-02-20)
 
 - **Scope:** (1) New unit tests for coverage: HaliteEncryptor when key path is a directory; GenerateSecretKeyCommand when creating key in non-existent directory. (2) Fix PHP Notice in HaliteEncryptor test (suppress with `@` so suite runs without notices). Coverage lines ≥ 95%.

@@ -13,7 +13,17 @@ class ConfigurationTest extends TestCase
         $config = $this->process([]);
 
         $this->assertSame('default', $config['default_config']);
+        $this->assertSame(5, $config['batch_size']);
         $this->assertSame([], $config['configs']);
+    }
+
+    public function testBatchSizeDefaultAndCustom(): void
+    {
+        $config = $this->process([]);
+        $this->assertSame(5, $config['batch_size']);
+
+        $config = $this->process(['batch_size' => 10]);
+        $this->assertSame(10, $config['batch_size']);
     }
 
     public function testSingleConfigWithCustomEncryptor(): void

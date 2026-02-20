@@ -6,8 +6,9 @@ The bundle is configured under the root key `nowo_doctrine_encrypt`. The only su
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `configs` | `array` | `[]` (normalized to one `default` config) | Map of alias => options. Each alias has `encryptor_class` and either `secret_directory_path` or `secret_key_env_var`. Optional: `secret_key_filename`. |
 | `default_config` | `string` | `default` | Which config to use when the attribute has no alias or uses `"default"`. |
+| `batch_size` | `int` | `5` | Default batch size for `doctrine:decrypt:database` and `doctrine:encrypt:database` (raw SQL). Overridable per run via the `batchSize` argument. Minimum: 1. |
+| `configs` | `array` | `[]` (normalized to one `default` config) | Map of alias => options. Each alias has `encryptor_class` and either `secret_directory_path` or `secret_key_env_var`. Optional: `secret_key_filename`. |
 
 Per-config options (under each entry in `configs`):
 

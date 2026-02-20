@@ -5,6 +5,7 @@
 # Halite and Defuse (requires: composer require defuse/php-encryption ^2.1)
 nowo_doctrine_encrypt:
   default_config: personal_data
+  # batch_size: 5   # optional; default batch for decrypt/encrypt database commands (raw SQL)
   configs:
     # 1) No secret_key_filename: default path .Halite.personal_data.key
     personal_data:

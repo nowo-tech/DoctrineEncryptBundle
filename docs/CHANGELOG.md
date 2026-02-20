@@ -9,11 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- (No changes yet.)
+- **doctrine:encrypt:status:** For each entity, lists which properties are encrypted and their **config** (e.g. `email (config: personal_data)`). At the end, shows **configured encryptor configs** (config name, encryptor class Halite/Defuse, and which is default).
+- **doctrine:encrypt:rotate-keys:** New command to run the full key rotation: optional backup of key files (`--backup`), full decrypt, key change (generate new key files or prompt for .env update), then re-encrypt. Each step asks for confirmation unless `--no-interaction` is used. See [COMMANDS.md](COMMANDS.md#rotate-keys) and [KEY_ROTATION.md](KEY_ROTATION.md).
+- **doctrine:encrypt:generate-secret-key:** Option **`--force`** to overwrite existing key file(s) without asking.
+- **doctrine:decrypt:database** and **doctrine:encrypt:database:** Option **`--force`** to skip the confirmation prompt (useful when calling from scripts or from `rotate-keys` with `--no-interaction`).
 
 ### Changed
 
-- (No changes yet.)
+- **Documentation:** COMMANDS.md documents status output (per-entity properties and configs, configured configs), rotate-keys command, and `--force` on generate-secret-key, decrypt and encrypt. KEY_ROTATION.md and SECURITY.md reference the new rotate-keys command. README and INSTALLATION next steps mention rotate keys. ROADMAP updated to reflect key rotation command and docs.
 
 ### Fixed
 

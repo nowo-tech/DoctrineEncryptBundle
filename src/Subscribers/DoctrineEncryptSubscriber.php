@@ -141,6 +141,14 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
     }
 
     /**
+     * Clear the decryption cache to free memory (e.g. during batch decrypt).
+     */
+    public function clearDecryptionCache(): void
+    {
+        $this->cachedDecryptions = [];
+    }
+
+    /**
      * Listen a postUpdate lifecycle event.
      * Decrypt entities property's values when post updated.
      *
@@ -283,8 +291,14 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
             if ($encryptorMethod === 'decrypt') {
                 if ($value !== null && $value !== '') {
                     if (str_ends_with($value, self::ENCRYPTION_MARKER)) {
-                        $this->decryptCounter++;
-                        $currentPropValue = $propertyEncryptor->decrypt(substr($value, 0, -strlen(self::ENCRYPTION_MARKER)));
+                        $ciphertext = substr($value, 0, -strlen(self::ENCRYPTION_MARKER));
+                        try {
+                            $currentPropValue = $propertyEncryptor->decrypt($ciphertext);
+                            $this->decryptCounter++;
+                        } catch (\Throwable $e) {
+                            // Ciphertext not valid (e.g. Halite "Invalid version tag", wrong key, or value was plain with <ENC> appended)
+                            $currentPropValue = $ciphertext;
+                        }
                         $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
                         $this->cachedDecryptions[get_class($entity)][spl_object_id($entity)][$refProperty->getName()][$currentPropValue] = $value;
                     }

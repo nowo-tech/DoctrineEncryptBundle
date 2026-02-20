@@ -184,4 +184,70 @@ abstract class AbstractCommand extends Command
 
         return $validMetaData;
     }
+
+    /**
+     * Returns table name, identifier column names, and encrypted column names for the given entity and config.
+     * Used for raw SQL encrypt/decrypt (no Doctrine lifecycle events).
+     *
+     * @param object $entityMetaData   Doctrine ClassMetadata
+     * @param string $configName       Config name (e.g. personal_data)
+     * @param string $defaultConfigName Default config name for resolving Encrypted('default')
+     * @return array{table: string, idColumns: array<int, string>, columns: array<int, array{field: string, column: string}>}
+     */
+    protected function getEncryptedTableInfo($entityMetaData, string $configName, string $defaultConfigName): array
+    {
+        $table = $entityMetaData->getTableName();
+        // Resolve identifier column names from field names so we use actual DB column names (Doctrine may expose field names in some versions)
+        $idColumns = [];
+        if (method_exists($entityMetaData, 'getIdentifierFieldNames')) {
+            foreach ($entityMetaData->getIdentifierFieldNames() as $idFieldName) {
+                $idColumns[] = $this->getColumnNameFromMetadata($entityMetaData, $idFieldName);
+            }
+        } else {
+            $idColumns = $entityMetaData->getIdentifierColumnNames();
+        }
+        $properties = $this->getEncryptionablePropertiesForConfig($entityMetaData, $configName, $defaultConfigName);
+        $columns = [];
+        foreach ($properties as $property) {
+            $fieldName = $property->getName();
+            $columnName = $this->getColumnNameFromMetadata($entityMetaData, $fieldName);
+            $columns[] = ['field' => $fieldName, 'column' => $columnName];
+        }
+        return ['table' => $table, 'idColumns' => $idColumns, 'columns' => $columns];
+    }
+
+    /**
+     * Returns the database column name for a field (compatible with Doctrine ORM 2.x and 3.x).
+     *
+     * @param object $entityMetaData Doctrine ClassMetadata
+     * @param string $fieldName       Property/field name
+     */
+    protected function getColumnNameFromMetadata($entityMetaData, string $fieldName): string
+    {
+        if (method_exists($entityMetaData, 'getColumnName')) {
+            return $entityMetaData->getColumnName($fieldName);
+        }
+        $mapping = $entityMetaData->getFieldMapping($fieldName);
+        return $mapping['columnName'] ?? $fieldName;
+    }
+
+    /**
+     * Get a value from a DB row by column name (exact or case-insensitive match).
+     * Drivers may return different key casing (e.g. SQLite, PostgreSQL).
+     *
+     * @param array<string, mixed> $row
+     */
+    protected function getRowValue(array $row, string $columnName): mixed
+    {
+        if (array_key_exists($columnName, $row)) {
+            return $row[$columnName];
+        }
+        $lower = strtolower($columnName);
+        foreach ($row as $k => $v) {
+            if (strtolower((string) $k) === $lower) {
+                return $v;
+            }
+        }
+        return null;
+    }
 }
