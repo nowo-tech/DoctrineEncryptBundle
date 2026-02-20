@@ -119,7 +119,7 @@ For upgrade steps, see [UPGRADING.md](UPGRADING.md#upgrading-to-200).
 
 ---
 
-## [1.0.0] - 2025-02-19
+## [1.0.0] - 2026-02-19
 
 First release under **nowo-tech**. Fork from `hec-franco/doctrine-encrypt-bundle` with Halite and Defuse encryptors, Doctrine ORM 2.x/3.x, and attribute/annotation support.
 
