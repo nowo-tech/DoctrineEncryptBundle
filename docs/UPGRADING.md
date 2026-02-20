@@ -29,7 +29,7 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
-## Upgrading to 2.0.7 (unreleased)
+## Upgrading to 2.0.7
 
 No breaking changes. New features:
 
@@ -37,6 +37,7 @@ No breaking changes. New features:
 - **doctrine:encrypt:rotate-keys** runs the full key rotation (optional backup, decrypt, change keys, re-encrypt) with step-by-step confirmation; use `--backup` and/or `--no-interaction` as needed.
 - **doctrine:encrypt:generate-secret-key** accepts **`--force`** to overwrite existing key files without asking.
 - **doctrine:decrypt:database** and **doctrine:encrypt:database** accept **`--force`** to skip the confirmation prompt.
+- **Config:** Optional `nowo_doctrine_encrypt.batch_size` (default `5`) for encrypt/decrypt database batch size. FrankenPHP is supported (see INSTALLATION.md); no config changes needed.
 
 Update as usual:
 

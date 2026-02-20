@@ -32,10 +32,10 @@
 
 ---
 
-## v2.0.7 (unreleased)
+## v2.0.7 (2026-02-20)
 
-- **Scope:** (1) doctrine:encrypt:status: list encrypted properties and config per entity; show configured encryptor configs at end. (2) New command doctrine:encrypt:rotate-keys (optional backup, decrypt, change keys, re-encrypt; --backup, --no-interaction). (3) --force on generate-secret-key (overwrite without asking), decrypt:database and encrypt:database (skip confirmation). (4) Docs: COMMANDS, KEY_ROTATION, SECURITY, INSTALLATION, ROADMAP, CHANGELOG, UPGRADING updated.
-- **Checklist:** CHANGELOG and UPGRADING updated; tag `v2.0.7` when ready.
+- **Scope:** (1) doctrine:encrypt:status: list encrypted properties and config per entity; show configured encryptor configs at end. (2) New command doctrine:encrypt:rotate-keys (optional backup, decrypt, change keys, re-encrypt; --backup, --no-interaction). (3) --force on generate-secret-key (overwrite without asking), decrypt:database and encrypt:database (skip confirmation). (4) Encrypt/decrypt database use raw SQL; batch_size config (default 5). (5) FrankenPHP docs (INSTALLATION, README, DEMO); tests and coverage ≥ 95%. (6) Docs: COMMANDS, KEY_ROTATION, SECURITY, INSTALLATION, ROADMAP, CHANGELOG, UPGRADING updated.
+- **Checklist:** CHANGELOG and UPGRADING updated; tag `v2.0.7` created and pushed.
 
 ---
 
