@@ -6,9 +6,14 @@ use Attribute;
 use Nowo\DoctrineEncryptBundle\Configuration\Annotation;
 use ReflectionClass;
 
+/**
+ * Reads PHP 8 attributes from classes and properties, restricted to bundle annotation types.
+ *
+ * Only attributes implementing Annotation (e.g. Encrypted) are returned; other attributes are ignored.
+ */
 final class AttributeReader
 {
-    /** @var array */
+    /** @var array<string, bool> Cache of attribute class name => is repeatable */
     private array $isRepeatableAttribute = [];
 
     /**
@@ -77,12 +82,10 @@ final class AttributeReader
     }
 
     /**
-     * The function converts an array of attributes into instances of Gedmo Annotations.
+     * Converts reflection attributes to instances, filtering to bundle annotation types only.
      *
-     * @param array<\ReflectionAttribute> $attributes An array of attributes. Each attribute is an instance of a class that
-     * extends the `Annotation` class.
-     *
-     * @return array an array of attribute instances.
+     * @param array<\ReflectionAttribute> $attributes Reflection attributes from a class or property
+     * @return array<string, Annotation|array<Annotation>> Attribute name => instance(s)
      */
     private function convertToAttributeInstances(array $attributes): array
     {
@@ -91,7 +94,7 @@ final class AttributeReader
         foreach ($attributes as $attribute) {
             $attributeName = $attribute->getName();
             assert(is_string($attributeName));
-            // Make sure we only get Gedmo Annotations
+            // Only process bundle annotation types (e.g. Encrypted)
             if (!is_subclass_of($attributeName, Annotation::class)) {
                 continue;
             }
@@ -114,12 +117,10 @@ final class AttributeReader
     }
 
     /**
-     * The function "isRepeatable" checks if a given attribute class is repeatable or not.
+     * Checks whether the attribute class is repeatable (can appear multiple times on the same target).
      *
-     * @param string $attributeClassName The parameter is a string that represents the
-     * fully qualified class name of an attribute.
-     *
-     * @return bool a boolean value.
+     * @param string $attributeClassName Fully qualified attribute class name
+     * @return bool
      */
     private function isRepeatable(string $attributeClassName): bool
     {

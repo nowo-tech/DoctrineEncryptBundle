@@ -32,6 +32,13 @@
 
 ---
 
+## v2.0.6 (2026-02-20)
+
+- **Scope:** (1) New unit tests for coverage: HaliteEncryptor when key path is a directory; GenerateSecretKeyCommand when creating key in non-existent directory. (2) Fix PHP Notice in HaliteEncryptor test (suppress with `@` so suite runs without notices). Coverage lines ≥ 95%.
+- **Checklist:** CHANGELOG and UPGRADING updated; tag `v2.0.6` created and pushed.
+
+---
+
 ## v2.0.5 (2026-02-20)
 
 - **Scope:** (1) GenerateSecretKeyCommand: support all configs (create missing Halite/Defuse keys); optional `config` argument with overwrite confirmation. (2) Rename test directory `Tests` → `tests`; update phpunit, composer autoload-dev, php-cs-fixer. (3) Keep symfony/var-exporter in require for LazyGhost; CI pin var-exporter ^7.4. (4) Makefile: validate and update targets; qa runs validate. (5) Docs: COMMANDS.md correct args (config) and generate-secret-key behaviour.

@@ -7,6 +7,7 @@ namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Twig;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Twig\DecryptExtension;
+use Nowo\DoctrineEncryptBundle\Twig\MaskExtension;
 use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use PHPUnit\Framework\TestCase;
 
@@ -109,5 +110,23 @@ class DecryptExtensionTest extends TestCase
         $ext = new DecryptExtension($registry);
 
         $this->assertSame('0', $ext->decrypt('0'));
+    }
+
+    public function testMaskReturnsNullForNull(): void
+    {
+        $ext = new MaskExtension();
+        $this->assertNull($ext->mask(null));
+    }
+
+    public function testMaskShowsReplacementPlusLastFour(): void
+    {
+        $ext = new MaskExtension();
+        $this->assertSame('****5678', $ext->mask('12345678'));
+    }
+
+    public function testMaskWithCustomVisibleLastAndReplacement(): void
+    {
+        $ext = new MaskExtension();
+        $this->assertSame('••••78', $ext->mask('12345678', 2, '••••'));
     }
 }

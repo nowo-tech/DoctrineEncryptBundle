@@ -2,6 +2,8 @@
 
 This guide describes a safe procedure to **rotate encryption keys**: back up the current state, decrypt data with the old key, replace the key file(s), then re-encrypt with the new key(s). Use it when you need to change the secret key (e.g. for compliance, after a suspected compromise, or periodic rotation).
 
+**GDPR and compliance.** Encrypting personal data at rest helps meet data protection and security requirements (e.g. GDPR Art. 32). Key rotation is part of a sound security practice and can support compliance with retention and “right to erasure” scenarios when combined with data anonymization. This bundle can be used together with **[Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle)** (or similar): you can decrypt data with this bundle, anonymize or delete it with the anonymization bundle for GDPR compliance, then re-encrypt with new keys if needed. That workflow supports both key rotation and fulfilment of data subject rights.
+
 **Important:** Key rotation touches all encrypted data. Plan the steps, run them in a maintenance window, and verify backups before starting.
 
 ## Overview
@@ -35,12 +37,12 @@ The bundle does not support “in-place” re-encryption with a new key; decrypt
 Decrypt all encrypted columns using the **current** key (the one still configured and present on disk).
 
 ```bash
-# Use the default configured encryptor
+# Decrypt all configs (default and named)
 php bin/console doctrine:decrypt:database
 
-# Or specify the encryptor if needed
-php bin/console doctrine:decrypt:database Halite
-php bin/console doctrine:decrypt:database Defuse
+# Or decrypt a specific config only
+php bin/console doctrine:decrypt:database default
+php bin/console doctrine:decrypt:database personal_data
 ```
 
 With **multiple encryptor configs**, the subscriber uses the registry to pick the right encryptor per property (`#[Encrypted('personal_data')]`, etc.). A single run of `doctrine:decrypt:database` therefore decrypts all entities using each config’s current key. Ensure every encrypted column is decrypted (all old keys still in place) before replacing any key file.
@@ -69,12 +71,12 @@ Verify that data is decrypted (e.g. check a few rows or run `doctrine:encrypt:st
 Re-encrypt all previously decrypted columns with the **new** key(s).
 
 ```bash
-# Use the default configured encryptor (now using the new key)
+# Re-encrypt all configs (now using the new keys)
 php bin/console doctrine:encrypt:database
 
-# Or specify the encryptor if needed
-php bin/console doctrine:encrypt:database Halite
-php bin/console doctrine:encrypt:database Defuse
+# Or re-encrypt a specific config only
+php bin/console doctrine:encrypt:database default
+php bin/console doctrine:encrypt:database personal_data
 ```
 
 With **multiple configs**, a single run of `doctrine:encrypt:database` re-encrypts all entities using each config’s encryptor from the registry. Ensure every key file has been replaced with the new key so all columns are re-encrypted with the correct new keys.

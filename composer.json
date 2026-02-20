@@ -1,22 +1,28 @@
 {
   "name": "nowo-tech/doctrine-encrypt-bundle",
-  "description": "Encrypt Symfony 7|8 entity fields with Halite or Defuse (verified libraries).",
+  "description": "Encrypt Doctrine entity fields at rest with Halite or Defuse. Symfony 7|8 bundle for field-level encryption, GDPR-friendly, multiple keys, key rotation.",
   "type": "symfony-bundle",
   "license": "MIT",
   "keywords": [
     "doctrine",
     "symfony",
-    "halite",
-    "defuse",
+    "symfony-bundle",
+    "encryption",
     "encrypt",
     "decrypt",
-    "entity"
+    "halite",
+    "defuse",
+    "entity",
+    "field-level encryption",
+    "data-at-rest",
+    "gdpr",
+    "key rotation"
   ],
   "homepage": "https://github.com/nowo-tech/DoctrineEncryptBundle",
   "support": {
     "issues": "https://github.com/nowo-tech/DoctrineEncryptBundle/issues",
     "source": "https://github.com/nowo-tech/DoctrineEncryptBundle",
-    "docs": "https://github.com/nowo-tech/DoctrineEncryptBundle/tree/main/docs"
+    "docs": "https://github.com/nowo-tech/DoctrineEncryptBundle/blob/master/docs/INSTALLATION.md"
   },
   "authors": [
     {

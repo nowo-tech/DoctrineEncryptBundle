@@ -2,7 +2,6 @@
 
 namespace Nowo\DoctrineEncryptBundle\Command;
 
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
@@ -12,17 +11,18 @@ use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Symfony\Component\Console\Command\Command;
 
 /**
- * Base command containing usefull base methods.
- **/
+ * Base class for bundle console commands.
+ *
+ * Provides shared helpers: entity iteration, encrypted property discovery, and config-filtered metadata.
+ */
 abstract class AbstractCommand extends Command
 {
     /**
-     * AbstractCommand constructor.
-     *
-     * @param EntityManager             $entityManager
-     * @param DoctrineEncryptSubscriber  $subscriber
-     * @param EncryptorInterface|null    $defaultEncryptor Used by encrypt/decrypt database commands when subscriber has no encryptor (e.g. multi-config).
-     * @param EncryptorRegistry|null     $encryptorRegistry Used by encrypt/decrypt database commands to resolve config names and encryptors.
+     * @param EntityManagerInterface     $entityManager    Doctrine entity manager
+     * @param AttributeReader            $attributeReader  Reader for Encrypted attributes
+     * @param DoctrineEncryptSubscriber  $subscriber       Encrypt/decrypt event subscriber
+     * @param EncryptorInterface|null    $defaultEncryptor Used by encrypt/decrypt database commands when using multi-config
+     * @param EncryptorRegistry|null     $encryptorRegistry Used by encrypt/decrypt database commands to resolve config names and encryptors
      */
     public function __construct(
         public EntityManagerInterface $entityManager,
@@ -36,12 +36,10 @@ abstract class AbstractCommand extends Command
 
 
     /**
-     * The function returns an iterable object containing entities of a specified type.
+     * Returns an iterable over all entities of the given class (for batch processing).
      *
-     * @param string entityName The `entityName` parameter is a string that represents the name of the
-     * entity class you want to retrieve data from.
-     *
-     * @return iterable an iterable object.
+     * @param string $entityName Fully qualified entity class name
+     * @return iterable
      */
     protected function getEntityIterator(string $entityName): iterable
     {
@@ -51,13 +49,10 @@ abstract class AbstractCommand extends Command
 
 
     /**
-     * The function returns the count of records in a database table for a given entity name.
+     * Returns the number of records for the given entity.
      *
-     * @param string entityName The parameter `` is a string that represents the name of the
-     * entity for which you want to retrieve the count of records in its corresponding database table.
-     *
-     * @return int The method is returning an integer value, which is the count of records in the specified
-     * entity table.
+     * @param string $entityName Fully qualified entity class name
+     * @return int
      */
     protected function getTableCount(string $entityName): int
     {
@@ -68,9 +63,9 @@ abstract class AbstractCommand extends Command
 
 
     /**
-     * The function retrieves the metadata of entities that have properties eligible for encryption.
+     * Returns metadata for all entities that have at least one property marked with Encrypted.
      *
-     * @return array an array of valid entity metadata.
+     * @return array
      */
     protected function getEncryptionableEntityMetaData(): array
     {
@@ -95,14 +90,10 @@ abstract class AbstractCommand extends Command
     }
 
     /**
-     * The function "getEncryptionableProperties" returns an array of properties that are marked with the
-     * "Encrypted" annotation.
+     * Returns properties of the entity that are marked with the Encrypted attribute.
      *
-     * @param $entityMetaData, the  parameter is an object that contains metadata information
-     * about an entity in a Doctrine ORM (Object-Relational Mapping) system. It typically includes details
-     * such as the entity's name, table name, column names, associations, and other mapping information.
-     *
-     * @return array an array of properties that are marked with the `Encrypted` annotation.
+     * @param object $entityMetaData Doctrine entity metadata (ClassMetadata)
+     * @return array<\ReflectionProperty>
      */
     protected function getEncryptionableProperties($entityMetaData): array
     {
@@ -148,11 +139,10 @@ abstract class AbstractCommand extends Command
     }
 
     /**
-     * Returns entity metadata that have at least one Encrypted property for the given config.
+     * Returns metadata for entities that have at least one Encrypted property for the given config.
      *
-     * @param string $configName        Config name (e.g. personal_data)
-     * @param string $defaultConfigName Registry default config name
-     *
+     * @param string $configName        Config alias (e.g. personal_data)
+     * @param string $defaultConfigName Registry default config name (for resolving Encrypted('default'))
      * @return array
      */
     protected function getEncryptionableEntityMetaDataForConfig(string $configName, string $defaultConfigName): array

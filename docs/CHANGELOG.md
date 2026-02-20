@@ -21,6 +21,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.6] - 2026-02-20
+
+### Added
+
+- **Tests:** Unit test for `HaliteEncryptor` when the key path is a directory (covers `normalizeKeyFile()` early return). Unit test for `GenerateSecretKeyCommand` when the key file is created in a non-existent directory (covers `createKey()` with `mkdir(..., true)`). Improves code coverage (lines ≥ 95%).
+
+### Fixed
+
+- **PHPUnit:** The unit test that uses a directory as key path no longer triggers a PHP Notice (Halite emits a notice when reading a path that is a directory); the test suppresses it with `@` on the call that triggers it so the test suite runs without notices.
+
+No upgrade steps required from 2.0.5. See [UPGRADING.md](UPGRADING.md#upgrading-to-206).
+
+---
+
 ## [2.0.5] - 2026-02-20
 
 ### Added

@@ -117,4 +117,124 @@ class HaliteEncryptorTest extends TestCase
         $this->assertSame(self::DATA, $halite->decrypt($c2));
         @unlink($keyfile);
     }
+
+    public function testEncryptDecryptWithKeyContentFromString(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        $keyfile = sys_get_temp_dir() . '/halite-nowhere.key';
+        $keyObj = KeyFactory::generateEncryptionKey();
+        $tmp = tempnam(sys_get_temp_dir(), 'halite_');
+        KeyFactory::save($keyObj, $tmp);
+        $keyContent = trim(file_get_contents($tmp));
+        @unlink($tmp);
+
+        $halite = new HaliteEncryptor($keyfile, $keyContent);
+        $encrypted = $halite->encrypt(self::DATA);
+        $this->assertNotSame(self::DATA, $encrypted);
+        $this->assertSame(self::DATA, $halite->decrypt($encrypted));
+        $this->assertFileDoesNotExist($keyfile);
+    }
+
+    public function testConstructorWithEmptyKeyContentUsesKeyFile(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        $keyfile = sys_get_temp_dir() . '/halite-empty-content-' . uniqid('', true) . '.key';
+        $keyObj = KeyFactory::generateEncryptionKey();
+        KeyFactory::save($keyObj, $keyfile);
+        try {
+            $halite = new HaliteEncryptor($keyfile, '');
+            $encrypted = $halite->encrypt(self::DATA);
+            $this->assertSame(self::DATA, $halite->decrypt($encrypted));
+        } finally {
+            @unlink($keyfile);
+        }
+    }
+
+    public function testNormalizeKeyFileTrimsTrailingNewline(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        $keyfile = sys_get_temp_dir() . '/halite-newline-' . uniqid('', true) . '.key';
+        $keyObj = KeyFactory::generateEncryptionKey();
+        $tmp = tempnam(sys_get_temp_dir(), 'halite_');
+        KeyFactory::save($keyObj, $tmp);
+        $keyContent = file_get_contents($tmp);
+        file_put_contents($keyfile, $keyContent . "\n");
+        @unlink($tmp);
+        try {
+            $halite = new HaliteEncryptor($keyfile);
+            $halite->encrypt(self::DATA);
+            $this->assertSame(trim($keyContent), file_get_contents($keyfile));
+        } finally {
+            @unlink($keyfile);
+        }
+    }
+
+    public function testInvalidKeyFileHexThrowsRuntimeException(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        $keyfile = sys_get_temp_dir() . '/halite-invalid-' . uniqid('', true) . '.key';
+        file_put_contents($keyfile, 'not-valid-hex-content-zz');
+        try {
+            $halite = new HaliteEncryptor($keyfile);
+            $this->expectException(\RuntimeException::class);
+            $this->expectExceptionMessage('Invalid Halite key file');
+            $this->expectExceptionMessage('Expected hexadecimal');
+            $halite->encrypt(self::DATA);
+        } finally {
+            @unlink($keyfile);
+        }
+    }
+
+    public function testGetKeyThrowsWhenKeyFileEmptyAndNoKeyContent(): void
+    {
+        $halite = new HaliteEncryptor('', null);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('The encryption key environment variable is not set');
+        $this->expectExceptionMessage('doctrine:encrypt:generate-secret-key');
+        $halite->encrypt(self::DATA);
+    }
+
+    public function testEncryptDecryptWithKeyContentWithWhitespaceTrimsContent(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        $keyObj = KeyFactory::generateEncryptionKey();
+        $tmp = tempnam(sys_get_temp_dir(), 'halite_');
+        KeyFactory::save($keyObj, $tmp);
+        $keyContent = "\n  " . trim(file_get_contents($tmp)) . "  \n";
+        @unlink($tmp);
+
+        $halite = new HaliteEncryptor('/nonexistent.key', $keyContent);
+        $encrypted = $halite->encrypt(self::DATA);
+        $this->assertNotSame(self::DATA, $encrypted);
+        $this->assertSame(self::DATA, $halite->decrypt($encrypted));
+    }
+
+    /** Covers normalizeKeyFile() early return when key path is not a file (e.g. is a directory). */
+    public function testEncryptThrowsWhenKeyPathIsDirectory(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        $dir = sys_get_temp_dir() . '/halite-dir-' . uniqid('', true);
+        mkdir($dir, 0o755, true);
+        try {
+            $halite = new HaliteEncryptor($dir);
+            $this->expectException(\Throwable::class);
+            @$halite->encrypt(self::DATA);
+        } finally {
+            if (is_dir($dir)) {
+                @rmdir($dir);
+            }
+        }
+    }
 }

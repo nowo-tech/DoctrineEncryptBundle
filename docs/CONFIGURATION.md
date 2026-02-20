@@ -6,8 +6,17 @@ The bundle is configured under the root key `nowo_doctrine_encrypt`. The only su
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `configs` | `array` | `[]` (normalized to one `default` config) | Map of alias => options. Each alias (e.g. `default`, `personal_data`, `financial_data`) has `encryptor_class` and `secret_directory_path`. |
+| `configs` | `array` | `[]` (normalized to one `default` config) | Map of alias => options. Each alias has `encryptor_class` and either `secret_directory_path` or `secret_key_env_var`. Optional: `secret_key_filename`. |
 | `default_config` | `string` | `default` | Which config to use when the attribute has no alias or uses `"default"`. |
+
+Per-config options (under each entry in `configs`):
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `encryptor_class` | `string` | `Halite` | `Halite`, `Defuse`, or a custom class. |
+| `secret_directory_path` | `string` | `%kernel.project_dir%` | Directory for the key file. **Required** unless `secret_key_env_var` is set. Cannot be set together with `secret_key_env_var`. |
+| `secret_key_filename` | `string` | *(pattern)* | Optional custom key filename (e.g. `.my_app.key`). Only used when `secret_directory_path` is set; default pattern is `.{encryptor_class}.{alias}.key`. |
+| `secret_key_env_var` | `string` | `null` | Use `%env(APP_ENCRYPT_KEY)%`. Symfony resolves it at config load and the bundle receives the key value. When set, **must not** set `secret_directory_path` or `secret_key_filename`. |
 
 If `configs` is empty, the bundle behaves as if you had defined a single config named `default` with Halite and `%kernel.project_dir%`.
 
@@ -58,9 +67,16 @@ Each config has its own key file: `.{encryptor_class}.{alias}.key` (e.g. `.Halit
   composer require defuse/php-encryption ^2.1
   ```
 
-## Secret key files
+## Secret key: file or env
 
-Key file per config: `.{encryptor_class}.{alias}.key` (e.g. `.Halite.default.key`, `.Halite.personal_data.key`, `.Defuse.financial_data.key`) inside that config’s `secret_directory_path`.
+For each config you either use a **key file** or a **env var**:
+
+- **Key file:** Set `secret_directory_path` (and optionally `secret_key_filename`). The key file path is `{secret_directory_path}/{secret_key_filename}` or, if `secret_key_filename` is omitted, `{secret_directory_path}/.{encryptor_class}.{alias}.key` (e.g. `.Halite.default.key`, `.Defuse.financial_data.key`).
+- **Env var:** Set `secret_key_env_var` to `%env(APP_ENCRYPT_KEY)%`. Symfony resolves it when loading config and the bundle receives the key value. Do **not** set `secret_directory_path` or `secret_key_filename`. The value must be the same format as the key file content (for Halite: hex-encoded key; for Defuse: the password string). Run `doctrine:encrypt:generate-secret-key` for configs without path to get the key value, then set it in your `.env` or environment.
+
+## Secret key files (when using path)
+
+Key file per config: `.{encryptor_class}.{alias}.key` (or your `secret_key_filename`) inside that config’s `secret_directory_path`.
 
 **Important:** Add key files to `.gitignore` so they are never committed:
 

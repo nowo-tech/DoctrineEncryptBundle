@@ -88,4 +88,37 @@ class DefuseEncryptorTest extends TestCase
         $this->assertSame(self::DATA, $defuse->decrypt($c2));
         @unlink($keyfile);
     }
+
+    public function testEncryptDecryptWithKeyContentFromString(): void
+    {
+        $keyContent = bin2hex(random_bytes(64));
+        $defuse = new DefuseEncryptor('/nonexistent/path.key', $keyContent);
+        $encrypted = $defuse->encrypt(self::DATA);
+        $this->assertNotSame(self::DATA, $encrypted);
+        $this->assertSame(self::DATA, $defuse->decrypt($encrypted));
+        $this->assertFileDoesNotExist('/nonexistent/path.key');
+    }
+
+    public function testGetKeyThrowsWhenKeyFileEmptyAndNoKeyContent(): void
+    {
+        $defuse = new DefuseEncryptor('', null);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('The encryption key environment variable is not set');
+        $this->expectExceptionMessage('doctrine:encrypt:generate-secret-key');
+        $defuse->encrypt(self::DATA);
+    }
+
+    public function testConstructorWithEmptyKeyContentUsesKeyFile(): void
+    {
+        $keyfile = sys_get_temp_dir() . '/defuse-empty-content-' . uniqid('', true) . '.key';
+        $key = bin2hex(random_bytes(64));
+        file_put_contents($keyfile, $key);
+        try {
+            $defuse = new DefuseEncryptor($keyfile, '');
+            $encrypted = $defuse->encrypt(self::DATA);
+            $this->assertSame(self::DATA, $defuse->decrypt($encrypted));
+        } finally {
+            @unlink($keyfile);
+        }
+    }
 }

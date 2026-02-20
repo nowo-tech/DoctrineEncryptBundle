@@ -27,7 +27,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
 class GenerateSecretKeyCommand extends AbstractCommand
 {
     /**
-     * @param array<string, array{path: string, encryptor_class: string}> $keyPaths config alias => path (may contain %kernel.project_dir%) and encryptor_class (Halite|Defuse)
+     * @param array<string, array{path: string|null, encryptor_class: string}> $keyPaths config alias => path (null when using secret_key_env_var with %env(APP_ENCRYPT_KEY)%), encryptor_class
      */
     public function __construct(
         \Doctrine\ORM\EntityManagerInterface $entityManager,
@@ -39,6 +39,11 @@ class GenerateSecretKeyCommand extends AbstractCommand
         parent::__construct($entityManager, $attributeReader, $subscriber);
     }
 
+    /**
+     * Adds optional config argument to generate key for a single config.
+     *
+     * @return void
+     */
     protected function configure(): void
     {
         $def = $this->getDefinition();
@@ -47,12 +52,19 @@ class GenerateSecretKeyCommand extends AbstractCommand
         }
     }
 
+    /**
+     * Generates key file(s) for path-based configs or outputs key value for env-based configs.
+     *
+     * @param InputInterface  $input  Console input
+     * @param OutputInterface $output Console output
+     * @return int Command exit code
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $projectDir = $this->kernel->getProjectDir();
         $resolved = [];
         foreach ($this->keyPaths as $name => $info) {
-            $path = str_replace('%kernel.project_dir%', $projectDir, $info['path']);
+            $path = $info['path'] === null ? null : str_replace('%kernel.project_dir%', $projectDir, $info['path']);
             $resolved[$name] = ['path' => $path, 'encryptor_class' => $info['encryptor_class']];
         }
 
@@ -67,6 +79,10 @@ class GenerateSecretKeyCommand extends AbstractCommand
 
         $created = 0;
         foreach ($resolved as $name => $info) {
+            if ($info['path'] === null) {
+                $this->outputEnvKeyInfo($name, $info, $output);
+                continue;
+            }
             if ($this->supportsKeyGeneration($info['encryptor_class'])) {
                 if (!file_exists($info['path'])) {
                     $this->createKey($info['path'], $info['encryptor_class'], $output);
@@ -86,11 +102,24 @@ class GenerateSecretKeyCommand extends AbstractCommand
         return self::SUCCESS;
     }
 
+    /**
+     * Generates or outputs key for a single config.
+     *
+     * @param string          $configName Config alias
+     * @param array           $info       Resolved path and encryptor_class
+     * @param InputInterface  $input      Console input
+     * @param OutputInterface $output     Console output
+     * @return int
+     */
     private function generateForConfig(string $configName, array $info, InputInterface $input, OutputInterface $output): int
     {
         $path = $info['path'];
         $encryptorClass = $info['encryptor_class'];
 
+        if ($path === null) {
+            $this->outputEnvKeyInfo($configName, $info, $output);
+            return self::SUCCESS;
+        }
         if (!$this->supportsKeyGeneration($encryptorClass)) {
             $output->writeln(sprintf('<error>Key generation is only supported for Halite and Defuse. Config "%s" uses "%s".</error>', $configName, $encryptorClass));
             return self::FAILURE;
@@ -116,6 +145,14 @@ class GenerateSecretKeyCommand extends AbstractCommand
             || $encryptorClass === HaliteEncryptor::class || $encryptorClass === DefuseEncryptor::class;
     }
 
+    /**
+     * Creates and saves a new key file for the given path and encryptor type.
+     *
+     * @param string          $path          Key file path
+     * @param string          $encryptorClass Halite or Defuse (or FQCN)
+     * @param OutputInterface $output        Console output
+     * @return void
+     */
     private function createKey(string $path, string $encryptorClass, OutputInterface $output): void
     {
         $isHalite = $encryptorClass === 'Halite' || $encryptorClass === HaliteEncryptor::class;
@@ -130,5 +167,49 @@ class GenerateSecretKeyCommand extends AbstractCommand
             }
             file_put_contents($path, $key);
         }
+    }
+
+    /**
+     * When config has no path (uses secret_key_env_var with %env(APP_ENCRYPT_KEY)%): generate and emit the key value and indicate the variable is not set yet.
+     */
+    private function outputEnvKeyInfo(string $configName, array $info, OutputInterface $output): void
+    {
+        if (!$this->supportsKeyGeneration($info['encryptor_class'])) {
+            $output->writeln(sprintf('<comment>Config "%s": key generation not supported for "%s".</comment>', $configName, $info['encryptor_class']));
+            return;
+        }
+
+        $keyValue = $this->generateKeyValueForEnv($info['encryptor_class']);
+        $output->writeln(sprintf('<info>Config "%s":</info>', $configName));
+        $output->writeln('<comment>The encryption key variable is not set yet. Add it to your .env with the value below.</comment>');
+        $output->writeln('');
+        $output->writeln(sprintf('<comment>%s</comment>', $keyValue));
+        $output->writeln('');
+    }
+
+    /**
+     * Generates a key value in the same format as stored in file (Halite/Defuse: hex string).
+     *
+     * @param string $encryptorClass Halite or Defuse (or FQCN)
+     * @return string Key value suitable for env var
+     */
+    private function generateKeyValueForEnv(string $encryptorClass): string
+    {
+        $isHalite = $encryptorClass === 'Halite' || $encryptorClass === HaliteEncryptor::class;
+        if ($isHalite) {
+            $encryptionKey = KeyFactory::generateEncryptionKey();
+            $tmp = tempnam(sys_get_temp_dir(), 'halite_key_');
+            if ($tmp === false) {
+                throw new \RuntimeException('Could not create temp file for key.');
+            }
+            try {
+                KeyFactory::save($encryptionKey, $tmp);
+                $value = trim(file_get_contents($tmp));
+                return $value;
+            } finally {
+                @unlink($tmp);
+            }
+        }
+        return bin2hex(random_bytes(255));
     }
 }

@@ -6,7 +6,7 @@ COMPOSE := docker-compose -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
 .PHONY: help up down build install shell logs setup db-create db-schema key fixtures cache-clear update-bundle test encrypt-status encrypt-database decrypt-database ensure-up
-.PHONY: encrypt-database-all decrypt-database-all encrypt-database-personal_data decrypt-database-personal_data encrypt-database-financial_data decrypt-database-financial_data
+.PHONY: encrypt-database-all decrypt-database-all encrypt-database-personal_data decrypt-database-personal_data encrypt-database-financial_data decrypt-database-financial_data encrypt-database-env_var decrypt-database-env_var
 
 help:
 	@echo "Doctrine Encrypt Bundle Demo - Symfony 8"
@@ -25,12 +25,14 @@ help:
 	@echo "  make encrypt-status     List entities and encrypted properties"
 	@echo "  make encrypt-database   Encrypt: all configs (interactive)"
 	@echo "  make encrypt-database-all            Same: all configs"
-	@echo "  make encrypt-database-personal_data  Encrypt: only config personal_data"
-	@echo "  make encrypt-database-financial_data Encrypt: only config financial_data"
+	@echo "  make encrypt-database-personal_data  Encrypt: config personal_data (default path)"
+	@echo "  make encrypt-database-financial_data Encrypt: config financial_data (secret_key_filename)"
+	@echo "  make encrypt-database-env_var       Encrypt: config env_var (%env(APP_ENCRYPT_KEY)%)"
 	@echo "  make decrypt-database   Decrypt: all configs (interactive)"
 	@echo "  make decrypt-database-all            Same: all configs"
-	@echo "  make decrypt-database-personal_data  Decrypt: only config personal_data"
-	@echo "  make decrypt-database-financial_data Decrypt: only config financial_data"
+	@echo "  make decrypt-database-personal_data  Decrypt: config personal_data"
+	@echo "  make decrypt-database-financial_data Decrypt: config financial_data"
+	@echo "  make decrypt-database-env_var       Decrypt: config env_var"
 	@echo "  make cache-clear        Clear Symfony cache"
 	@echo "  make update-bundle      Update bundle from path repo"
 	@echo "  make test               Run tests"
@@ -81,7 +83,7 @@ db-schema: ensure-up
 
 key: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:encrypt:generate-secret-key 2>/dev/null || true
-	@echo "Halite key for personal_data generated (or exists). Defuse creates .Defuse.financial_data.key on first use."
+	@echo "Keys: personal_data = .Halite.personal_data.key; financial_data = .demo_financial.key; env_var = APP_ENCRYPT_KEY (.env). Add printed key to .env if APP_ENCRYPT_KEY is empty."
 
 encrypt-status: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:encrypt:status
@@ -97,6 +99,9 @@ encrypt-database-personal_data: ensure-up
 encrypt-database-financial_data: ensure-up
 	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:encrypt:database financial_data
 
+encrypt-database-env_var: ensure-up
+	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:encrypt:database env_var
+
 # Decrypt: all configs (no config argument)
 decrypt-database decrypt-database-all: ensure-up
 	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:decrypt:database
@@ -107,6 +112,9 @@ decrypt-database-personal_data: ensure-up
 
 decrypt-database-financial_data: ensure-up
 	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:decrypt:database financial_data
+
+decrypt-database-env_var: ensure-up
+	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:decrypt:database env_var
 
 cache-clear: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console cache:clear

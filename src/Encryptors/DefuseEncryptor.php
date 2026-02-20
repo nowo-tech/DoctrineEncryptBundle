@@ -4,27 +4,35 @@ namespace Nowo\DoctrineEncryptBundle\Encryptors;
 
 use Symfony\Component\Filesystem\Filesystem;
 
+/**
+ * Encryptor implementation using defuse/php-encryption (password-based encryption).
+ *
+ * The secret key can be read from a file or from string content (e.g. env var).
+ * If the key file does not exist, a new key is generated and saved.
+ */
 class DefuseEncryptor implements EncryptorInterface
 {
     private Filesystem $fs;
     private ?string $encryptionKey = null;
     private string $keyFile;
+    private ?string $keyContent;
 
     /**
-     * {@inheritdoc}
+     * @param string      $keyFile    Path to the key file (ignored when $keyContent is set).
+     * @param string|null $keyContent Optional key value (e.g. from env). When set, $keyFile is not read.
      */
-    public function __construct(string $keyFile)
+    public function __construct(string $keyFile, ?string $keyContent = null)
     {
         $this->keyFile = $keyFile;
+        $this->keyContent = $keyContent !== null && $keyContent !== '' ? $keyContent : null;
         $this->fs = new Filesystem();
     }
 
     /**
-     * The function encrypts a given string using a password-based encryption algorithm.
+     * Encrypts plain text using the configured key.
      *
-     * @param string data The "data" parameter is a string that represents the data you want to encrypt.
-     *
-     * @return string The encrypt function is returning a string.
+     * @param string $data Plain text to encrypt
+     * @return string Ciphertext
      */
     public function encrypt(string $data): string
     {
@@ -33,12 +41,10 @@ class DefuseEncryptor implements EncryptorInterface
 
 
     /**
-     * The function decrypts a given string using a password-based encryption algorithm.
+     * Decrypts ciphertext using the configured key.
      *
-     * @param string data The parameter `` is a string that represents the encrypted data that you
-     * want to decrypt.
-     *
-     * @return string The decrypt function is returning a string.
+     * @param string $data Ciphertext to decrypt
+     * @return string Plain text
      */
     public function decrypt(string $data): string
     {
@@ -46,14 +52,22 @@ class DefuseEncryptor implements EncryptorInterface
     }
 
     /**
-     * The function `getKey()` retrieves an encryption key from a file or generates a new one if the file
-     * does not exist.
+     * Returns the encryption key, loading from file or env content; creates the key file if missing.
      *
-     * @return string the encryption key as a string.
+     * @return string The encryption key (password string for Defuse)
      */
     private function getKey(): string
     {
         if ($this->encryptionKey === null) {
+            if ($this->keyContent !== null) {
+                $this->encryptionKey = trim($this->keyContent);
+                return $this->encryptionKey;
+            }
+            if ($this->keyFile === '') {
+                throw new \RuntimeException(
+                    'The encryption key environment variable is not set. Run "php bin/console doctrine:encrypt:generate-secret-key" to get the key value, then set it in your .env or environment.'
+                );
+            }
             if ($this->fs->exists($this->keyFile)) {
                 $this->encryptionKey = trim(file_get_contents($this->keyFile));
             } else {

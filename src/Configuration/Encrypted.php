@@ -20,6 +20,10 @@ class Encrypted implements Annotation
     /** Config alias from nowo_doctrine_encrypt.configs. Use "default" when no alias: then default_config is used. */
     public string $config = 'default';
 
+    /**
+     * @param string|array $configOrValues Config alias (e.g. 'personal_data'), or annotation array with 'config'/'value' key
+     * @param string|null  $config         Config alias when using named argument (e.g. #[Encrypted(config: 'financial_data')])
+     */
     public function __construct(string|array $configOrValues = 'default', ?string $config = null)
     {
         if ($config !== null) {

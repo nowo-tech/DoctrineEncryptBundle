@@ -144,4 +144,14 @@ class EncryptUtilTest extends TestCase
 
         $util->decrypt('cipher' . EncryptUtil::ENCRYPTION_MARKER, 'non_existent');
     }
+
+    public function testDecryptWithConfigNullUsesDefaultEncryptor(): void
+    {
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $encryptor->expects($this->once())->method('decrypt')->with('cipher')->willReturn('plain');
+        $registry = $this->createRegistryWithDefault($encryptor);
+        $util = new EncryptUtil($registry);
+
+        $this->assertSame('plain', $util->decrypt('cipher' . EncryptUtil::ENCRYPTION_MARKER, null));
+    }
 }

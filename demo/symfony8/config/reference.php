@@ -903,7 +903,9 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     default_config?: scalar|Param|null, // Config alias to use when #[Encrypted] has no alias or uses "default". // Default: "default"
  *     configs?: array<string, array{ // Default: []
  *         encryptor_class?: scalar|Param|null, // Default: "Halite"
- *         secret_directory_path?: scalar|Param|null, // Default: "%kernel.project_dir%"
+ *         secret_directory_path?: scalar|Param|null, // Directory for the key file. Required unless secret_key_env_var is set. // Default: null
+ *         secret_key_filename?: scalar|Param|null, // Optional custom key filename (e.g. .my_app.key). Only used when secret_directory_path is set. // Default: null
+ *         secret_key_env_var?: scalar|Param|null, // Key content from env: use %env(APP_ENCRYPT_KEY)% so Symfony resolves it at config load and the bundle receives the value. When set, secret_directory_path and secret_key_filename are not allowed. // Default: null
  *     }>,
  * }
  * @psalm-type DebugConfig = array{

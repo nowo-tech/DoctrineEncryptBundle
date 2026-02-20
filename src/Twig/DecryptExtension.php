@@ -21,6 +21,8 @@ use Twig\Extension\AbstractExtension;
  * omit (null) = default config, or pass a config name (e.g. 'financial_data').
  *
  * Usage: {{ value|decrypt }} or {{ value|decrypt('financial_data') }}
+ *
+ * To decrypt then mask: {{ value|decrypt('personal_data')|mask(4) }} (mask from MaskExtension).
  */
 class DecryptExtension /* extends AbstractExtension*/
 {
@@ -64,8 +66,10 @@ class DecryptExtension /* extends AbstractExtension*/
     }
 
     /**
-     * Returns the encryptor for the given config name (or the default).
-     * Same logic as EncryptUtil::getEncryptor.
+     * Returns the encryptor for the given config name (or the default). Same logic as EncryptUtil::getEncryptor.
+     *
+     * @param string|null $config Config alias, or null for default
+     * @return EncryptorInterface
      */
     private function getEncryptor(?string $config): EncryptorInterface
     {

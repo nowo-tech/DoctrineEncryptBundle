@@ -12,7 +12,7 @@
         <h2 class="mb-0">EncryptUtil + Twig filters</h2>
     </div>
     <div class="card-body">
-        <p class="mb-0">This page uses <strong>EncryptUtil</strong> and Twig filter <code>|decrypt</code> with <strong>default</strong> config and with <strong>config indicada</strong> (<code>personal_data</code>, <code>financial_data</code>).</p>
+        <p class="mb-0">This page uses <strong>EncryptUtil</strong> and Twig filter <code>|decrypt</code> with <strong>default</strong> config and with <strong>specified config</strong> (<code>personal_data</code>, <code>financial_data</code>).</p>
     </div>
 </div>
 
@@ -70,15 +70,20 @@
     </div>
 </div>
 
-{# --- 4) Twig filter: default and config indicada --- #}
+{# --- 4) Twig filter: default and specified config --- #}
 <div class="card shadow-sm mb-4">
     <div class="card-header">
-        <h3 class="mb-0">4. Twig filter <code>|decrypt</code> – default and config indicada</h3>
+        <h3 class="mb-0">4. Twig filter <code>|decrypt</code> – default and specified config</h3>
     </div>
     <div class="card-body">
         <p class="mb-2">Default: <code>{{ '{{ value|decrypt }}' }}</code> → <strong>{{ encryptedForTwigDefault|decrypt }}</strong></p>
-        <p class="mb-2">Config indicada (misma que la default): <code>{{ '{{ value|decrypt(\'personal_data\') }}' }}</code> → <strong>{{ encryptedForTwigPersonal|decrypt('personal_data') }}</strong></p>
-        <p class="mb-0">Config indicada distinta de la default: <code>{{ '{{ value|decrypt(\'financial_data\') }}' }}</code> → <strong>{{ encryptedForTwigFinancial|decrypt('financial_data') }}</strong></p>
+        <p class="mb-2">Specified config (same as default): <code>{{ '{{ value|decrypt(\'personal_data\') }}' }}</code> → <strong>{{ encryptedForTwigPersonal|decrypt('personal_data') }}</strong></p>
+        <p class="mb-2">Specified config (different from default): <code>{{ '{{ value|decrypt(\'financial_data\') }}' }}</code> → <strong>{{ encryptedForTwigFinancial|decrypt('financial_data') }}</strong></p>
+        <hr>
+        <h4 class="h6 mt-3">5. Twig filters |mask and |decrypt then |mask</h4>
+        <p class="mb-2"><code>|mask(4)</code> on plain value: {{ "12345678"|mask(4) }}</p>
+        <p class="mb-2"><code>|decrypt('personal_data')|mask(4)</code> on encrypted: {{ encryptedForTwigPersonal|decrypt('personal_data')|mask(4) }}</p>
+        <p class="mb-0"><code>|decrypt|mask(4)</code> default config: {{ encryptedForTwigDefault|decrypt|mask(4) }}</p>
     </div>
 </div>
 {% endblock %}

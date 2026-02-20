@@ -72,19 +72,19 @@ php bin/console doctrine:decrypt:database default 50
 
 Generates encryption key files for Halite and Defuse configs.
 
-**Without argument:** Checks all configs; creates a key file in each `secret_directory_path` when missing (Halite and Defuse only). Skips configs that already have a key file.
+**Without argument:** For configs with a key file path: creates the key file when missing (Halite and Defuse only) and skips when it already exists. For configs **without path** (they use `secret_key_env_var` with `%env(APP_ENCRYPT_KEY)%`): the command only **outputs the generated key** (one per config) so you can set it in your `.env` or environment.
 
 ```bash
 php bin/console doctrine:encrypt:generate-secret-key
 ```
 
-**With config argument:** Creates or overwrites the key for that config only. If the key file already exists, the command asks for confirmation before overwriting.
+**With config argument:** For a path-based config: creates or overwrites the key file (asks for confirmation if it exists). For a config without path: only outputs the generated key value.
 
 ```bash
 php bin/console doctrine:encrypt:generate-secret-key default
 php bin/console doctrine:encrypt:generate-secret-key personal_data
 ```
 
-Run this before first use if no key file exists, or when rotating keys. Configs using a custom encryptor class are skipped (only Halite and Defuse keys are generated).
+Run this before first use if no key file exists, or when rotating keys. When using `%env(APP_ENCRYPT_KEY)%` in config, run the command to get the key value and set it in your environment. Configs using a custom encryptor class are skipped (only Halite and Defuse keys are generated).
 
 For a full **key rotation** procedure (backup → decrypt → change keys → re-encrypt), see [Key rotation](KEY_ROTATION.md).

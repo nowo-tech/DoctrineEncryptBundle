@@ -69,6 +69,18 @@ class ConfigurationTest extends TestCase
 
         $this->assertInstanceOf(\Symfony\Component\Config\Definition\Builder\TreeBuilder::class, $treeBuilder);
         $this->assertNotNull($treeBuilder->getRootNode());
+        $this->assertInstanceOf(\Symfony\Component\Config\Definition\Builder\NodeDefinition::class, $treeBuilder->getRootNode());
+    }
+
+    public function testSecretKeyFilenameDefaultsToNullWhenNotProvided(): void
+    {
+        $config = $this->process([
+            'configs' => [
+                'default' => ['encryptor_class' => 'Halite'],
+            ],
+        ]);
+        $this->assertArrayHasKey('secret_key_filename', $config['configs']['default']);
+        $this->assertNull($config['configs']['default']['secret_key_filename']);
     }
 
     public function testConfigurationAliasConstant(): void
@@ -86,6 +98,52 @@ class ConfigurationTest extends TestCase
 
         $this->assertSame('Halite', $config['configs']['default']['encryptor_class']);
         $this->assertSame('%kernel.project_dir%', $config['configs']['default']['secret_directory_path']);
+    }
+
+    public function testSecretKeyFilenameOptional(): void
+    {
+        $config = $this->process([
+            'configs' => [
+                'default' => [
+                    'encryptor_class' => 'Halite',
+                    'secret_directory_path' => '/var/keys',
+                    'secret_key_filename' => '.my_app.key',
+                ],
+            ],
+        ]);
+
+        $this->assertSame('.my_app.key', $config['configs']['default']['secret_key_filename']);
+    }
+
+    public function testSecretKeyEnvVar(): void
+    {
+        $config = $this->process([
+            'configs' => [
+                'default' => [
+                    'encryptor_class' => 'Halite',
+                    'secret_key_env_var' => 'APP_ENCRYPT_KEY',
+                ],
+            ],
+        ]);
+
+        $this->assertSame('APP_ENCRYPT_KEY', $config['configs']['default']['secret_key_env_var']);
+        $this->assertNull($config['configs']['default']['secret_directory_path']);
+    }
+
+    public function testCannotSetBothSecretKeyEnvVarAndSecretDirectoryPath(): void
+    {
+        $this->expectException(\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Cannot set both secret_key_env_var and secret_directory_path');
+
+        $this->process([
+            'configs' => [
+                'default' => [
+                    'encryptor_class' => 'Halite',
+                    'secret_directory_path' => '/var/keys',
+                    'secret_key_env_var' => 'APP_ENCRYPT_KEY',
+                ],
+            ],
+        ]);
     }
 
     private function process(array $config): array

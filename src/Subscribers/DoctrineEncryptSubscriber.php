@@ -24,7 +24,10 @@ use ReflectionProperty;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 
 /**
- * Doctrine event subscriber which encrypt/decrypt entities
+ * Doctrine event listener that encrypts entity properties on persist/update and decrypts on load.
+ *
+ * Listens to postUpdate, preUpdate, postLoad, onFlush, preFlush, postFlush.
+ * Only processes properties marked with the Encrypted attribute; supports multiple encryptor configs via registry.
  */
 #[AsDoctrineListener(event: Events::postUpdate, priority: 500, connection: 'default')]
 #[AsDoctrineListener(event: Events::preUpdate, priority: 500, connection: 'default')]
@@ -75,7 +78,7 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
     private array $cachedDecryptions = [];
 
     /**
-     * @param EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor Registry (normal DI), a single encryptor (BC/tests), or null.
+     * @param EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor Registry (normal DI), a single encryptor (BC/tests), or null
      */
     public function __construct(EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor = null)
     {
@@ -105,14 +108,23 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
     }
     */
 
-    /** Temporarily override encryptor (used by encrypt/decrypt database commands). Pass null to disable encryption. */
+    /**
+     * Temporarily overrides the encryptor (used by encrypt/decrypt database commands). Pass null to disable encryption.
+     *
+     * @param EncryptorInterface|null $encryptor Encryptor to use, or null to disable
+     * @return void
+     */
     public function setEncryptor(?EncryptorInterface $encryptor = null): void
     {
         $this->encryptorOverride = $encryptor;
         $this->encryptorOverrideSet = true;
     }
 
-    /** Current encryptor: override if set (including null), otherwise default from registry. */
+    /**
+     * Returns the current encryptor: override if set (including null), otherwise default from registry.
+     *
+     * @return EncryptorInterface|null
+     */
     public function getEncryptor(): ?EncryptorInterface
     {
         if ($this->encryptorOverrideSet) {

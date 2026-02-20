@@ -63,7 +63,7 @@ The bundle is installed via Composer **path repository** pointing to `/var/doctr
 
 **Symfony 7** and **Symfony 8** demos both use **multiple encryptor configs**. In `config/packages/nowo_doctrine_encrypt.yaml` you’ll find:
 
-- **configs:** `personal_data` (Halite) and `financial_data` (Defuse), each with its own key file.
+- **configs:** e.g. `personal_data` (Halite), `financial_data` (Defuse), and optionally `env_var` (key from `%env(APP_ENCRYPT_KEY)%`), each with its own key or key file.
 - **default_config:** `personal_data` (used by `#[Encrypted]` without a config name).
 
 **SecretMessage** uses the default config. **SensitiveRecord** uses both:

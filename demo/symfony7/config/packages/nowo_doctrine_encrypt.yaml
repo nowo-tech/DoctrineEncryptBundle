@@ -1,16 +1,23 @@
-# Single encryptor (default) - uncomment to use only one encryptor:
-# nowo_doctrine_encrypt:
-#   encryptor_class: Halite
-#   secret_directory_path: '%kernel.project_dir%'
-
-# Multiple encryptors (see docs/CONFIGURATION.md) - SecretMessage (default), SensitiveRecord (personal_data + financial_data)
+# Demo: three config variants
+# 1. default_path (personal_data): default key path, no secret_key_filename → .Halite.personal_data.key
+# 2. custom_filename (financial_data): custom secret_key_filename → .demo_financial.key
+# 3. env_var: key from environment; %env(APP_ENCRYPT_KEY)% is resolved by Symfony and the bundle receives the value
 # Halite and Defuse (requires: composer require defuse/php-encryption ^2.1)
 nowo_doctrine_encrypt:
   default_config: personal_data
   configs:
+    # 1) No secret_key_filename: default path .Halite.personal_data.key
     personal_data:
       encryptor_class: Halite
       secret_directory_path: '%kernel.project_dir%'
+
+    # 2) With secret_key_filename: custom filename
     financial_data:
       encryptor_class: Defuse
       secret_directory_path: '%kernel.project_dir%'
+      secret_key_filename: '.demo_financial.key'
+
+    # 3) Key from .env; Symfony resolves %env()% and the bundle receives the value
+    env_var:
+      encryptor_class: Halite
+      secret_key_env_var: '%env(APP_ENCRYPT_KEY)%'

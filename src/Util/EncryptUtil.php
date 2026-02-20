@@ -18,8 +18,9 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
  * Same config philosophy as DecryptExtension (Twig): optional $config to choose encryptor;
  * omit (null) = default config, or pass a config name (e.g. personal_data, financial_data).
  * Adds '<ENC>' marker to identify encrypted values.
+ *
+ * Type-hint this class to get the util service (alias: nowo_doctrine_encrypt.encrypt_util).
  */
-/** Alias for autowiring: type-hint this class to get the util service. */
 #[AsAlias(id: self::UTIL_NAME, public: true)]
 class EncryptUtil
 {
@@ -35,8 +36,9 @@ class EncryptUtil
     /**
      * Decrypts a value if it has the encryption marker at the end; otherwise returns the original value.
      *
-     * @param string|null $value    The value to decrypt
-     * @param string|null $config Encryptor config name (e.g. 'personal_data', 'financial_data'). Null = default config
+     * @param string|null $value  Value to decrypt (ciphertext + marker, or plain)
+     * @param string|null $config Encryptor config name (e.g. 'personal_data'). Null = default config
+     * @return string|null Decrypted value or original if not encrypted
      */
     public function decrypt(?string $value, ?string $config = null): ?string
     {
@@ -60,8 +62,9 @@ class EncryptUtil
      *
      * Empty strings and '0' are not encrypted and are returned as-is.
      *
-     * @param string|null $value    The value to encrypt
+     * @param string|null $value  Plain text to encrypt
      * @param string|null $config Encryptor config name. Null = default config
+     * @return string|null Ciphertext + marker, or original value if empty/zero
      */
     public function encrypt(?string $value, ?string $config = null): ?string
     {
@@ -79,6 +82,9 @@ class EncryptUtil
 
     /**
      * Returns the encryptor for the given config name (or the default).
+     *
+     * @param string|null $config Config alias, or null for default
+     * @return EncryptorInterface
      */
     private function getEncryptor(?string $config): EncryptorInterface
     {

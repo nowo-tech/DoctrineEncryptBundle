@@ -17,12 +17,17 @@ class SensitiveRecordType extends AbstractType
         $builder
             ->add('personalNote', TextareaType::class, [
                 'required' => false,
-                'label' => 'Personal note (Halite – personal_data)',
+                'label' => 'Personal note (Halite – personal_data, default path)',
                 'attr' => ['class' => 'form-control', 'rows' => 3],
             ])
             ->add('financialNote', TextareaType::class, [
                 'required' => false,
-                'label' => 'Financial note (Defuse – financial_data)',
+                'label' => 'Financial note (Defuse – financial_data, secret_key_filename)',
+                'attr' => ['class' => 'form-control', 'rows' => 3],
+            ])
+            ->add('envVarNote', TextareaType::class, [
+                'required' => false,
+                'label' => 'Env var note (Halite – env_var, %env(APP_ENCRYPT_KEY)%)',
                 'attr' => ['class' => 'form-control', 'rows' => 3],
             ]);
     }

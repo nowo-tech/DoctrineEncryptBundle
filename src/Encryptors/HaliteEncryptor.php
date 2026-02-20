@@ -9,31 +9,34 @@ use ParagonIE\Halite\Symmetric\EncryptionKey;
 use ParagonIE\HiddenString\HiddenString;
 
 /**
- * Class for encrypting and decrypting with the halite library
+ * Encryptor implementation using paragonie/halite (symmetric authenticated encryption).
+ *
+ * The secret key can be read from a file (hex-encoded) or from string content (e.g. env var).
+ * If the key file does not exist, a new key is generated and saved.
  *
  * @author Michael de Groot <specamps@gmail.com>
  */
-
 class HaliteEncryptor implements EncryptorInterface
 {
     private ?EncryptionKey $encryptionKey = null;
     private string $keyFile;
+    private ?string $keyContent;
 
     /**
-     * {@inheritdoc}
+     * @param string      $keyFile    Path to the key file (ignored when $keyContent is set).
+     * @param string|null $keyContent Optional key value (e.g. from env). When set, $keyFile is not read.
      */
-    public function __construct(string $keyFile)
+    public function __construct(string $keyFile, ?string $keyContent = null)
     {
         $this->keyFile = $keyFile;
+        $this->keyContent = $keyContent !== null && $keyContent !== '' ? $keyContent : null;
     }
 
     /**
-     * The function encrypts a given string using a specified key.
+     * Encrypts plain text using the Halite key.
      *
-     * @param string $data The parameter is a string that represents the data that you want to
-     * encrypt.
-     *
-     * @return string The encrypt function is returning a string.
+     * @param string $data Plain text to encrypt
+     * @return string Ciphertext
      */
     public function encrypt(string $data): string
     {
@@ -41,12 +44,10 @@ class HaliteEncryptor implements EncryptorInterface
     }
 
     /**
-     * The function decrypts a given string using a specified key and returns the decrypted data.
+     * Decrypts ciphertext using the Halite key.
      *
-     * @param string $data The parameter is a string that represents the encrypted data that needs
-     * to be decrypted.
-     *
-     * @return string The decrypted data is being returned as a string.
+     * @param string $data Ciphertext to decrypt
+     * @return string Plain text
      */
     public function decrypt(string $data): string
     {
@@ -60,14 +61,22 @@ class HaliteEncryptor implements EncryptorInterface
     }
 
     /**
-     * The function `getKey()` returns an encryption key, generating a new one if it doesn't exist or
-     * loading it from a file if it does.
+     * Returns the Halite encryption key, loading from file or env content; creates the key file if missing.
      *
-     * @return EncryptionKey an instance of the EncryptionKey class.
+     * @return EncryptionKey
      */
     private function getKey(): EncryptionKey
     {
         if ($this->encryptionKey === null) {
+            if ($this->keyContent !== null) {
+                $this->encryptionKey = $this->loadKeyFromString(trim($this->keyContent));
+                return $this->encryptionKey;
+            }
+            if ($this->keyFile === '') {
+                throw new \RuntimeException(
+                    'The encryption key environment variable is not set. Run "php bin/console doctrine:encrypt:generate-secret-key" to get the key value, then set it in your .env or environment.'
+                );
+            }
             try {
                 $this->normalizeKeyFile();
                 $this->encryptionKey = KeyFactory::loadEncryptionKey($this->keyFile);
@@ -91,7 +100,30 @@ class HaliteEncryptor implements EncryptorInterface
     }
 
     /**
-     * Removes leading/trailing whitespace (e.g. trailing newline) from the key file so Halite's hex decoder does not fail.
+     * Loads the encryption key from string content (e.g. from env).
+     * Halite only supports loading from file, so a temporary file is used.
+     *
+     * @param string $content Hex-encoded key content
+     * @return EncryptionKey
+     */
+    private function loadKeyFromString(string $content): EncryptionKey
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'halite_key_');
+        if ($tmp === false) {
+            throw new \RuntimeException('Could not create temp file for key.');
+        }
+        try {
+            file_put_contents($tmp, $content);
+            return KeyFactory::loadEncryptionKey($tmp);
+        } finally {
+            @unlink($tmp);
+        }
+    }
+
+    /**
+     * Trims leading/trailing whitespace in the key file so Halite's hex decoder does not fail.
+     *
+     * @return void
      */
     private function normalizeKeyFile(): void
     {

@@ -6,21 +6,19 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
- * Configuration tree for the bundle. Full reference: docs/CONFIGURATION.md
+ * Defines and validates the bundle configuration tree (default_config, configs per encryptor).
  *
- * This is the class that validates and merges configuration from your app/config files
- *
- * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html#cookbook-bundles-extension-config-class}
+ * @see docs/CONFIGURATION.md
+ * @see http://symfony.com/doc/current/cookbook/bundles/extension.html#cookbook-bundles-extension-config-class
  */
 class Configuration implements ConfigurationInterface
 {
     public const ALIAS = 'nowo_doctrine_encrypt';
 
     /**
-     * The getConfigTreeBuilder function creates a config tree builder for a PHP application, with default
-     * values for encryptor_class and secret_directory_path.
+     * Builds the configuration tree (default_config, configs with encryptor_class, secret_directory_path, etc.).
      *
-     * @return TreeBuilder The `TreeBuilder` object is being returned.
+     * @return TreeBuilder
      */
     public function getConfigTreeBuilder(): TreeBuilder
     {
@@ -47,10 +45,29 @@ class Configuration implements ConfigurationInterface
                     ->arrayPrototype()
                         ->children()
                             ->scalarNode('encryptor_class')->defaultValue('Halite')->end()
-                            ->scalarNode('secret_directory_path')->defaultValue('%kernel.project_dir%')->end()
+                            ->scalarNode('secret_directory_path')->defaultNull()->info('Directory for the key file. Required unless secret_key_env_var is set.')->end()
+                            ->scalarNode('secret_key_filename')->defaultNull()->info('Optional custom key filename (e.g. .my_app.key). Only used when secret_directory_path is set.')->end()
+                            ->scalarNode('secret_key_env_var')->defaultNull()->info('Key content from env: use %env(APP_ENCRYPT_KEY)% so Symfony resolves it at config load and the bundle receives the value. When set, secret_directory_path and secret_key_filename are not allowed.')->end()
+                        ->end()
+                        ->validate()
+                            ->ifTrue(static function (array $v): bool {
+                                $useEnv = isset($v['secret_key_env_var']) && $v['secret_key_env_var'] !== '' && $v['secret_key_env_var'] !== null;
+                                $usePath = isset($v['secret_directory_path']) && $v['secret_directory_path'] !== '' && $v['secret_directory_path'] !== null;
+                                return $useEnv && $usePath;
+                            })
+                            ->thenInvalid('Cannot set both secret_key_env_var and secret_directory_path.')
+                        ->end()
+                        ->beforeNormalization()
+                            ->ifTrue(static function (array $v): bool {
+                                return empty($v['secret_key_env_var']) && ($v['secret_directory_path'] ?? null) === null;
+                            })
+                            ->then(static function (array $v): array {
+                                $v['secret_directory_path'] = '%kernel.project_dir%';
+                                return $v;
+                            })
                         ->end()
                     ->end()
-                    ->info('Map of config alias => { encryptor_class, secret_directory_path }.')
+                    ->info('Map of config alias => { encryptor_class, secret_directory_path?, secret_key_filename?, secret_key_env_var? }.')
                 ->end()
             ->end();
         //

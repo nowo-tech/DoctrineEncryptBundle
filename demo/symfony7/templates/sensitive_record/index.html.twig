@@ -21,8 +21,8 @@
                     <thead class="table-light">
                         <tr>
                             <th>Id</th>
-                            <th>Personal note (decrypted)</th>
-                            <th>Financial note (decrypted)</th>
+                            <th>Personal note (masked)</th>
+                            <th>Financial note (masked)</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -30,8 +30,8 @@
                     {% for rec in records %}
                         <tr>
                             <td>{{ rec.id }}</td>
-                            <td>{{ rec.personalNote ? (rec.personalNote|slice(0, 40)) ~ '…' : '–' }}</td>
-                            <td>{{ rec.financialNote ? (rec.financialNote|slice(0, 40)) ~ '…' : '–' }}</td>
+                            <td>{{ rec.personalNote ? (rec.personalNote|mask(4)) : '–' }}</td>
+                            <td>{{ rec.financialNote ? (rec.financialNote|mask(4)) : '–' }}</td>
                             <td>
                                 <a href="{{ path('sensitive_record_show', { id: rec.id }) }}" class="btn btn-sm btn-outline-secondary">Show</a>
                                 <a href="{{ path('sensitive_record_edit', { id: rec.id }) }}" class="btn btn-sm btn-outline-primary">Edit</a>

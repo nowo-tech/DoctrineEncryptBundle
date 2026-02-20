@@ -22,17 +22,17 @@ class EncryptUtilDemoController extends AbstractController
         $encryptedDefault = $encryptUtil->encrypt($plainDefault);
         $decryptedDefault = $encryptUtil->decrypt($encryptedDefault);
 
-        // --- Config indicada: personal_data ---
+        // --- Specified config: personal_data ---
         $plainPersonal = 'Secret with personal_data config';
         $encryptedPersonal = $encryptUtil->encrypt($plainPersonal, 'personal_data');
         $decryptedPersonal = $encryptUtil->decrypt($encryptedPersonal, 'personal_data');
 
-        // --- Config indicada: financial_data ---
+        // --- Specified config: financial_data ---
         $plainFinancial = 'Secret with financial_data config';
         $encryptedFinancial = $encryptUtil->encrypt($plainFinancial, 'financial_data');
         $decryptedFinancial = $encryptUtil->decrypt($encryptedFinancial, 'financial_data');
 
-        // --- For Twig filter: default and config indicada (misma y distinta de la default) ---
+        // --- For Twig filter: default and specified config (same and different from default) ---
         $encryptedForTwigDefault = $encryptUtil->encrypt('Decrypted in Twig with |decrypt (default)');
         $encryptedForTwigPersonal = $encryptUtil->encrypt('Decrypted with |decrypt(\'personal_data\')', 'personal_data');
         $encryptedForTwigFinancial = $encryptUtil->encrypt('Decrypted with |decrypt(\'financial_data\')', 'financial_data');

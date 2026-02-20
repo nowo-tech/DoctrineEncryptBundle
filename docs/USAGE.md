@@ -94,7 +94,9 @@ With a **specific config** (when using multiple encryptors):
 {{ encryptedValue|decrypt('financial_data') }}
 ```
 
-If the value does not end with the encryption marker, the filter returns it unchanged. See the demo page “EncryptUtil & Twig” in `demo/symfony7` or `demo/symfony8` for a full example.
+If the value does not end with the encryption marker, the filter returns it unchanged. For a full example see the demo page “EncryptUtil & Twig” in `demo/symfony7` or `demo/symfony8` for a full example.
+
+To **decrypt and then mask** for safe display (e.g. show only last 4 characters), chain the filters: `{{ value|decrypt('personal_data')|mask(4) }}`. The `|mask` filter is from **MaskExtension** (e.g. `|mask(4)` or `|mask(2, '••••')`).
 
 ## Embedded entities
 

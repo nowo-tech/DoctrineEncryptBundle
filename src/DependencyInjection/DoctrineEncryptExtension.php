@@ -11,27 +11,27 @@ use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 /**
- * Initialization of bundle.
+ * Loads bundle configuration and registers encryptor services per config.
  *
- * This is the class that loads and manages your bundle configuration
+ * Builds one encryptor service per config (e.g. nowo_doctrine_encrypt.encryptor.personal_data),
+ * the registry, and parameters (key_paths, secret_key_path, etc.).
  *
- * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html}
+ * @see http://symfony.com/doc/current/cookbook/bundles/extension.html
  */
 class DoctrineEncryptExtension extends Extension
 {
+    /** Short names mapped to encryptor FQCN (Halite, Defuse). */
     public const SUPPORTED_ENCRYPTOR_CLASSES = [
       'Defuse' => DefuseEncryptor::class, // 'Ambta\DoctrineEncryptBundle\Encryptors\DefuseEncryptor',
       'Halite' => HaliteEncryptor::class, // 'Ambta\DoctrineEncryptBundle\Encryptors\HaliteEncryptor',
     ];
 
     /**
-     * This function loads the configuration, sets parameters, and loads a service file in a PHP
-     * application.
+     * Loads the bundle configuration, service definitions, and registers encryptor configs.
      *
-     * @param array configs An array of configuration values passed to the load() method.
-     * @param ContainerBuilder container The `` parameter is an instance of the
-     * `ContainerBuilder` class. It is used to manage and store service definitions, parameters, and other
-     * configuration settings for the application.
+     * @param array            $configs   Merged config from config files
+     * @param ContainerBuilder $container Container to register services and parameters in
+     * @return void
      */
     public function load(array $configs, ContainerBuilder $container): void
     {
@@ -51,6 +51,13 @@ class DoctrineEncryptExtension extends Extension
         $this->registerConfigs($container, $config);
     }
 
+    /**
+     * Registers one encryptor service per config and sets the registry and parameters.
+     *
+     * @param ContainerBuilder $container Container builder
+     * @param array            $config   Processed config (configs, default_config)
+     * @return void
+     */
     private function registerConfigs(ContainerBuilder $container, array $config): void
     {
         $configs = $config['configs'];
@@ -63,13 +70,25 @@ class DoctrineEncryptExtension extends Extension
         $keyPaths = [];
         foreach ($configs as $name => $options) {
             $encryptorClass = $this->resolveEncryptorClass($options['encryptor_class']);
-            $secretKeyPath = $options['secret_directory_path'] . '/.' . $options['encryptor_class'] . '.' . $name . '.key';
-            $serviceId = 'nowo_doctrine_encrypt.encryptor.' . $name;
-            $container->register($serviceId, $encryptorClass)
+            $useEnv = !empty($options['secret_key_env_var']);
+            if ($useEnv) {
+                $secretKeyPath = '';
+                $keyContent = $options['secret_key_env_var'];
+                $keyPaths[$name] = ['path' => null, 'encryptor_class' => $options['encryptor_class']];
+            } else {
+                $dir = $options['secret_directory_path'] ?? '%kernel.project_dir%';
+                $filename = $options['secret_key_filename'] ?? ('.' . $options['encryptor_class'] . '.' . $name . '.key');
+                $secretKeyPath = $dir . '/' . $filename;
+                $keyContent = null;
+                $keyPaths[$name] = ['path' => $secretKeyPath, 'encryptor_class' => $options['encryptor_class']];
+            }
+            $def = $container->register($serviceId = 'nowo_doctrine_encrypt.encryptor.' . $name, $encryptorClass)
                 ->setArgument(0, $secretKeyPath)
                 ->setPublic(false);
+            if ($keyContent !== null) {
+                $def->setArgument(1, $keyContent);
+            }
             $encryptorRefs[$name] = new Reference($serviceId);
-            $keyPaths[$name] = ['path' => $secretKeyPath, 'encryptor_class' => $options['encryptor_class']];
         }
         $container->setParameter('nowo_doctrine_encrypt.key_paths', $keyPaths);
 
@@ -81,11 +100,23 @@ class DoctrineEncryptExtension extends Extension
         $container->setAlias('nowo_doctrine_encrypt.encryptor', 'nowo_doctrine_encrypt.encryptor.' . $defaultConfig);
 
         $opts = $configs[$defaultConfig];
-        $secretKeyPathDefault = $opts['secret_directory_path'] . '/.' . $opts['encryptor_class'] . '.' . $defaultConfig . '.key';
+        if (!empty($opts['secret_key_env_var'])) {
+            $secretKeyPathDefault = '';
+        } else {
+            $dir = $opts['secret_directory_path'] ?? '%kernel.project_dir%';
+            $filename = $opts['secret_key_filename'] ?? ('.' . $opts['encryptor_class'] . '.' . $defaultConfig . '.key');
+            $secretKeyPathDefault = $dir . '/' . $filename;
+        }
         $container->setParameter('nowo_doctrine_encrypt.encryptor_class_name', $this->resolveEncryptorClass($configs[$defaultConfig]['encryptor_class']));
         $container->setParameter('nowo_doctrine_encrypt.secret_key_path', $secretKeyPathDefault);
     }
 
+    /**
+     * Resolves short encryptor name (Halite, Defuse) to FQCN, or returns custom class name as-is.
+     *
+     * @param string $encryptorClass Halite, Defuse, or a custom class FQCN
+     * @return string Encryptor FQCN
+     */
     private function resolveEncryptorClass(string $encryptorClass): string
     {
         return array_key_exists($encryptorClass, self::SUPPORTED_ENCRYPTOR_CLASSES)
@@ -94,7 +125,7 @@ class DoctrineEncryptExtension extends Extension
     }
 
     /**
-     * Get alias for configuration
+     * Returns the configuration alias (e.g. nowo_doctrine_encrypt).
      *
      * @return string
      */

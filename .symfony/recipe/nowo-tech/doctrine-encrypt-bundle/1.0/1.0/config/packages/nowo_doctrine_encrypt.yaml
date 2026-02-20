@@ -9,4 +9,6 @@ nowo_doctrine_encrypt:
         default:
             encryptor_class: Halite   # or Defuse (requires: composer require defuse/php-encryption ^2.1)
             secret_directory_path: '%kernel.project_dir%'
+            # Optional: secret_key_filename: '.my_app.key'   # custom key file name (only when using path)
+            # Optional: secret_key_env_var: '%env(APP_ENCRYPT_KEY)%'   # Symfony resolves at config load; do not set secret_directory_path; run generate-secret-key to get the key
     # Optional: add more configs (e.g. personal_data, financial_data) - see docs/CONFIGURATION.md

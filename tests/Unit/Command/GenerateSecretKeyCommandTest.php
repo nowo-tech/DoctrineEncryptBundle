@@ -127,6 +127,34 @@ class GenerateSecretKeyCommandTest extends TestCase
         unlink($keyPath);
     }
 
+    public function testExecuteWithConfigArgumentOverwritesKeyWhenUserConfirmsYes(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        $keyPath = sys_get_temp_dir() . '/nowo-test-halite-overwrite-' . uniqid() . '.key';
+        file_put_contents($keyPath, 'old-content');
+
+        $keyPaths = [
+            'default' => ['path' => $keyPath, 'encryptor_class' => 'Halite'],
+        ];
+        $command = $this->createCommand($keyPaths, sys_get_temp_dir());
+        $application = new Application();
+        $command->setApplication($application);
+        $tester = new CommandTester($command);
+        $tester->setInputs(['yes']);
+
+        $tester->execute(['config' => 'default'], ['interactive' => true]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertStringContainsString('Overwrite', $tester->getDisplay());
+        $this->assertStringContainsString('saved to', $tester->getDisplay());
+        $content = file_get_contents($keyPath);
+        $this->assertNotSame('old-content', $content);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]+$/i', trim($content), 'Key file must be hex');
+        unlink($keyPath);
+    }
+
     public function testExecuteWithUnknownConfigReturnsFailure(): void
     {
         $keyPaths = [
@@ -177,5 +205,105 @@ class GenerateSecretKeyCommandTest extends TestCase
         $this->assertSame(0, $tester->getStatusCode());
         $this->assertStringContainsString('not supported', $tester->getDisplay());
         $this->assertStringContainsString('Halite and Defuse', $tester->getDisplay());
+    }
+
+    public function testExecuteWithoutArgumentWhenConfigWithoutPathOutputsOnlyKey(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        $keyPaths = [
+            'default' => ['path' => null, 'encryptor_class' => 'Halite'],
+        ];
+        $command = $this->createCommand($keyPaths);
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertStringContainsString('Config "default":', $tester->getDisplay());
+        $this->assertStringContainsString('not set yet', $tester->getDisplay());
+        $this->assertStringContainsString('.env', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/[a-f0-9]{100,}/', $tester->getDisplay(), 'Output must contain the generated key (hex)');
+    }
+
+    public function testExecuteWithConfigArgumentWhenPathNullOutputsOnlyKey(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        $keyPaths = [
+            'default' => ['path' => null, 'encryptor_class' => 'Halite'],
+        ];
+        $command = $this->createCommand($keyPaths);
+        $tester = new CommandTester($command);
+
+        $tester->execute(['config' => 'default']);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertStringContainsString('Config "default":', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/[a-f0-9]{100,}/', $tester->getDisplay());
+    }
+
+    public function testExecuteWithoutArgumentWhenConfigWithoutPathUnsupportedEncryptor(): void
+    {
+        $keyPaths = [
+            'custom' => ['path' => null, 'encryptor_class' => 'CustomEncryptor'],
+        ];
+        $command = $this->createCommand($keyPaths);
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertStringContainsString('key generation not supported', $tester->getDisplay());
+        $this->assertStringContainsString('CustomEncryptor', $tester->getDisplay());
+    }
+
+    public function testExecuteWithoutArgumentDefuseConfigWithoutPathOutputsKey(): void
+    {
+        $keyPaths = [
+            'default' => ['path' => null, 'encryptor_class' => 'Defuse'],
+        ];
+        $command = $this->createCommand($keyPaths);
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertStringContainsString('Config "default":', $tester->getDisplay());
+        $this->assertMatchesRegularExpression('/[a-f0-9]{400,}/', $tester->getDisplay(), 'Defuse key is 510 hex chars');
+    }
+
+    public function testCommandDefinitionHasConfigArgument(): void
+    {
+        $command = $this->createCommand(['default' => ['path' => '/tmp/k.key', 'encryptor_class' => 'Halite']]);
+        $def = $command->getDefinition();
+        $this->assertTrue($def->hasArgument('config'));
+        $this->assertNull($def->getArgument('config')->getDefault(), 'config argument is optional (no default required)');
+    }
+
+    /** Covers createKey() path when parent directory does not exist (mkdir branch for Defuse). */
+    public function testExecuteCreatesKeyInNonExistentDirectory(): void
+    {
+        $baseDir = sys_get_temp_dir() . '/nowo-encrypt-nested-' . uniqid();
+        $this->assertDirectoryDoesNotExist($baseDir);
+        $keyPath = $baseDir . '/subdir/defuse.key';
+        $keyPaths = [
+            'default' => ['path' => $keyPath, 'encryptor_class' => 'Defuse'],
+        ];
+        $command = $this->createCommand($keyPaths, sys_get_temp_dir());
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertFileExists($keyPath);
+        $this->assertStringContainsString('Created', $tester->getDisplay());
+        $content = file_get_contents($keyPath);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]+$/i', trim($content));
+        unlink($keyPath);
+        rmdir($baseDir . '/subdir');
+        rmdir($baseDir);
     }
 }

@@ -997,7 +997,7 @@
             "dist": {
                 "type": "path",
                 "url": "/var/doctrine-encrypt-bundle",
-                "reference": "353015b3482dbe024c12172b483a65061d50d591"
+                "reference": "625dc09e3e5f75d184340ef9810d2c5ae93506cf"
             },
             "require": {
                 "doctrine/orm": "^2.15 || ^3.0",
@@ -1017,8 +1017,7 @@
                 "doctrine/annotations": "^2.0",
                 "friendsofphp/php-cs-fixer": "^3.0",
                 "phpunit/phpunit": "^10.0 || ^11.0",
-                "symfony/cache": "^7.0 || ^8.0",
-                "symfony/var-exporter": "^7.0 || ^8.0"
+                "symfony/cache": "^7.0 || ^8.0"
             },
             "suggest": {
                 "defuse/php-encryption": "Alternative to Halite for encryption",
@@ -1032,7 +1031,7 @@
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Nowo\\DoctrineEncryptBundle\\Tests\\": "Tests/"
+                    "Nowo\\DoctrineEncryptBundle\\Tests\\": "tests/"
                 }
             },
             "archive": {

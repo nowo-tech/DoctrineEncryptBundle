@@ -9,6 +9,11 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
+/**
+ * Console command to encrypt all currently plain values in the database for entities with Encrypted properties.
+ *
+ * Can process a single config (e.g. personal_data) or all configs when no argument is given.
+ */
 #[AsCommand(
     name: 'doctrine:encrypt:database',
     description: 'Encrypt whole database on tables which are not encrypted yet',
@@ -17,6 +22,11 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 )]
 class DoctrineEncryptDatabaseCommand extends AbstractCommand
 {
+    /**
+     * Adds optional config and batchSize arguments.
+     *
+     * @return void
+     */
     protected function configure(): void
     {
         $def = $this->getDefinition();
@@ -28,6 +38,13 @@ class DoctrineEncryptDatabaseCommand extends AbstractCommand
         }
     }
 
+    /**
+     * Encrypts unencrypted values for the selected config(s), with optional progress bar and confirmation.
+     *
+     * @param InputInterface  $input  Console input
+     * @param OutputInterface $output Console output
+     * @return int Command exit code
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $question = $this->getHelper('question');

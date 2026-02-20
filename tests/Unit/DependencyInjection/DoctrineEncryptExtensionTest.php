@@ -64,6 +64,17 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->assertStringEndsWith('.Halite.default.key', $path);
     }
 
+    public function testLoadWithEmptyConfigsArrayRegistersDefaultConfig(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([['configs' => []]], $container);
+
+        $this->assertTrue($container->hasDefinition('nowo_doctrine_encrypt.encryptor.default'));
+        $this->assertStringEndsWith('.Halite.default.key', $container->getParameter('nowo_doctrine_encrypt.secret_key_path'));
+        $keyPaths = $container->getParameter('nowo_doctrine_encrypt.key_paths');
+        $this->assertArrayHasKey('default', $keyPaths);
+    }
+
     public function testConfigLoadCustomSecretDirectoryPath(): void
     {
         $container = $this->createContainer();
@@ -87,7 +98,7 @@ class DoctrineEncryptExtensionTest extends TestCase
     }
 
     /**
-     * Comprueba que todos los servicios definidos por el bundle existen en el contenedor
+     * Checks that all services defined by the bundle exist in the container
      * (por namespace/clase y por alias), como al ejecutar "php bin/console debug:container".
      */
     public function testBundleServicesExistInContainer(): void
@@ -108,7 +119,7 @@ class DoctrineEncryptExtensionTest extends TestCase
             EncryptUtil::class,
         ];
 
-        // Alias definidos en services.yml (encrypt_util se añade en compilación vía AsAlias)
+        // Aliases defined in services.yml (encrypt_util is added at compile time via AsAlias)
         $expectedByAlias = [
             'nowo_doctrine_encrypt.encryptor_registry',
             'nowo_doctrine_encrypt.encryptor',
@@ -166,6 +177,84 @@ class DoctrineEncryptExtensionTest extends TestCase
         $registryDef = $container->getDefinition('nowo_doctrine_encrypt.encryptor_registry');
         $args = $registryDef->getArguments();
         $this->assertSame('personal_data', $args[1]);
+    }
+
+    public function testLoadWithSecretKeyFilenameUsesCustomPath(): void
+    {
+        $container = $this->createContainer();
+        $config = [
+            'configs' => [
+                'default' => [
+                    'encryptor_class' => 'Defuse',
+                    'secret_directory_path' => '/var/keys',
+                    'secret_key_filename' => '.my_encrypt.key',
+                ],
+            ],
+        ];
+        $this->extension->load([$config], $container);
+
+        $this->assertSame('/var/keys/.my_encrypt.key', $container->getParameter('nowo_doctrine_encrypt.secret_key_path'));
+        $keyPaths = $container->getParameter('nowo_doctrine_encrypt.key_paths');
+        $this->assertSame('/var/keys/.my_encrypt.key', $keyPaths['default']['path']);
+    }
+
+    public function testLoadWithSecretKeyEnvVarInjectsEnvAndKeyPathsHasNullPath(): void
+    {
+        $container = $this->createContainer();
+        $resolvedKey = 'resolved-key-from-env';
+        $config = [
+            'configs' => [
+                'default' => [
+                    'encryptor_class' => 'Halite',
+                    'secret_key_env_var' => $resolvedKey,
+                ],
+            ],
+        ];
+        $this->extension->load([$config], $container);
+
+        $keyPaths = $container->getParameter('nowo_doctrine_encrypt.key_paths');
+        $this->assertArrayHasKey('default', $keyPaths);
+        $this->assertNull($keyPaths['default']['path']);
+        $this->assertSame('Halite', $keyPaths['default']['encryptor_class']);
+
+        $def = $container->getDefinition('nowo_doctrine_encrypt.encryptor.default');
+        $this->assertSame($resolvedKey, $def->getArgument(1));
+    }
+
+    public function testLoadWithSecretKeyEnvVarResolvedValueInjectsKeyContentAsIs(): void
+    {
+        $container = $this->createContainer();
+        $resolvedKeyValue = str_repeat('a', 512);
+        $config = [
+            'configs' => [
+                'default' => [
+                    'encryptor_class' => 'Halite',
+                    'secret_key_env_var' => $resolvedKeyValue,
+                ],
+            ],
+        ];
+        $this->extension->load([$config], $container);
+
+        $def = $container->getDefinition('nowo_doctrine_encrypt.encryptor.default');
+        $this->assertSame($resolvedKeyValue, $def->getArgument(1));
+    }
+
+    public function testLoadWithSecretKeyEnvVarInjectsResolvedValueAsIs(): void
+    {
+        $container = $this->createContainer();
+        $resolvedKey = 'resolved-key-APP_ENCRYPT_KEY_2';
+        $config = [
+            'configs' => [
+                'default' => [
+                    'encryptor_class' => 'Halite',
+                    'secret_key_env_var' => $resolvedKey,
+                ],
+            ],
+        ];
+        $this->extension->load([$config], $container);
+
+        $def = $container->getDefinition('nowo_doctrine_encrypt.encryptor.default');
+        $this->assertSame($resolvedKey, $def->getArgument(1));
     }
 
     public function testLoadWithConfigsInvalidDefaultConfigFallsBackToFirst(): void
@@ -261,7 +350,7 @@ class DoctrineEncryptExtensionTest extends TestCase
             $refId = (string) $registryRef;
             $this->assertTrue($refId === $registryServiceId || $refId === $registryClass, 'EncryptUtil must receive EncryptorRegistry (id or class alias)');
         }
-        // Si getArguments() está vacío, el registry se inyecta por autowiring al compilar
+        // If getArguments() is empty, the registry is injected by autowiring at compile time
 
         $this->assertTrue($container->has(DecryptExtension::class));
         $twigDef = $container->getDefinition(DecryptExtension::class);
@@ -272,7 +361,7 @@ class DoctrineEncryptExtensionTest extends TestCase
             $twigRefId = (string) $twigRegistryRef;
             $this->assertTrue($twigRefId === $registryServiceId || $twigRefId === $registryClass, 'DecryptExtension must receive EncryptorRegistry (id or class alias)');
         }
-        // Si getArguments() está vacío, el registry se inyecta por autowiring al compilar
+        // If getArguments() is empty, the registry is injected by autowiring at compile time
     }
 
     private function createContainer(): ContainerBuilder

@@ -7,10 +7,9 @@ use Symfony\Component\Console\Input\InputInterface;
 // attributes
 use Symfony\Component\Console\Output\OutputInterface;
 
-/*
- * The DoctrineEncryptStatusCommand class retrieves metadata for entities and counts the number of
- * encrypted properties in each entity.
- **/
+/**
+ * Console command that lists entities and the count of encrypted properties per entity.
+ */
 #[AsCommand(
     name: 'doctrine:encrypt:status',
     description: 'Get status of doctrine encrypt bundle and the database',
@@ -20,16 +19,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 class DoctrineEncryptStatusCommand extends AbstractCommand
 {
     /**
-     * This PHP function retrieves metadata for entities and counts the number of encrypted properties in
-     * each entity.
+     * Outputs each entity and its encrypted property count, then a total summary.
      *
-     * @param InputInterface input The `` parameter is an instance of the `InputInterface` class. It
-     * represents the input arguments and options provided by the user when executing the command.
-     * @param OutputInterface output The `` parameter is an instance of the `OutputInterface` class.
-     * It is used to write output messages to the console or other output streams.
-     *
-     * @return int The method is returning an integer value. In this case, it is returning the constant
-     * value `AbstractCommand::SUCCESS`, which typically indicates a successful execution of the command.
+     * @param InputInterface  $input  Console input
+     * @param OutputInterface $output Console output
+     * @return int Command::SUCCESS
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {

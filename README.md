@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml/badge.svg)](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml) [![Packagist Version](https://img.shields.io/packagist/v/nowo-tech/doctrine-encrypt-bundle.svg?style=flat)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![Packagist Downloads](https://img.shields.io/packagist/dt/nowo-tech/doctrine-encrypt-bundle.svg)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php)](https://php.net) [![Symfony](https://img.shields.io/badge/Symfony-7%20%7C%208-000000?logo=symfony)](https://symfony.com) [![GitHub stars](https://img.shields.io/github/stars/nowo-tech/doctrine-encrypt-bundle.svg?style=social&label=Star)](https://github.com/nowo-tech/DoctrineEncryptBundle)
 
-> ⭐ **Found this useful?** [Install from Packagist](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) · Give it a **star** on [GitHub](https://github.com/nowo-tech/DoctrineEncryptBundle) so more developers can find it.
+**Symfony bundle to encrypt Doctrine entity fields at rest** using [Halite](https://github.com/paragonie/halite) or [Defuse](https://github.com/defuse/php-encryption)—audited libraries, no custom crypto. For **Symfony 7 and 8** · PHP 8.1+. Suits **GDPR** and compliance (e.g. Art. 32); supports key rotation and [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for anonymization and erasure.
 
-**Doctrine Encrypt Bundle** — Encrypt Doctrine entity fields with [Halite](https://github.com/paragonie/halite) or [Defuse](https://github.com/defuse/php-encryption). Uses verified, standardized libraries (no custom crypto). For Symfony 7 and 8 · PHP 8.1+.
+> ⭐ **Found this useful?** [Install from Packagist](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) · Give it a **star** on [GitHub](https://github.com/nowo-tech/DoctrineEncryptBundle) so more developers can find it.
 
 ## Table of contents
 
@@ -33,7 +33,8 @@ Looking for **Doctrine encryption**, **encrypt entity fields**, **Halite Symfony
 - ✅ **Twig filter** `|decrypt` — decrypt in templates; optional config argument: `{{ value|decrypt }}` or `{{ value|decrypt('financial_data') }}`
 - ✅ Works with **embedded entities** and **inheritance**
 - ✅ Console commands: status, generate secret key, encrypt/decrypt database
-- ✅ **Symfony Flex** recipe (register bundle + config; see [Recipe/](Recipe/README.md))
+- ✅ **Key rotation** — decrypt, replace keys, re-encrypt; combinable with [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for GDPR-compliant anonymization and erasure
+- ✅ **Symfony Flex** recipe (register bundle + config; see [docs/INSTALLATION.md](docs/INSTALLATION.md))
 - ✅ Compatible with **Symfony 7 and 8** and **Doctrine ORM 2.x and 3.x**
 
 ## Installation
@@ -144,7 +145,7 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 | [**Usage**](docs/USAGE.md) | Encrypted attribute, embedded entities, inheritance |
 | [**Example**](docs/EXAMPLE.md) | Full example: entity, fixtures, controller, template |
 | [**Commands**](docs/COMMANDS.md) | Status, generate key, encrypt/decrypt database |
-| [**Key rotation**](docs/KEY_ROTATION.md) | Strategy to change keys: backup, decrypt, replace keys, re-encrypt |
+| [**Key rotation**](docs/KEY_ROTATION.md) | Strategy to change keys: backup, decrypt, replace keys, re-encrypt. Supports GDPR compliance; combinable with Nowo\AnonymizedBundle. |
 | [**Demo**](docs/DEMO.md) | Demo projects (Symfony 7/8) and how to run them |
 | [**Changelog**](docs/CHANGELOG.md) | Version history |
 | [**Upgrading**](docs/UPGRADING.md) | Upgrade notes between versions |

@@ -30,12 +30,12 @@ Luego abre en el navegador la URL que se indique (ej. `http://localhost:8008`).
 - **down** – Para los contenedores.
 - **build** – Reconstruye la imagen sin caché.
 - **install** – `composer install` en el contenedor (usa el bundle desde `/var/doctrine-encrypt-bundle`).
-- **setup** – install + `doctrine:database:create` + `doctrine:schema:update` + `doctrine:encrypt:generate-secret-key`.
+- **setup** – install + `doctrine:database:create` + `doctrine:schema:update` + `doctrine:encrypt:generate-secret-key` (crea archivos de clave y añade `APP_ENCRYPT_KEY` a `.env` si no existe).
 - **shell** – Abre una shell en el contenedor PHP.
 - **logs** – Muestra los logs del contenedor.
 - **db-create** – Crea la base SQLite.
 - **db-schema** – Actualiza el schema Doctrine.
-- **key** – Genera la clave secreta de cifrado (Halite).
+- **key** – Genera claves: `personal_data` usa `APP_ENCRYPT_KEY` (se imprime y debe añadirse a `.env`); `financial_data` usa el archivo `.demo_financial.key`.
 - **cache-clear** – Limpia la caché de Symfony.
 - **update-bundle** – Actualiza el bundle desde el path montado y limpia caché.
 - **test** – Ejecuta los tests de la demo (si existen).
