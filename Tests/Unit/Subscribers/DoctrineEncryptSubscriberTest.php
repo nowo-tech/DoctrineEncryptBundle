@@ -14,6 +14,7 @@ use Doctrine\ORM\UnitOfWork;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
+use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\ChildWithEncryptedOnly;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\EntityWithConfigAlias;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\ExtendedUser;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
@@ -64,6 +65,12 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->assertSame($replaceEncryptor, $this->subscriber->getEncryptor());
         $this->subscriber->restoreEncryptor();
         $this->assertSame($this->encryptor, $this->subscriber->getEncryptor());
+    }
+
+    public function testConstructorWithNullRegistryReturnsNullEncryptor(): void
+    {
+        $subscriber = new DoctrineEncryptSubscriber(null);
+        $this->assertNull($subscriber->getEncryptor());
     }
 
     /** Covers processFields when encryptorOverride is set (uses override instead of registry->get). */
@@ -321,6 +328,23 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->assertNull($user->getAddress());
     }
 
+    /** String '0' is not treated as empty; it is encrypted and decrypted like any other value. */
+    public function testProcessFieldsWithStringZeroEncryptsAndDecrypts(): void
+    {
+        $user = new User('0', '0');
+
+        $this->subscriber->processFields($user, true);
+
+        $this->assertStringStartsWith('encrypted-', $user->name);
+        $this->assertStringEndsWith(DoctrineEncryptSubscriber::ENCRYPTION_MARKER, $user->name);
+        $this->assertStringStartsWith('encrypted-', $user->getAddress());
+        $this->assertStringEndsWith(DoctrineEncryptSubscriber::ENCRYPTION_MARKER, $user->getAddress());
+
+        $this->subscriber->processFields($user, false);
+        $this->assertSame('0', $user->name);
+        $this->assertSame('0', $user->getAddress());
+    }
+
     public function testEncryptCounterIncrementsOnEncrypt(): void
     {
         $user = new User('David', 'Switzerland');
@@ -501,5 +525,57 @@ class DoctrineEncryptSubscriberTest extends TestCase
 
         $this->assertStringStartsWith('encrypted-', $withUser->name);
         $this->assertNull($withUser->user);
+    }
+
+    /** When configFilter is set, only properties for that config are processed. */
+    public function testProcessFieldsWithConfigFilterOnlyProcessesMatchingConfig(): void
+    {
+        $defaultEncryptor = $this->createMock(EncryptorInterface::class);
+        $defaultEncryptor->method('encrypt')->willReturn('enc-default');
+        $otherEncryptor = $this->createMock(EncryptorInterface::class);
+        $otherEncryptor->method('encrypt')->willReturn('enc-other');
+        $registry = new EncryptorRegistry([
+            'default' => $defaultEncryptor,
+            'other_config' => $otherEncryptor,
+        ], 'default');
+        $subscriber = new DoctrineEncryptSubscriber($registry);
+
+        $entity = new EntityWithConfigAlias('a', 'b');
+        $subscriber->processFields($entity, true, 'other_config');
+
+        $this->assertSame('a', $entity->defaultField);
+        $this->assertStringStartsWith('enc-other', $entity->otherField);
+        $this->assertStringEndsWith('<ENC>', $entity->otherField);
+    }
+
+    /** Covers getClassProperties when parent class has no properties (merge branch not taken). */
+    public function testProcessFieldsEncryptEntityWhoseParentHasNoProperties(): void
+    {
+        $entity = new ChildWithEncryptedOnly('secret-data');
+
+        $this->subscriber->processFields($entity, true);
+
+        $this->assertStringStartsWith('encrypted-', $entity->secret);
+        $this->assertStringEndsWith(DoctrineEncryptSubscriber::ENCRYPTION_MARKER, $entity->secret);
+    }
+
+    /** Decrypt with configFilter only decrypts properties for that config. */
+    public function testProcessFieldsDecryptWithConfigFilterOnlyProcessesMatchingConfig(): void
+    {
+        $defaultEncryptor = $this->createMock(EncryptorInterface::class);
+        $defaultEncryptor->method('decrypt')->willReturn('dec-default');
+        $otherEncryptor = $this->createMock(EncryptorInterface::class);
+        $otherEncryptor->method('decrypt')->willReturn('dec-other');
+        $registry = new EncryptorRegistry([
+            'default' => $defaultEncryptor,
+            'other_config' => $otherEncryptor,
+        ], 'default');
+        $subscriber = new DoctrineEncryptSubscriber($registry);
+
+        $entity = new EntityWithConfigAlias('encrypted-x<ENC>', 'encrypted-y<ENC>');
+        $subscriber->processFields($entity, false, 'default');
+
+        $this->assertSame('dec-default', $entity->defaultField);
+        $this->assertSame('encrypted-y<ENC>', $entity->otherField);
     }
 }

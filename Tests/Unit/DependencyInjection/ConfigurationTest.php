@@ -71,6 +71,23 @@ class ConfigurationTest extends TestCase
         $this->assertNotNull($treeBuilder->getRootNode());
     }
 
+    public function testConfigurationAliasConstant(): void
+    {
+        $this->assertSame('nowo_doctrine_encrypt', Configuration::ALIAS);
+    }
+
+    public function testProcessedConfigHasDefaultEncryptorClassAndSecretPath(): void
+    {
+        $config = $this->process([
+            'configs' => [
+                'default' => [],
+            ],
+        ]);
+
+        $this->assertSame('Halite', $config['configs']['default']['encryptor_class']);
+        $this->assertSame('%kernel.project_dir%', $config['configs']['default']['secret_directory_path']);
+    }
+
     private function process(array $config): array
     {
         $configuration = new Configuration();

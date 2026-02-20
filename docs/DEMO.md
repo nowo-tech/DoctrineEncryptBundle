@@ -52,13 +52,16 @@ Change port: `PORT=9008 make up`.
 - **public/index.php** – Symfony front controller.
 - **config/** – Bundles (DoctrineEncryptBundle), Doctrine, `nowo_doctrine_encrypt.yaml`.
 - **src/Entity/SecretMessage.php** – Example entity with `#[Encrypted]` property.
-- **src/Controller/DemoController.php** – Simple home route.
+- **src/Entity/SensitiveRecord.php** – Entity with two configs: `personal_data` and `financial_data`.
+- **src/Controller/DemoController.php** – Home route.
+- **src/Controller/EncryptUtilDemoController.php** – Page that uses **EncryptUtil** and the Twig **`|decrypt`** filter.
+- **Templates** – CRUD for Secret messages and Sensitive records, plus the EncryptUtil & Twig demo page.
 
 The bundle is installed via Composer **path repository** pointing to `/var/doctrine-encrypt-bundle` (mounted from the repo root). See **demo/README.md** for more detail.
 
-## Multiple encryptors (Symfony 8 demo)
+## Multiple encryptors and EncryptUtil (both demos)
 
-The **Symfony 8** demo illustrates **multiple encryptor configs**. In `demo/symfony8/config/packages/nowo_doctrine_encrypt.yaml` you’ll find:
+**Symfony 7** and **Symfony 8** demos both use **multiple encryptor configs**. In `config/packages/nowo_doctrine_encrypt.yaml` you’ll find:
 
 - **configs:** `personal_data` (Halite) and `financial_data` (Defuse), each with its own key file.
 - **default_config:** `personal_data` (used by `#[Encrypted]` without a config name).
@@ -68,4 +71,4 @@ The **Symfony 8** demo illustrates **multiple encryptor configs**. In `demo/symf
 - `personal_note` → `#[Encrypted('personal_data')]`
 - `financial_note` → `#[Encrypted('financial_data')]`
 
-Run `make encrypt-status` in the demo directory to see entities and encrypted properties per config. Full reference: [Configuration – Multiple encryptors](CONFIGURATION.md#multiple-encryptors-configs), [Usage – Multiple encryptors](USAGE.md#multiple-encryptors).
+The **"EncryptUtil & Twig"** page demonstrates programmatic encrypt/decrypt via `EncryptUtil` and the Twig filter `|decrypt` with default and config-specific usage. Run `make encrypt-status` (or `php bin/console doctrine:encrypt:status`) in the demo directory to see entities and encrypted properties. Full reference: [Configuration](CONFIGURATION.md#example-multiple-encryptors), [Usage – EncryptUtil and Twig](USAGE.md#encryptutil-programmatic-encryptdecrypt).

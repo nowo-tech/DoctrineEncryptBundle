@@ -222,16 +222,15 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
     }
 
     /**
-     * Process (encrypt/decrypt) entities fields
+     * Process (encrypt/decrypt) entities fields.
      *
-     * @param Object $entity doctrine entity
-     * @param Boolean $isEncryptOperation If true - encrypt, false - decrypt entity
+     * @param object $entity doctrine entity
+     * @param bool   $isEncryptOperation If true - encrypt, false - decrypt entity
+     * @param string|null $configFilter When set, only process properties that use this config (e.g. personal_data). Resolves "default" via registry default.
      *
      * @return object|null
-     *@throws \RuntimeException
-     *
      */
-    public function processFields(object $entity, bool $isEncryptOperation = true): ?object
+    public function processFields(object $entity, bool $isEncryptOperation = true, ?string $configFilter = null): ?object
     {
         $encryptor = $this->getEncryptor();
         if ($encryptor === null) {
@@ -241,18 +240,26 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
         $encryptorMethod = $isEncryptOperation ? 'encrypt' : 'decrypt';
         $realClass = $this->getRealClass($entity);
         $properties = $this->getClassProperties($realClass);
+        $defaultConfigName = $this->registry?->getDefaultName();
 
         foreach ($properties as $refProperty) {
             $attributes = $refProperty->getAttributes();
             $isEmbebed = $this->defineAtributeType($attributes, 'Doctrine\ORM\Mapping\Embedded');
             if ($isEmbebed) {
-                $this->handleEmbeddedAnnotation($entity, $refProperty, $isEncryptOperation);
+                $this->handleEmbeddedAnnotation($entity, $refProperty, $isEncryptOperation, $configFilter);
                 continue;
             }
 
             $encryptedAttr = $this->getEncryptedAttributeInstance($attributes);
             if ($encryptedAttr === null) {
                 continue;
+            }
+
+            if ($configFilter !== null && $defaultConfigName !== null) {
+                $effectiveConfig = $encryptedAttr->config === 'default' ? $defaultConfigName : $encryptedAttr->config;
+                if ($effectiveConfig !== $configFilter) {
+                    continue;
+                }
             }
 
             $propertyEncryptor = $this->encryptorOverride !== null
@@ -297,7 +304,7 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
         return null;
     }
 
-    private function handleEmbeddedAnnotation($entity, ReflectionProperty $embeddedProperty, bool $isEncryptOperation = true)
+    private function handleEmbeddedAnnotation($entity, ReflectionProperty $embeddedProperty, bool $isEncryptOperation = true, ?string $configFilter = null): void
     {
         $propName = $embeddedProperty->getName();
 
@@ -306,7 +313,7 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
         $embeddedEntity = $pac->getValue($entity, $propName);
 
         if ($embeddedEntity) {
-            $this->processFields($embeddedEntity, $isEncryptOperation);
+            $this->processFields($embeddedEntity, $isEncryptOperation, $configFilter);
         }
     }
 

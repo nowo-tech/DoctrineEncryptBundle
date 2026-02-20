@@ -72,4 +72,16 @@ class EncryptorRegistryTest extends TestCase
 
         $this->assertSame(['personal_data', 'financial_data'], $registry->getConfigNames());
     }
+
+    public function testGetDefaultThrowsWhenDefaultNameNotInRegistry(): void
+    {
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $registry = new EncryptorRegistry(['personal_data' => $encryptor], 'default');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown encryptor config "default"');
+        $this->expectExceptionMessage('personal_data');
+
+        $registry->getDefault();
+    }
 }

@@ -19,7 +19,7 @@ help:
 	@echo "  shell         Open shell in container"
 	@echo "  install       Install Composer dependencies"
 	@echo "  test          Run PHPUnit tests (starts container if needed)"
-	@echo "  test-coverage Run tests with code coverage (needs PCOV: run 'make build' if you see 'No code coverage driver')"
+	@echo "  test-coverage Run tests with code coverage; target 95%% (needs PCOV: run 'make build' if you see 'No code coverage driver')"
 	@echo "  cs-check      Check code style"
 	@echo "  cs-fix        Fix code style"
 	@echo "  qa            Run all QA checks (cs-check + test)"

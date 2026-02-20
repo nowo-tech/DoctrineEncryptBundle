@@ -25,7 +25,7 @@ The bundle does not support “in-place” re-encryption with a new key; decrypt
 
 2. **Key file(s)**  
    Copy the current secret key file(s) to a secure, offline location (e.g. encrypted volume or vault). You need them to decrypt in step 2.  
-   - Single encryptor: e.g. `.Halite.key` or `.Defuse.key` in `secret_directory_path`.  
+   - Single config (e.g. `default`): e.g. `.Halite.default.key` or `.Defuse.default.key` in that config’s `secret_directory_path`.  
    - Multiple configs: one file per config, e.g. `.Halite.personal_data.key`, `.Defuse.financial_data.key`.
 
 3. **Optional:** Put the application in maintenance mode or read-only so no new encrypted data is written during the rotation.

@@ -43,30 +43,37 @@ return [
 
 ```yaml
 nowo_doctrine_encrypt:
-    encryptor_class: Halite   # or Defuse
-    secret_directory_path: '%kernel.project_dir%'
+    default_config: default
+    configs:
+        default:
+            encryptor_class: Halite   # or Defuse
+            secret_directory_path: '%kernel.project_dir%'
 ```
 
-All keys are optional; defaults are applied if the file is omitted.
+If the file is omitted, the bundle uses a single default config (Halite, `%kernel.project_dir%`). See [Configuration](CONFIGURATION.md) for multiple configs.
 
 ## Using Defuse
 
-If you want to use Defuse instead of Halite:
+If you want to use Defuse instead of (or in addition to) Halite:
 
 ```bash
 composer require defuse/php-encryption ^2.1
 ```
 
-Then set in config:
+Then set in config under the relevant config entry:
 
 ```yaml
 nowo_doctrine_encrypt:
-    encryptor_class: Defuse
+    default_config: default
+    configs:
+        default:
+            encryptor_class: Defuse
+            secret_directory_path: '%kernel.project_dir%'
 ```
 
 ## Secret key
 
-The bundle stores a secret key in a file under `secret_directory_path` (e.g. `.Halite.key` or `.Defuse.key`). You can generate it with:
+The bundle stores a secret key per config, e.g. `.Halite.default.key` or `.Defuse.default.key` under `secret_directory_path`. You can generate the default key with:
 
 ```bash
 php bin/console doctrine:encrypt:generate-secret-key
@@ -74,11 +81,13 @@ php bin/console doctrine:encrypt:generate-secret-key
 
 (Command name may vary; list commands with `php bin/console list doctrine`.)
 
-**Important:** Add the key file to `.gitignore`:
+**Important:** Add key files to `.gitignore`:
 
 ```gitignore
 .Halite.key
 .Defuse.key
+.Halite.*.key
+.Defuse.*.key
 ```
 
 ## Next steps

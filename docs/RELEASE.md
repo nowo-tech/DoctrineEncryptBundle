@@ -32,6 +32,11 @@
 
 ---
 
+## v2.0.4 (2026-02-19)
+
+- **Scope:** (1) Fix PHPUnit unit tests (EncryptUtil, DecryptExtension) so they no longer mock the final class `EncryptorRegistry`; use real registry with mocked `EncryptorInterface` instead. Fixes test-coverage errors with PHPUnit 10/11. (2) Make `doctrine:encrypt:database` and `doctrine:decrypt:database` command `configure()` idempotent so arguments are only added when not already present; avoids "An argument with name config already exists" with Symfony Console 7/8.
+- **Checklist:** CHANGELOG and UPGRADING updated; tag `v2.0.4` created and pushed.
+
 ## v2.0.3 (2026-02-19)
 
 - **Scope:** Allow paragonie/sodium_compat ^2.0 so the bundle installs in projects using sodium_compat 2.x.

@@ -29,6 +29,8 @@ Looking for **Doctrine encryption**, **encrypt entity fields**, **Halite Symfony
 - ✅ **Multiple encryptor configs** — e.g. `personal_data` (Halite) and `financial_data` (Defuse) in the same app, each with its own key
 - ✅ **Halite** and **Defuse** — audited crypto libraries, no custom algorithms
 - ✅ Transparent: encrypt on persist/update, decrypt on load
+- ✅ **EncryptUtil** — programmatic `encrypt()` / `decrypt()` with optional config name (default or e.g. `financial_data`)
+- ✅ **Twig filter** `|decrypt` — decrypt in templates; optional config argument: `{{ value|decrypt }}` or `{{ value|decrypt('financial_data') }}`
 - ✅ Works with **embedded entities** and **inheritance**
 - ✅ Console commands: status, generate secret key, encrypt/decrypt database
 - ✅ **Symfony Flex** recipe (register bundle + config; see [Recipe/](Recipe/README.md))
@@ -88,15 +90,20 @@ Key files: one per config, e.g. `.Halite.personal_data.key`, `.Defuse.financial_
 
 Generate the default key: `php bin/console doctrine:encrypt:generate-secret-key` (Halite only). See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) and [docs/COMMANDS.md](docs/COMMANDS.md).
 
-### Single encryptor (legacy)
+### Single encryptor (one config)
+
+Use one entry under `configs` (e.g. `default`):
 
 ```yaml
 nowo_doctrine_encrypt:
-    encryptor_class: Halite   # or Defuse
-    secret_directory_path: '%kernel.project_dir%'
+    default_config: default
+    configs:
+        default:
+            encryptor_class: Halite   # or Defuse
+            secret_directory_path: '%kernel.project_dir%'
 ```
 
-Key file: `.Halite.key` or `.Defuse.key`. Full options: [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
+Key file: `.Halite.default.key` (or `.Defuse.default.key`). Full options: [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
 
 ## Usage
 
@@ -126,7 +133,7 @@ private ?string $email = null;
 private ?string $iban = null;
 ```
 
-Values are encrypted on persist/update and decrypted on load. See [docs/USAGE.md](docs/USAGE.md) for embedded entities, inheritance, and more examples.
+Values are encrypted on persist/update and decrypted on load. For **programmatic encrypt/decrypt** (e.g. in a service or API) use **EncryptUtil**; in Twig use the **`|decrypt`** filter when you need to decrypt a value in a template. See [docs/USAGE.md](docs/USAGE.md) for EncryptUtil, Twig filter, embedded entities, and inheritance.
 
 ## Documentation
 

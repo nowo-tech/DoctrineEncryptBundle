@@ -44,4 +44,10 @@ class EncryptedTest extends TestCase
         $attr = new Encrypted([]);
         $this->assertSame('default', $attr->config);
     }
+
+    public function testConstructorWithExplicitDefaultString(): void
+    {
+        $attr = new Encrypted('default');
+        $this->assertSame('default', $attr->config);
+    }
 }

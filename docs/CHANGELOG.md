@@ -21,6 +21,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.4] - 2026-02-19
+
+### Fixed
+
+- **PHPUnit:** Unit tests for `EncryptUtil` and `DecryptExtension` (Twig) no longer mock the final class `EncryptorRegistry`; they use real `EncryptorRegistry` instances with mocked `EncryptorInterface` where needed. This fixes `ClassIsFinalException: Class ... is declared "final" and cannot be doubled` when running `make test-coverage` or `composer test-coverage` with PHPUnit 10/11.
+- **Symfony Console:** Commands `doctrine:encrypt:database` and `doctrine:decrypt:database` now register arguments in an idempotent way: `config` and `batchSize` are only added when not already present. This avoids `LogicException: An argument with name "config" already exists` when the Console component builds the command definition more than once (e.g. with certain Symfony Console 7/8 setups or when tests call `getDefinition()`).
+
+No upgrade steps required from 2.0.3. See [UPGRADING.md](UPGRADING.md#upgrading-to-204).
+
+---
+
 ## [2.0.3] - 2026-02-19
 
 ### Changed

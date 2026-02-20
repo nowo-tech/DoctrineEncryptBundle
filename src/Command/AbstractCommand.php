@@ -5,6 +5,8 @@ namespace Nowo\DoctrineEncryptBundle\Command;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Symfony\Component\Console\Command\Command;
@@ -18,12 +20,16 @@ abstract class AbstractCommand extends Command
      * AbstractCommand constructor.
      *
      * @param EntityManager             $entityManager
-     * @param DoctrineEncryptSubscriber $subscriber
+     * @param DoctrineEncryptSubscriber  $subscriber
+     * @param EncryptorInterface|null    $defaultEncryptor Used by encrypt/decrypt database commands when subscriber has no encryptor (e.g. multi-config).
+     * @param EncryptorRegistry|null     $encryptorRegistry Used by encrypt/decrypt database commands to resolve config names and encryptors.
      */
     public function __construct(
         public EntityManagerInterface $entityManager,
         public AttributeReader $attributeReader,
-        public DoctrineEncryptSubscriber $subscriber
+        public DoctrineEncryptSubscriber $subscriber,
+        public ?EncryptorInterface $defaultEncryptor = null,
+        public ?EncryptorRegistry $encryptorRegistry = null
     ) {
         parent::__construct();
     }
@@ -111,5 +117,60 @@ abstract class AbstractCommand extends Command
         }
         // return properties
         return $properties;
+    }
+
+    /**
+     * Returns properties marked with Encrypted that belong to the given config.
+     * When a property has config "default", it is included if $defaultConfigName === $configName.
+     *
+     * @param object $entityMetaData Doctrine entity metadata
+     * @param string $configName      Config name (e.g. personal_data, financial_data)
+     * @param string $defaultConfigName Registry default config name (for resolving Encrypted('default'))
+     *
+     * @return array<\ReflectionProperty>
+     */
+    protected function getEncryptionablePropertiesForConfig($entityMetaData, string $configName, string $defaultConfigName): array
+    {
+        $reflectionClass = new \ReflectionClass($entityMetaData->name);
+        $propertyArray = $reflectionClass->getProperties();
+        $properties = [];
+        foreach ($propertyArray as $property) {
+            $annotation = $this->attributeReader->getPropertyAnnotation($property, Encrypted::class);
+            if ($annotation instanceof Encrypted) {
+                $effectiveConfig = $annotation->config === 'default' ? $defaultConfigName : $annotation->config;
+                if ($effectiveConfig === $configName) {
+                    $properties[] = $property;
+                }
+            }
+        }
+
+        return $properties;
+    }
+
+    /**
+     * Returns entity metadata that have at least one Encrypted property for the given config.
+     *
+     * @param string $configName        Config name (e.g. personal_data)
+     * @param string $defaultConfigName Registry default config name
+     *
+     * @return array
+     */
+    protected function getEncryptionableEntityMetaDataForConfig(string $configName, string $defaultConfigName): array
+    {
+        $validMetaData = [];
+        $metaDataArray = $this->entityManager->getMetadataFactory()->getAllMetadata();
+
+        foreach ($metaDataArray as $entityMetaData) {
+            if (isset($entityMetaData->isMappedSuperclass) && $entityMetaData->isMappedSuperclass) {
+                continue;
+            }
+
+            $properties = $this->getEncryptionablePropertiesForConfig($entityMetaData, $configName, $defaultConfigName);
+            if (count($properties) > 0) {
+                $validMetaData[] = $entityMetaData;
+            }
+        }
+
+        return $validMetaData;
     }
 }

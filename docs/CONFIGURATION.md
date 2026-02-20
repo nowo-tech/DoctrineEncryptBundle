@@ -1,6 +1,6 @@
 # Configuration
 
-The bundle is configured under the root key `nowo_doctrine_encrypt`. You define one or more **configs** (each with its own encryptor and key path) and a **default_config**. When `#[Encrypted]` has no alias (or uses `"default"`), the encryptor for `default_config` is used.
+The bundle is configured under the root key `nowo_doctrine_encrypt`. The only supported structure is **`default_config`** plus **`configs`** (a map of config name ⇒ options). There is no root-level `encryptor_class` or `secret_directory_path`; use a single entry under `configs` (e.g. `default`) for one encryptor. When `#[Encrypted]` has no alias (or uses `"default"`), the encryptor for `default_config` is used.
 
 ## Options
 

@@ -7,6 +7,16 @@ services:
     resource: '../../Command/*'
     exclude: '../../Command/AbstractCommand.php'
 
+  Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptDatabaseCommand:
+    arguments:
+      $defaultEncryptor: '@nowo_doctrine_encrypt.encryptor'
+      $encryptorRegistry: '@nowo_doctrine_encrypt.encryptor_registry'
+
+  Nowo\DoctrineEncryptBundle\Command\DoctrineDecryptDatabaseCommand:
+    arguments:
+      $defaultEncryptor: '@nowo_doctrine_encrypt.encryptor'
+      $encryptorRegistry: '@nowo_doctrine_encrypt.encryptor_registry'
+
   Nowo\DoctrineEncryptBundle\Command\GenerateSecretKeyCommand:
     arguments:
       $secretKeyPath: '%nowo_doctrine_encrypt.secret_key_path%'

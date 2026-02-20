@@ -2,12 +2,23 @@
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\DependencyInjection;
 
+use Nowo\DoctrineEncryptBundle\Command\DoctrineDecryptDatabaseCommand;
+use Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptDatabaseCommand;
+use Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptStatusCommand;
+use Nowo\DoctrineEncryptBundle\Command\GenerateSecretKeyCommand;
 use Nowo\DoctrineEncryptBundle\DependencyInjection\DoctrineEncryptExtension;
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
+use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
+use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
+use Nowo\DoctrineEncryptBundle\Twig\DecryptExtension;
+use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Symfony\Component\DependencyInjection\Reference;
 
 class DoctrineEncryptExtensionTest extends TestCase
 {
@@ -73,6 +84,46 @@ class DoctrineEncryptExtensionTest extends TestCase
     public function testGetAlias(): void
     {
         $this->assertSame('nowo_doctrine_encrypt', $this->extension->getAlias());
+    }
+
+    /**
+     * Comprueba que todos los servicios definidos por el bundle existen en el contenedor
+     * (por namespace/clase y por alias), como al ejecutar "php bin/console debug:container".
+     */
+    public function testBundleServicesExistInContainer(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([[]], $container);
+
+        $expectedByNamespace = [
+            DoctrineEncryptDatabaseCommand::class,
+            DoctrineDecryptDatabaseCommand::class,
+            DoctrineEncryptStatusCommand::class,
+            GenerateSecretKeyCommand::class,
+            EncryptorRegistry::class,
+            EncryptorInterface::class,
+            AttributeReader::class,
+            DoctrineEncryptSubscriber::class,
+            DecryptExtension::class,
+            EncryptUtil::class,
+        ];
+
+        // Alias definidos en services.yml (encrypt_util se añade en compilación vía AsAlias)
+        $expectedByAlias = [
+            'nowo_doctrine_encrypt.encryptor_registry',
+            'nowo_doctrine_encrypt.encryptor',
+            'nowo_doctrine_encrypt.orm_subscriber',
+            'nowo_doctrine_encrypt.subscriber',
+            'nowo_doctrine_attribute_reader',
+        ];
+
+        foreach ($expectedByNamespace as $serviceId) {
+            $this->assertTrue($container->has($serviceId), "Container must define service by namespace: {$serviceId}");
+        }
+
+        foreach ($expectedByAlias as $serviceId) {
+            $this->assertTrue($container->has($serviceId), "Container must define service by alias: {$serviceId}");
+        }
     }
 
     public function testConfigLoadCustom(): void
@@ -147,6 +198,81 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->extension->load([$config], $container);
 
         $this->assertSame('Custom\\MyEncryptor', $container->getParameter('nowo_doctrine_encrypt.encryptor_class_name'));
+    }
+
+    public function testEncryptDatabaseCommandReceivesRegistryAndDefaultEncryptor(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([[]], $container);
+
+        $def = $container->getDefinition(DoctrineEncryptDatabaseCommand::class);
+        $args = $def->getArguments();
+
+        $this->assertArrayHasKey('$encryptorRegistry', $args);
+        $this->assertArrayHasKey('$defaultEncryptor', $args);
+        $this->assertInstanceOf(Reference::class, $args['$encryptorRegistry']);
+        $this->assertInstanceOf(Reference::class, $args['$defaultEncryptor']);
+        $this->assertSame('nowo_doctrine_encrypt.encryptor_registry', (string) $args['$encryptorRegistry']);
+        $this->assertSame('nowo_doctrine_encrypt.encryptor', (string) $args['$defaultEncryptor']);
+    }
+
+    public function testDecryptDatabaseCommandReceivesRegistryAndDefaultEncryptor(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([[]], $container);
+
+        $def = $container->getDefinition(DoctrineDecryptDatabaseCommand::class);
+        $args = $def->getArguments();
+
+        $this->assertArrayHasKey('$encryptorRegistry', $args);
+        $this->assertArrayHasKey('$defaultEncryptor', $args);
+        $this->assertSame('nowo_doctrine_encrypt.encryptor_registry', (string) $args['$encryptorRegistry']);
+        $this->assertSame('nowo_doctrine_encrypt.encryptor', (string) $args['$defaultEncryptor']);
+    }
+
+    public function testSubscriberReceivesEncryptorRegistry(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([[]], $container);
+
+        $def = $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber');
+        $args = $def->getArguments();
+
+        $this->assertNotEmpty($args);
+        $first = $args[0] ?? $args['$registryOrEncryptor'] ?? null;
+        $this->assertInstanceOf(Reference::class, $first);
+        $this->assertSame('nowo_doctrine_encrypt.encryptor_registry', (string) $first);
+    }
+
+    public function testEncryptUtilAndDecryptExtensionAreRegisteredAndReceiveRegistry(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([[]], $container);
+
+        $registryServiceId = 'nowo_doctrine_encrypt.encryptor_registry';
+        $registryClass = EncryptorRegistry::class;
+
+        $this->assertTrue($container->has(EncryptUtil::class));
+        $utilDef = $container->getDefinition(EncryptUtil::class);
+        $utilArgs = $utilDef->getArguments();
+        if ($utilArgs !== []) {
+            $registryRef = $utilArgs['registry'] ?? $utilArgs[0] ?? null;
+            $this->assertInstanceOf(Reference::class, $registryRef);
+            $refId = (string) $registryRef;
+            $this->assertTrue($refId === $registryServiceId || $refId === $registryClass, 'EncryptUtil must receive EncryptorRegistry (id or class alias)');
+        }
+        // Si getArguments() está vacío, el registry se inyecta por autowiring al compilar
+
+        $this->assertTrue($container->has(DecryptExtension::class));
+        $twigDef = $container->getDefinition(DecryptExtension::class);
+        $twigArgs = $twigDef->getArguments();
+        if ($twigArgs !== []) {
+            $twigRegistryRef = $twigArgs['registry'] ?? $twigArgs[0] ?? null;
+            $this->assertInstanceOf(Reference::class, $twigRegistryRef);
+            $twigRefId = (string) $twigRegistryRef;
+            $this->assertTrue($twigRefId === $registryServiceId || $twigRefId === $registryClass, 'DecryptExtension must receive EncryptorRegistry (id or class alias)');
+        }
+        // Si getArguments() está vacío, el registry se inyecta por autowiring al compilar
     }
 
     private function createContainer(): ContainerBuilder

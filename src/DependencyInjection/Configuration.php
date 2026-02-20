@@ -29,8 +29,10 @@ class Configuration implements ConfigurationInterface
         if (\method_exists($treeBuilder, 'getRootNode')) {
             $rootNode = $treeBuilder->getRootNode();
         } else {
-            // BC layer for symfony/config 4.1 and older
-            $rootNode = $treeBuilder->root(self::ALIAS);
+            // BC layer for symfony/config 4.1 and older (TreeBuilder::root() before getRootNode() existed)
+            /** @codeCoverageIgnoreStart - getRootNode() exists in current symfony/config */
+            $rootNode = \call_user_func([$treeBuilder, 'root'], self::ALIAS);
+            /** @codeCoverageIgnoreEnd */
         }
 
         // Single grammar: default_config + configs. When #[Encrypted] has no alias (or "default"), the encryptor for default_config is used.

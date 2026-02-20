@@ -15,7 +15,7 @@ Look for commands such as:
 - `doctrine:decrypt:database`
 - `doctrine:encrypt:generate-secret-key`
 
-(Exact names may vary; run `list` to see the current names.)
+Run `php bin/console list doctrine` to see the exact command names.
 
 ## Status
 
@@ -25,7 +25,7 @@ Get the current database and encryption information:
 php bin/console doctrine:encrypt:status
 ```
 
-This returns the number of entities and the number of properties marked with `@Encrypted` (or the `Encrypted` attribute) per entity.
+This returns the number of entities and the number of properties marked with the `Encrypted` attribute per entity.
 
 ## Encrypt database
 
@@ -35,14 +35,17 @@ Encrypt all currently unencrypted values in the database:
 php bin/console doctrine:encrypt:database
 ```
 
-Optionally specify the encryptor:
+Optional arguments:
+
+- **encryptor** — Encryptor to use (e.g. `Halite`, `Defuse`), or a class name. Default: the configured default encryptor.
+- **batchSize** — Number of entities to flush per batch (default: 20).
+
+Examples:
 
 ```bash
 php bin/console doctrine:encrypt:database Halite
-php bin/console doctrine:encrypt:database Defuse
+php bin/console doctrine:encrypt:database Defuse 50
 ```
-
-The command uses the configured encryptor by default.
 
 ## Decrypt database
 
@@ -52,11 +55,16 @@ Decrypt all encrypted values:
 php bin/console doctrine:decrypt:database
 ```
 
-Optionally specify the encryptor:
+Optional arguments:
+
+- **encryptor** — Encryptor to use (e.g. `Halite`, `Defuse`), or a class name. Default: the configured default encryptor.
+- **batchSize** — Number of entities to flush per batch (default: 20).
+
+Examples:
 
 ```bash
 php bin/console doctrine:decrypt:database Halite
-php bin/console doctrine:decrypt:database Defuse
+php bin/console doctrine:decrypt:database Defuse 50
 ```
 
 ## Generate secret key

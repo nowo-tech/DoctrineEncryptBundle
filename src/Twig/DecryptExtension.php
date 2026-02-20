@@ -9,6 +9,7 @@ use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Extension\AbstractExtension;
+
 // use Twig\TwigFilter;
 
 /**
@@ -21,7 +22,7 @@ use Twig\Extension\AbstractExtension;
  *
  * Usage: {{ value|decrypt }} or {{ value|decrypt('financial_data') }}
  */
-class DecryptExtension/* extends AbstractExtension*/
+class DecryptExtension /* extends AbstractExtension*/
 {
     public function __construct(
         private readonly EncryptorRegistry $registry

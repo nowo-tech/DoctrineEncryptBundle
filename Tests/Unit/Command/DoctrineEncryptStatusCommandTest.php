@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping\ClassMetadataFactory;
 use Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptStatusCommand;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
+use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\EntityWithConfigAlias;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -116,5 +117,58 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $display = $tester->getDisplay();
         $this->assertStringContainsString(User::class, $display);
         $this->assertStringNotContainsString('BaseEntity', $display);
+    }
+
+    public function testExecuteWithNoEntitiesOutputsZeroSummary(): void
+    {
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([]);
+
+        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+
+        $attributeReader = new AttributeReader();
+        $subscriber = $this->createMock(DoctrineEncryptSubscriber::class);
+
+        $command = new DoctrineEncryptStatusCommand($em, $attributeReader, $subscriber);
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('0 entities found', $display);
+        $this->assertStringContainsString('0 encrypted properties', $display);
+    }
+
+    public function testExecuteOutputsMultipleEntitiesWithEncryptedProperties(): void
+    {
+        $metadataUser = new \stdClass();
+        $metadataUser->name = User::class;
+        $metadataUser->isMappedSuperclass = false;
+
+        $metadataEntityWithAlias = new \stdClass();
+        $metadataEntityWithAlias->name = EntityWithConfigAlias::class;
+        $metadataEntityWithAlias->isMappedSuperclass = false;
+
+        $metadataFactory = $this->createMock(ClassMetadataFactory::class);
+        $metadataFactory->method('getAllMetadata')->willReturn([$metadataUser, $metadataEntityWithAlias]);
+
+        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em->method('getMetadataFactory')->willReturn($metadataFactory);
+
+        $attributeReader = new AttributeReader();
+        $subscriber = $this->createMock(DoctrineEncryptSubscriber::class);
+
+        $command = new DoctrineEncryptStatusCommand($em, $attributeReader, $subscriber);
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        $this->assertSame(0, $tester->getStatusCode());
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString(User::class, $display);
+        $this->assertStringContainsString(EntityWithConfigAlias::class, $display);
+        $this->assertMatchesRegularExpression('/\d+ entities found which are containing \d+ encrypted properties\./', $display);
     }
 }

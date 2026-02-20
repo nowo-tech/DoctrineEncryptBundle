@@ -6,6 +6,7 @@ COMPOSE := docker-compose -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
 .PHONY: help up down build install shell logs setup db-create db-schema key fixtures cache-clear update-bundle test encrypt-status encrypt-database decrypt-database ensure-up
+.PHONY: encrypt-database-all decrypt-database-all encrypt-database-personal_data decrypt-database-personal_data encrypt-database-financial_data decrypt-database-financial_data
 
 help:
 	@echo "Doctrine Encrypt Bundle Demo - Symfony 8"
@@ -22,8 +23,14 @@ help:
 	@echo "  make key                Generate encryption secret key"
 	@echo "  make fixtures           Load data fixtures (SecretMessage + SensitiveRecord)"
 	@echo "  make encrypt-status     List entities and encrypted properties"
-	@echo "  make encrypt-database   Encrypt existing data (interactive)"
-	@echo "  make decrypt-database   Decrypt existing data (interactive)"
+	@echo "  make encrypt-database   Encrypt: all configs (interactive)"
+	@echo "  make encrypt-database-all            Same: all configs"
+	@echo "  make encrypt-database-personal_data  Encrypt: only config personal_data"
+	@echo "  make encrypt-database-financial_data Encrypt: only config financial_data"
+	@echo "  make decrypt-database   Decrypt: all configs (interactive)"
+	@echo "  make decrypt-database-all            Same: all configs"
+	@echo "  make decrypt-database-personal_data  Decrypt: only config personal_data"
+	@echo "  make decrypt-database-financial_data Decrypt: only config financial_data"
 	@echo "  make cache-clear        Clear Symfony cache"
 	@echo "  make update-bundle      Update bundle from path repo"
 	@echo "  make test               Run tests"
@@ -79,11 +86,27 @@ key: ensure-up
 encrypt-status: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:encrypt:status
 
-encrypt-database: ensure-up
+# Encrypt: all configs (no config argument)
+encrypt-database encrypt-database-all: ensure-up
 	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:encrypt:database
 
-decrypt-database: ensure-up
+# Encrypt: single config
+encrypt-database-personal_data: ensure-up
+	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:encrypt:database personal_data
+
+encrypt-database-financial_data: ensure-up
+	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:encrypt:database financial_data
+
+# Decrypt: all configs (no config argument)
+decrypt-database decrypt-database-all: ensure-up
 	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:decrypt:database
+
+# Decrypt: single config
+decrypt-database-personal_data: ensure-up
+	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:decrypt:database personal_data
+
+decrypt-database-financial_data: ensure-up
+	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:decrypt:database financial_data
 
 cache-clear: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console cache:clear

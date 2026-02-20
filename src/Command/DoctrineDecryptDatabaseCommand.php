@@ -2,19 +2,13 @@
 
 namespace Nowo\DoctrineEncryptBundle\Command;
 
-use Nowo\DoctrineEncryptBundle\DependencyInjection\DoctrineEncryptExtension;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-// attributes
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 
-/*
- * The DoctrineDecryptDatabaseCommand class is a PHP command that decrypts all fields in a database
- * using an encryptor specified by the user.
- **/
 #[AsCommand(
     name: 'doctrine:decrypt:database',
     description: 'Decrypt whole database on tables which are encrypted',
@@ -23,76 +17,76 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 )]
 class DoctrineDecryptDatabaseCommand extends AbstractCommand
 {
-    /**
-     * The function "configure" is used to set up command line arguments for a PHP script.
-     */
     protected function configure(): void
     {
-        $this
-          ->addArgument('encryptor', InputArgument::OPTIONAL, 'The encryptor you want to decrypt the database with')
-          ->addArgument('batchSize', InputArgument::OPTIONAL, 'The update/flush batch size', 20);
+        $def = $this->getDefinition();
+        if (!$def->hasArgument('config')) {
+            $this->addArgument('config', InputArgument::OPTIONAL, 'Config name to use (e.g. personal_data, financial_data). If omitted, all configs are processed in turn.');
+        }
+        if (!$def->hasArgument('batchSize')) {
+            $this->addArgument('batchSize', InputArgument::OPTIONAL, 'The update/flush batch size', 20);
+        }
     }
 
-    /**
-     * This PHP function decrypts all fields in a database using an encryptor specified by the user.
-     *
-     * @param InputInterface input The `` parameter is an instance of the `InputInterface` class,
-     * which represents the input arguments and options provided by the user when executing the command.
-     * @param OutputInterface output The `` parameter is an instance of the `OutputInterface` class,
-     * which is used to write output to the console. It provides methods like `writeln()` to write a line
-     * of text to the output.
-     *
-     * @return int The method is returning an integer value, which is either `AbstractCommand::SUCCESS` or
-     * a custom value defined by the developer.
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        // Get entity manager, question helper, subscriber service and annotation reader
         $question = $this->getHelper('question');
+        $batchSize = (int) $input->getArgument('batchSize');
+        $configArg = $input->getArgument('config');
 
-        // Get list of supported encryptors
-        $supportedExtensions = DoctrineEncryptExtension::SUPPORTED_ENCRYPTOR_CLASSES;
-        $batchSize = $input->getArgument('batchSize');
+        $registry = $this->encryptorRegistry;
+        $defaultConfigName = $registry?->getDefaultName();
 
-        // If encryptor has been set use that encryptor else use default
-        if ($input->getArgument('encryptor')) {
-            if (isset($supportedExtensions[$input->getArgument('encryptor')])) {
-                $reflection = new \ReflectionClass($supportedExtensions[$input->getArgument('encryptor')]);
-                $encryptor = $reflection->newInstance();
-                $this->subscriber->setEncryptor($encryptor);
+        if ($configArg !== null && $configArg !== '') {
+            if ($registry === null || !$registry->has($configArg)) {
+                $available = $registry ? implode(', ', $registry->getConfigNames()) : 'default';
+                $output->writeln('<error>Unknown config "' . $configArg . '". Available: ' . $available . '</error>');
+
+                return self::FAILURE;
+            }
+            $configsToProcess = [$configArg];
+        } else {
+            if ($registry === null) {
+                $configsToProcess = $defaultConfigName !== null ? [$defaultConfigName] : [];
             } else {
-                if (class_exists($input->getArgument('encryptor'))) {
-                    $reflection = new \ReflectionClass($input->getArgument('encryptor'));
-                    $this->subscriber->setEncryptor($reflection->newInstance());
-                } else {
-                    $output->writeln('Given encryptor does not exists');
-                    $output->writeln('Supported encryptors: ' . implode(', ', array_keys($supportedExtensions)));
-
-                    return self::FAILURE;
+                $configsToProcess = array_values(array_filter($registry->getConfigNames(), fn (string $n) => $n !== 'default'));
+                if ($configsToProcess === []) {
+                    $configsToProcess = [$registry->getDefaultName()];
                 }
             }
         }
 
-        // Get entity manager metadata
-        $metaDataArray = $this->entityManager->getMetadataFactory()->getAllMetadata();
+        if ($configsToProcess === []) {
+            $output->writeln('<error>No encryptor configured. Configure nowo_doctrine_encrypt in config.</error>');
 
-        // Set counter and loop through entity manager meta data
-        $propertyCount = 0;
-        foreach ($metaDataArray as $metaData) {
-            if (isset($metaData->isMappedSuperclass) && $metaData->isMappedSuperclass) {
-                continue;
-            }
-
-            $countProperties = count($this->getEncryptionableProperties($metaData));
-            $propertyCount += $countProperties;
+            return self::FAILURE;
         }
 
+        $defaultConfigName ??= $configsToProcess[0];
+
+        $propertyCount = 0;
+        foreach ($configsToProcess as $configName) {
+            foreach ($this->getEncryptionableEntityMetaDataForConfig($configName, $defaultConfigName) as $metaData) {
+                $propertyCount += count($this->getEncryptionablePropertiesForConfig($metaData, $configName, $defaultConfigName));
+            }
+        }
+
+        $encryptor = $registry ? $registry->get($configsToProcess[0]) : $this->subscriber->getEncryptor();
+        if ($encryptor === null && $this->defaultEncryptor !== null) {
+            $encryptor = $this->defaultEncryptor;
+        }
+        if ($encryptor === null) {
+            $output->writeln('<error>No encryptor configured.</error>');
+
+            return self::FAILURE;
+        }
+
+        $configList = implode(', ', $configsToProcess);
         $confirmationQuestion = new ConfirmationQuestion(
-            '<question>' . count($metaDataArray) . ' entities found which are containing ' . $propertyCount . ' properties with the encryption tag. ' . PHP_EOL . '' .
-            'Which are going to be decrypted with [' . get_class($this->subscriber->getEncryptor()) . ']. ' . PHP_EOL . '' .
-            'Wrong settings can mess up your data and it will be unrecoverable. ' . PHP_EOL . '' .
-            'I advise you to make <bg=yellow;options=bold>a backup</bg=yellow;options=bold>. ' . PHP_EOL . '' .
-            'Continue with this action? (y/yes)</question>',
+            '<question>' . count($configsToProcess) . ' config(s): [' . $configList . '], ' . $propertyCount . ' encrypted properties.' . PHP_EOL .
+            'Which are going to be decrypted. Wrong settings can mess up your data.' . PHP_EOL .
+            'I advise you to make <bg=yellow;options=bold>a backup</bg=yellow;options=bold>. ' . PHP_EOL .
+            'Continue? (y/yes)</question>',
             false
         );
 
@@ -100,68 +94,69 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
             return AbstractCommand::SUCCESS;
         }
 
-        // Start decrypting database
-        $output->writeln('' . PHP_EOL . 'Decrypting all fields. This can take up to several minutes depending on the database size.');
+        $output->writeln('' . PHP_EOL . 'Decrypting all fields. This can take several minutes depending on the database size.');
 
         $valueCounter = 0;
 
-        // Loop through entity manager meta data
-        foreach ($this->getEncryptionableEntityMetaData() as $metaData) {
-            $i = 0;
-            $iterator = $this->getEntityIterator($metaData->name);
-            $totalCount = $this->getTableCount($metaData->name);
-
-            $output->writeln(sprintf('Processing <comment>%s</comment>', $metaData->name));
-            $progressBar = new ProgressBar($output, $totalCount);
-
-            foreach ($iterator as $row) {
-                $entity = $row[0];
-
-                // Create reflectionClass for each entity
-                $entityReflectionClass = new \ReflectionClass($entity);
-
-                //Get the current encryptor used
-                $encryptorUsed = $this->subscriber->getEncryptor();
-
-                //Loop through the property's in the entity
-                foreach ($this->getEncryptionableProperties($metaData) as $property) {
-                    $methodeName = ucfirst($property->getName());
-
-                    $getter = 'get' . $methodeName;
-                    $setter = 'set' . $methodeName;
-
-                    //Check if getter and setter are set
-                    if ($entityReflectionClass->hasMethod($getter) && $entityReflectionClass->hasMethod($setter)) {
-                        $unencrypted = $entity->$getter();
-                        $entity->$setter($unencrypted);
-                        $valueCounter++;
-                    }
-                }
-
-                $this->subscriber->setEncryptor(null);
-                $this->entityManager->persist($entity);
-
-                if (($i % $batchSize) === 0) {
-                    $this->entityManager->flush();
-                    $this->entityManager->clear();
-                }
-                $progressBar->advance(1);
-                $i++;
-
-                $this->subscriber->setEncryptor($encryptorUsed);
+        foreach ($configsToProcess as $configName) {
+            $encryptorForConfig = $registry ? $registry->get($configName) : $this->defaultEncryptor;
+            if ($encryptorForConfig === null) {
+                continue;
             }
+            $this->subscriber->setEncryptor($encryptorForConfig);
 
+            $metaDataArray = $this->getEncryptionableEntityMetaDataForConfig($configName, $defaultConfigName);
+            $output->writeln(sprintf('Config <comment>%s</comment> (%s)', $configName, $encryptorForConfig::class));
 
-            $progressBar->finish();
-            $output->writeln('');
-            $encryptorUsed = $this->subscriber->getEncryptor();
-            $this->subscriber->setEncryptor(null);
-            $this->entityManager->flush();
-            $this->entityManager->clear();
-            $this->subscriber->setEncryptor($encryptorUsed);
+            foreach ($metaDataArray as $metaData) {
+                $i = 0;
+                $iterator = $this->getEntityIterator($metaData->name);
+                $totalCount = $this->getTableCount($metaData->name);
+                $propertiesForConfig = $this->getEncryptionablePropertiesForConfig($metaData, $configName, $defaultConfigName);
+
+                $output->writeln(sprintf('  Processing <comment>%s</comment>', $metaData->name));
+                $progressBar = new ProgressBar($output, $totalCount);
+
+                foreach ($iterator as $row) {
+                    $entity = $row[0];
+                    $entityReflectionClass = new \ReflectionClass($entity);
+
+                    foreach ($propertiesForConfig as $property) {
+                        $methodName = ucfirst($property->getName());
+                        $getter = 'get' . $methodName;
+                        $setter = 'set' . $methodName;
+
+                        if ($entityReflectionClass->hasMethod($getter) && $entityReflectionClass->hasMethod($setter)) {
+                            $unencrypted = $entity->$getter();
+                            $entity->$setter($unencrypted);
+                            $valueCounter++;
+                        }
+                    }
+
+                    $this->subscriber->setEncryptor(null);
+                    $this->entityManager->persist($entity);
+
+                    if (($i % $batchSize) === 0) {
+                        $this->entityManager->flush();
+                        $this->entityManager->clear();
+                    }
+                    $progressBar->advance(1);
+                    $i++;
+
+                    $this->subscriber->setEncryptor($encryptorForConfig);
+                }
+
+                $progressBar->finish();
+                $output->writeln('');
+                $this->subscriber->setEncryptor(null);
+                $this->entityManager->flush();
+                $this->entityManager->clear();
+                $this->subscriber->setEncryptor($encryptorForConfig);
+            }
         }
 
-        $output->writeln('' . PHP_EOL . 'Decryption finished values found: <info>' . $valueCounter . '</info>, decrypted: <info>' . $this->subscriber->decryptCounter . '</info>.' . PHP_EOL . 'All values are now decrypted.');
+        $output->writeln('' . PHP_EOL . 'Decryption finished. Values found: <info>' . $valueCounter . '</info>, decrypted: <info>' . $this->subscriber->decryptCounter . '</info>.' . PHP_EOL . 'All values are now decrypted.');
+
         return AbstractCommand::SUCCESS;
     }
 }
