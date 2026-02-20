@@ -29,6 +29,19 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.0.5
+
+No breaking changes. Update as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+If you run the test suite from the bundle source, ensure your autoload and PHPUnit config use the `tests/` directory (lowercase); the package already ships with this layout.
+
+---
+
 ## Upgrading to 2.0.4
 
 No breaking changes. Update as usual:

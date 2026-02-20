@@ -21,6 +21,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.5] - 2026-02-20
+
+### Added
+
+- **doctrine:encrypt:generate-secret-key:** Optional argument `config` to generate the key for a single config; when the key file already exists, the command asks for confirmation before overwriting. Without argument, the command now checks all configs (all `secret_directory_path` entries) and creates a missing key file for each Halite or Defuse config; configs that already have a key are skipped with a message.
+- **Makefile:** Targets `validate` (runs `composer validate --strict`) and `update` (runs `composer update`); `make qa` now runs `validate` before cs-check and test.
+
+### Changed
+
+- **Test directory:** The test directory has been renamed from `Tests` to `tests` (lowercase). PHP namespaces remain `Nowo\DoctrineEncryptBundle\Tests\`; only the folder and references in `phpunit.xml.dist`, `composer.json` (autoload-dev), and `.php-cs-fixer.dist.php` changed.
+- **symfony/var-exporter:** Kept in `require` (not only in require-dev) so that Doctrine ORM 3.x LazyGhost is available in all environments (CI and production when using lazy loading). This fixes functional test failures on PHP 8.4/8.5 with Symfony 8.0 ("Symfony LazyGhost is not available").
+- **CI:** Install step pins `symfony/var-exporter:^7.4` so Doctrine ORM accepts the installed version for LazyGhost; coverage job also requires `symfony/var-exporter`.
+- **Documentation:** [COMMANDS.md](docs/COMMANDS.md) updated: encrypt/decrypt database commands use argument `config` (config alias); generate-secret-key documents the new behaviour (all configs vs single config with confirmation).
+
+No upgrade steps required from 2.0.4. See [UPGRADING.md](UPGRADING.md#upgrading-to-205).
+
+---
+
 ## [2.0.4] - 2026-02-19
 
 ### Fixed

@@ -60,6 +60,7 @@ class DoctrineEncryptExtension extends Extension
         }
 
         $encryptorRefs = [];
+        $keyPaths = [];
         foreach ($configs as $name => $options) {
             $encryptorClass = $this->resolveEncryptorClass($options['encryptor_class']);
             $secretKeyPath = $options['secret_directory_path'] . '/.' . $options['encryptor_class'] . '.' . $name . '.key';
@@ -68,7 +69,9 @@ class DoctrineEncryptExtension extends Extension
                 ->setArgument(0, $secretKeyPath)
                 ->setPublic(false);
             $encryptorRefs[$name] = new Reference($serviceId);
+            $keyPaths[$name] = ['path' => $secretKeyPath, 'encryptor_class' => $options['encryptor_class']];
         }
+        $container->setParameter('nowo_doctrine_encrypt.key_paths', $keyPaths);
 
         $encryptorRefs['default'] = $encryptorRefs[$defaultConfig];
         $container->getDefinition('nowo_doctrine_encrypt.encryptor_registry')

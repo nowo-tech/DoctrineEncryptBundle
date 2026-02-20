@@ -32,6 +32,13 @@
 
 ---
 
+## v2.0.5 (2026-02-20)
+
+- **Scope:** (1) GenerateSecretKeyCommand: support all configs (create missing Halite/Defuse keys); optional `config` argument with overwrite confirmation. (2) Rename test directory `Tests` → `tests`; update phpunit, composer autoload-dev, php-cs-fixer. (3) Keep symfony/var-exporter in require for LazyGhost; CI pin var-exporter ^7.4. (4) Makefile: validate and update targets; qa runs validate. (5) Docs: COMMANDS.md correct args (config) and generate-secret-key behaviour.
+- **Checklist:** CHANGELOG and UPGRADING updated; tag `v2.0.5` created and pushed.
+
+---
+
 ## v2.0.4 (2026-02-19)
 
 - **Scope:** (1) Fix PHPUnit unit tests (EncryptUtil, DecryptExtension) so they no longer mock the final class `EncryptorRegistry`; use real registry with mocked `EncryptorInterface` instead. Fixes test-coverage errors with PHPUnit 10/11. (2) Make `doctrine:encrypt:database` and `doctrine:decrypt:database` command `configure()` idempotent so arguments are only added when not already present; avoids "An argument with name config already exists" with Symfony Console 7/8.

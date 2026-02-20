@@ -61,7 +61,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Nowo\\DoctrineEncryptBundle\\Tests\\": "Tests/"
+      "Nowo\\DoctrineEncryptBundle\\Tests\\": "tests/"
     }
   },
   "archive": {

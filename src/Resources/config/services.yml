@@ -19,7 +19,8 @@ services:
 
   Nowo\DoctrineEncryptBundle\Command\GenerateSecretKeyCommand:
     arguments:
-      $secretKeyPath: '%nowo_doctrine_encrypt.secret_key_path%'
+      $kernel: '@kernel'
+      $keyPaths: '%nowo_doctrine_encrypt.key_paths%'
 
   nowo_doctrine_encrypt.encryptor_registry:
     class: Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry

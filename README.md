@@ -88,7 +88,7 @@ Key files: one per config, e.g. `.Halite.personal_data.key`, `.Defuse.financial_
 .Defuse.*.key
 ```
 
-Generate the default key: `php bin/console doctrine:encrypt:generate-secret-key` (Halite only). See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) and [docs/COMMANDS.md](docs/COMMANDS.md).
+Generate keys: `php bin/console doctrine:encrypt:generate-secret-key` (creates missing Halite/Defuse keys for all configs, or pass a config alias). See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) and [docs/COMMANDS.md](docs/COMMANDS.md).
 
 ### Single encryptor (one config)
 
