@@ -21,6 +21,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.8] - 2026-02-20
+
+### Fixed
+
+- **Symfony Console 7.0 / 8.0:** `RotateKeysCommandTest` no longer uses `Application::add()` (removed in Symfony Console 8.0). Tests now register commands via `FactoryCommandLoader` and `setCommandLoader()`, and set the application on the rotate command with `setApplication()` so subcommands resolve correctly. This fixes the 8 failing unit tests when running on PHP 8.4 with Symfony 7.0 (e.g. in CI).
+
+No upgrade steps required from 2.0.7. See [UPGRADING.md](UPGRADING.md#upgrading-to-208).
+
+---
+
 ## [2.0.7] - 2026-02-20
 
 ### Added

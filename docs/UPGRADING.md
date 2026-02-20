@@ -29,6 +29,19 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.0.8
+
+No breaking changes. This release fixes unit tests for Symfony Console 7.0/8.0 compatibility (RotateKeysCommandTest); no changes required in your application.
+
+Update as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+---
+
 ## Upgrading to 2.0.7
 
 No breaking changes. New features:
