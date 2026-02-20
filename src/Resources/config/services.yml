@@ -22,6 +22,11 @@ services:
       $kernel: '@kernel'
       $keyPaths: '%nowo_doctrine_encrypt.key_paths%'
 
+  Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptStatusCommand:
+    arguments:
+      $encryptorRegistry: '@nowo_doctrine_encrypt.encryptor_registry'
+      $keyPaths: '%nowo_doctrine_encrypt.key_paths%'
+
   nowo_doctrine_encrypt.encryptor_registry:
     class: Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry
     arguments: [[], 'default']

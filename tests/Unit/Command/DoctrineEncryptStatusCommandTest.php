@@ -86,7 +86,7 @@ class DoctrineEncryptStatusCommandTest extends TestCase
 
         $this->assertSame(0, $tester->getStatusCode());
         $display = $tester->getDisplay();
-        $this->assertMatchesRegularExpression('/\d+ entities found which are containing \d+ encrypted properties\./', $display);
+        $this->assertMatchesRegularExpression('/\d+ entit\(y\/ies\) with encryption, \d+ encrypted properties in total/', $display);
     }
 
     public function testExecuteSkipsMappedSuperclassAndOutputsOthers(): void
@@ -137,8 +137,8 @@ class DoctrineEncryptStatusCommandTest extends TestCase
 
         $this->assertSame(0, $tester->getStatusCode());
         $display = $tester->getDisplay();
-        $this->assertStringContainsString('0 entities found', $display);
-        $this->assertStringContainsString('0 encrypted properties', $display);
+        $this->assertStringContainsString('0 entit(y/ies) with encryption', $display);
+        $this->assertStringContainsString('0 encrypted properties in total', $display);
     }
 
     public function testExecuteOutputsMultipleEntitiesWithEncryptedProperties(): void
@@ -169,6 +169,6 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $display = $tester->getDisplay();
         $this->assertStringContainsString(User::class, $display);
         $this->assertStringContainsString(EntityWithConfigAlias::class, $display);
-        $this->assertMatchesRegularExpression('/\d+ entities found which are containing \d+ encrypted properties\./', $display);
+        $this->assertMatchesRegularExpression('/\d+ entit\(y\/ies\) with encryption, \d+ encrypted properties in total/', $display);
     }
 }

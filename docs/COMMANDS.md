@@ -25,7 +25,7 @@ Get the current database and encryption information:
 php bin/console doctrine:encrypt:status
 ```
 
-This returns the number of entities and the number of properties marked with the `Encrypted` attribute per entity.
+The command lists, for each entity, which properties are encrypted and under which **config** (e.g. `personal_data`, `financial_data`). It then shows a summary (how many entities have encrypted properties and the total encrypted property count) and, at the end, the **configured encryptor configs** in the project (config name, encryptor class such as Halite/Defuse, and which config is the default).
 
 ## Encrypt database
 

@@ -22,7 +22,7 @@ abstract class AbstractCommand extends Command
      * @param AttributeReader            $attributeReader  Reader for Encrypted attributes
      * @param DoctrineEncryptSubscriber  $subscriber       Encrypt/decrypt event subscriber
      * @param EncryptorInterface|null    $defaultEncryptor Used by encrypt/decrypt database commands when using multi-config
-     * @param EncryptorRegistry|null     $encryptorRegistry Used by encrypt/decrypt database commands to resolve config names and encryptors
+     * @param EncryptorRegistry|null    $encryptorRegistry Used by encrypt/decrypt database commands and status command to resolve config names
      */
     public function __construct(
         public EntityManagerInterface $entityManager,
@@ -108,6 +108,27 @@ abstract class AbstractCommand extends Command
         }
         // return properties
         return $properties;
+    }
+
+    /**
+     * Returns encrypted properties with their effective config name (resolves "default" to $defaultConfigName).
+     *
+     * @param object $entityMetaData     Doctrine entity metadata (ClassMetadata)
+     * @param string $defaultConfigName  Default config name (e.g. from EncryptorRegistry::getDefaultName())
+     * @return array<int, array{property: \ReflectionProperty, config: string}>
+     */
+    protected function getEncryptionablePropertiesWithConfig($entityMetaData, string $defaultConfigName): array
+    {
+        $reflectionClass = new \ReflectionClass($entityMetaData->name);
+        $result = [];
+        foreach ($reflectionClass->getProperties() as $property) {
+            $annotation = $this->attributeReader->getPropertyAnnotation($property, Encrypted::class);
+            if ($annotation instanceof Encrypted) {
+                $config = $annotation->config === 'default' ? $defaultConfigName : $annotation->config;
+                $result[] = ['property' => $property, 'config' => $config];
+            }
+        }
+        return $result;
     }
 
     /**
