@@ -58,7 +58,7 @@ jobs:
 
       - name: Install dependencies with Symfony ${{ matrix.symfony }}
         run: |
-          composer require symfony/config:^${{ matrix.symfony }} symfony/dependency-injection:^${{ matrix.symfony }} symfony/http-kernel:^${{ matrix.symfony }} symfony/property-access:^${{ matrix.symfony }} symfony/yaml:^${{ matrix.symfony }} symfony/var-exporter:^${{ matrix.symfony }} --no-interaction --no-update
+          composer require symfony/config:^${{ matrix.symfony }} symfony/dependency-injection:^${{ matrix.symfony }} symfony/http-kernel:^${{ matrix.symfony }} symfony/property-access:^${{ matrix.symfony }} symfony/yaml:^${{ matrix.symfony }} symfony/var-exporter:^7.4 --no-interaction --no-update
           composer update --with-all-dependencies --no-interaction --prefer-dist --no-progress
 
       - name: Run tests
@@ -167,7 +167,7 @@ jobs:
 
       - name: Install dependencies (Symfony 7.0)
         run: |
-          composer require symfony/config:^7.0 symfony/dependency-injection:^7.0 symfony/http-kernel:^7.0 symfony/property-access:^7.0 symfony/yaml:^7.0 --no-interaction --no-update
+          composer require symfony/config:^7.0 symfony/dependency-injection:^7.0 symfony/http-kernel:^7.0 symfony/property-access:^7.0 symfony/yaml:^7.0 symfony/var-exporter:^7.4 --no-interaction --no-update
           composer update symfony/* --with-all-dependencies --no-interaction --prefer-dist --no-progress
 
       - name: Run tests with coverage
