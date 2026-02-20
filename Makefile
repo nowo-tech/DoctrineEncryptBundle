@@ -5,7 +5,7 @@ COMPOSE_FILE := docker-compose.yml
 COMPOSE := docker-compose -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
-.PHONY: help up down build shell install validate test test-coverage cs-check cs-fix qa clean ensure-up
+.PHONY: help up down build shell install update validate test test-coverage cs-check cs-fix qa clean ensure-up
 
 help:
 	@echo "Doctrine Encrypt Bundle - Development Commands"
@@ -18,6 +18,7 @@ help:
 	@echo "  build         Rebuild Docker image (no cache)"
 	@echo "  shell         Open shell in container"
 	@echo "  install       Install Composer dependencies"
+	@echo "  update        Update composer.lock (composer update)"
 	@echo "  validate      Run composer validate --strict"
 	@echo "  test          Run PHPUnit tests (starts container if needed)"
 	@echo "  test-coverage Run tests with code coverage; target 95%% (needs PCOV: run 'make build' if you see 'No code coverage driver')"
@@ -54,6 +55,9 @@ ensure-up:
 
 install: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) composer install
+
+update: ensure-up
+	$(COMPOSE) exec -T $(SERVICE_PHP) composer update --no-interaction
 
 validate: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) composer validate --strict
