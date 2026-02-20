@@ -55,7 +55,7 @@ class DefuseEncryptor implements EncryptorInterface
     {
         if ($this->encryptionKey === null) {
             if ($this->fs->exists($this->keyFile)) {
-                $this->encryptionKey = file_get_contents($this->keyFile);
+                $this->encryptionKey = trim(file_get_contents($this->keyFile));
             } else {
                 $string = random_bytes(255);
                 $this->encryptionKey = bin2hex($string);
