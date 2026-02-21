@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Encryptors;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 class DefuseEncryptorTest extends TestCase
 {
@@ -16,11 +19,11 @@ class DefuseEncryptorTest extends TestCase
             mkdir($dir, 0o777, true);
         }
         $keyfile = $dir . '/defuse-test-' . uniqid('', true) . '.key';
-        $key = bin2hex(random_bytes(64));
+        $key     = bin2hex(random_bytes(64));
         file_put_contents($keyfile, $key);
         $this->assertNotFalse(file_get_contents($keyfile), 'Key file must be readable after write');
         try {
-            $defuse = new DefuseEncryptor($keyfile);
+            $defuse    = new DefuseEncryptor($keyfile);
             $encrypted = $defuse->encrypt(self::DATA);
             $this->assertNotSame(self::DATA, $encrypted);
             $decrypted = $defuse->decrypt($encrypted);
@@ -37,7 +40,7 @@ class DefuseEncryptorTest extends TestCase
 
     public function testGenerateKey(): void
     {
-        $keyfile = sys_get_temp_dir() . '/defuse-' . md5(time());
+        $keyfile = sys_get_temp_dir() . '/defuse-' . md5((string) time());
         if (file_exists($keyfile)) {
             unlink($keyfile);
         }
@@ -53,7 +56,7 @@ class DefuseEncryptorTest extends TestCase
     public function testEncryptDecryptEmptyString(): void
     {
         $keyfile = sys_get_temp_dir() . '/defuse-test-' . uniqid('', true) . '.key';
-        $defuse = new DefuseEncryptor($keyfile);
+        $defuse  = new DefuseEncryptor($keyfile);
         $defuse->encrypt(''); // ensure key exists
 
         $encrypted = $defuse->encrypt('');
@@ -66,7 +69,7 @@ class DefuseEncryptorTest extends TestCase
     public function testDecryptInvalidCiphertextThrows(): void
     {
         $keyfile = sys_get_temp_dir() . '/defuse-test-' . uniqid('', true) . '.key';
-        $defuse = new DefuseEncryptor($keyfile);
+        $defuse  = new DefuseEncryptor($keyfile);
         $defuse->encrypt(self::DATA); // ensure key exists
 
         $this->expectException(\Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException::class);
@@ -77,7 +80,7 @@ class DefuseEncryptorTest extends TestCase
     public function testEncryptingSamePlaintextTwiceProducesDifferentCiphertext(): void
     {
         $keyfile = sys_get_temp_dir() . '/defuse-test-' . uniqid('', true) . '.key';
-        $defuse = new DefuseEncryptor($keyfile);
+        $defuse  = new DefuseEncryptor($keyfile);
         $defuse->encrypt(self::DATA); // ensure key exists
 
         $c1 = $defuse->encrypt(self::DATA);
@@ -92,8 +95,8 @@ class DefuseEncryptorTest extends TestCase
     public function testEncryptDecryptWithKeyContentFromString(): void
     {
         $keyContent = bin2hex(random_bytes(64));
-        $defuse = new DefuseEncryptor('/nonexistent/path.key', $keyContent);
-        $encrypted = $defuse->encrypt(self::DATA);
+        $defuse     = new DefuseEncryptor('/nonexistent/path.key', $keyContent);
+        $encrypted  = $defuse->encrypt(self::DATA);
         $this->assertNotSame(self::DATA, $encrypted);
         $this->assertSame(self::DATA, $defuse->decrypt($encrypted));
         $this->assertFileDoesNotExist('/nonexistent/path.key');
@@ -102,7 +105,7 @@ class DefuseEncryptorTest extends TestCase
     public function testGetKeyThrowsWhenKeyFileEmptyAndNoKeyContent(): void
     {
         $defuse = new DefuseEncryptor('', null);
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('The encryption key environment variable is not set');
         $this->expectExceptionMessage('doctrine:encrypt:generate-secret-key');
         $defuse->encrypt(self::DATA);
@@ -111,10 +114,10 @@ class DefuseEncryptorTest extends TestCase
     public function testConstructorWithEmptyKeyContentUsesKeyFile(): void
     {
         $keyfile = sys_get_temp_dir() . '/defuse-empty-content-' . uniqid('', true) . '.key';
-        $key = bin2hex(random_bytes(64));
+        $key     = bin2hex(random_bytes(64));
         file_put_contents($keyfile, $key);
         try {
-            $defuse = new DefuseEncryptor($keyfile, '');
+            $defuse    = new DefuseEncryptor($keyfile, '');
             $encrypted = $defuse->encrypt(self::DATA);
             $this->assertSame(self::DATA, $defuse->decrypt($encrypted));
         } finally {

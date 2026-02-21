@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Functional\DoctrineEncryptSubscriber;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;

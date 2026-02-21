@@ -10,6 +10,8 @@ use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use Twig\Attribute\AsTwigFilter;
 use Twig\Extension\AbstractExtension;
 
+use function strlen;
+
 // use Twig\TwigFilter;
 
 /**
@@ -24,7 +26,7 @@ use Twig\Extension\AbstractExtension;
  *
  * To decrypt then mask: {{ value|decrypt('personal_data')|mask(4) }} (mask from MaskExtension).
  */
-class DecryptExtension /* extends AbstractExtension*/
+class DecryptExtension /* extends AbstractExtension */
 {
     public function __construct(
         private readonly EncryptorRegistry $registry
@@ -43,7 +45,7 @@ class DecryptExtension /* extends AbstractExtension*/
     /**
      * Decrypts a value if it has the encryption marker at the end.
      *
-     * @param mixed       $value  The value to decrypt
+     * @param mixed $value The value to decrypt
      * @param string|null $config Encryptor config name (e.g. 'financial_data'). Null = default config
      */
     #[AsTwigFilter('decrypt', isSafe: ['html'])]
@@ -69,7 +71,6 @@ class DecryptExtension /* extends AbstractExtension*/
      * Returns the encryptor for the given config name (or the default). Same logic as EncryptUtil::getEncryptor.
      *
      * @param string|null $config Config alias, or null for default
-     * @return EncryptorInterface
      */
     private function getEncryptor(?string $config): EncryptorInterface
     {

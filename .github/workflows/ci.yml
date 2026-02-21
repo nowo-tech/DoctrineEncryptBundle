@@ -1,5 +1,5 @@
-# CI: tests on PHP 8.1–8.5 × Symfony 7.0, 8.0 (with exclusions for incompatible pairs).
-# Requires ext-sodium for Halite encryptor tests.
+# CI: tests on PHP 8.1–8.5 × Symfony 7.0, 8.0 (exclusions for incompatible pairs). Requires ext-sodium.
+# Coverage with PCOV; release updated via release.yml on tag push.
 name: CI
 
 on:

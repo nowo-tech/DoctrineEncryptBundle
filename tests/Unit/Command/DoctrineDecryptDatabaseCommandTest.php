@@ -17,8 +17,12 @@ use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Command\fixtures\DummyEncryptorForCommand;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use stdClass;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
+
+use function count;
 
 class DoctrineDecryptDatabaseCommandTest extends TestCase
 {
@@ -28,8 +32,8 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
      */
     private function createMetadataForUser(): object
     {
-        return new class () {
-            public string $name = User::class;
+        return new class {
+            public string $name             = User::class;
             public bool $isMappedSuperclass = false;
 
             public function getTableName(): string
@@ -59,12 +63,15 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $conn = $this->createMock(Connection::class);
         $conn->method('getDatabasePlatform')->willReturn($platform);
         $conn->method('executeQuery')->willReturn($result);
+
         return $conn;
     }
+
     private function createCommandWithApplication(DoctrineDecryptDatabaseCommand $command): DoctrineDecryptDatabaseCommand
     {
         $application = new Application();
         $command->setApplication($application);
+
         return $command;
     }
 
@@ -76,8 +83,8 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
+        $encryptor  = $this->createMock(EncryptorInterface::class);
+        $registry   = new EncryptorRegistry(['default' => $encryptor], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
 
         $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
@@ -93,12 +100,12 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
 
     public function testExecuteSkipsMappedSuperclassWhenCountingProperties(): void
     {
-        $mappedSuper = new \stdClass();
-        $mappedSuper->name = 'BaseEntity';
+        $mappedSuper                     = new stdClass();
+        $mappedSuper->name               = 'BaseEntity';
         $mappedSuper->isMappedSuperclass = true;
 
-        $metadata = new \stdClass();
-        $metadata->name = User::class;
+        $metadata                     = new stdClass();
+        $metadata->name               = User::class;
         $metadata->isMappedSuperclass = false;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -107,8 +114,8 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
+        $encryptor  = $this->createMock(EncryptorInterface::class);
+        $registry   = new EncryptorRegistry(['default' => $encryptor], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
 
         $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
@@ -150,8 +157,8 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
+        $encryptor  = $this->createMock(EncryptorInterface::class);
+        $registry   = new EncryptorRegistry(['default' => $encryptor], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
 
         $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
@@ -166,7 +173,7 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
 
     public function testExecuteRunsDecryptionLoopWhenUserConfirms(): void
     {
-        $metadata = $this->createMetadataForUser();
+        $metadata        = $this->createMetadataForUser();
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
@@ -174,8 +181,8 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
         $em->method('getConnection')->willReturn($this->createConnectionMock());
 
-        $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
+        $encryptor  = $this->createMock(EncryptorInterface::class);
+        $registry   = new EncryptorRegistry(['default' => $encryptor], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
 
         $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
@@ -192,8 +199,8 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
 
     public function testExecuteAcceptsConfigName(): void
     {
-        $metadata = new \stdClass();
-        $metadata->name = User::class;
+        $metadata                     = new stdClass();
+        $metadata->name               = User::class;
         $metadata->isMappedSuperclass = false;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -202,8 +209,8 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $dummy = new DummyEncryptorForCommand();
-        $registry = new EncryptorRegistry(['default' => $dummy], 'default');
+        $dummy      = new DummyEncryptorForCommand();
+        $registry   = new EncryptorRegistry(['default' => $dummy], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
 
         $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
@@ -221,12 +228,12 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($this->createMock(ClassMetadataFactory::class));
         $registry = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
-        $command = new DoctrineDecryptDatabaseCommand(
+        $command  = new DoctrineDecryptDatabaseCommand(
             $em,
             new AttributeReader(),
             new DoctrineEncryptSubscriber($registry),
             null,
-            $registry
+            $registry,
         );
         $def = $command->getDefinition();
         $this->assertTrue($def->hasArgument('config'));
@@ -235,7 +242,7 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
 
     public function testExecuteUsesCustomBatchSizeWhenProvided(): void
     {
-        $metadata = $this->createMetadataForUser();
+        $metadata        = $this->createMetadataForUser();
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
@@ -243,7 +250,7 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
         $em->method('getConnection')->willReturn($this->createConnectionMock());
 
-        $registry = new EncryptorRegistry(['default' => new DummyEncryptorForCommand()], 'default');
+        $registry   = new EncryptorRegistry(['default' => new DummyEncryptorForCommand()], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
 
         $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
@@ -259,8 +266,8 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
 
     public function testExecuteWhenMultipleConfigsShowsAllInConfirmation(): void
     {
-        $metadata = new \stdClass();
-        $metadata->name = User::class;
+        $metadata                     = new stdClass();
+        $metadata->name               = User::class;
         $metadata->isMappedSuperclass = false;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -270,9 +277,9 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry([
-            'default' => $encryptor,
-            'personal_data' => $encryptor,
+        $registry  = new EncryptorRegistry([
+            'default'        => $encryptor,
+            'personal_data'  => $encryptor,
             'financial_data' => $encryptor,
         ], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
@@ -293,10 +300,10 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
     /** Asserts command definition (configure() is run from parent constructor when command is created). */
     public function testConfigureAddsArguments(): void
     {
-        $em = $this->createMock(EntityManagerInterface::class);
-        $registry = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
+        $em         = $this->createMock(EntityManagerInterface::class);
+        $registry   = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
-        $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
+        $command    = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
 
         $def = $command->getDefinition();
         $this->assertTrue($def->hasArgument('config'));
@@ -306,19 +313,19 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
 
     public function testExecuteDecryptLoopCallsExecuteStatementWhenRowHasEncryptedValue(): void
     {
-        $metadata = $this->createMetadataForUser();
+        $metadata        = $this->createMetadataForUser();
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
         $encryptedValue = 'ciphertext' . DoctrineEncryptSubscriber::ENCRYPTION_MARKER;
-        $rows = [['id' => 1, 'name' => $encryptedValue, 'address' => null]];
-        $conn = $this->createConnectionMock($rows);
+        $rows           = [['id' => 1, 'name' => $encryptedValue, 'address' => null]];
+        $conn           = $this->createConnectionMock($rows);
         $conn->expects($this->once())->method('executeStatement')->with(
             $this->stringContains('UPDATE'),
-            $this->callback(function (array $params): bool {
+            $this->callback(static function (array $params): bool {
                 return count($params) >= 2 && $params[0] === 'decrypted_plain';
             }),
-            $this->anything()
+            $this->anything(),
         );
 
         $em = $this->createMock(EntityManagerInterface::class);
@@ -327,7 +334,7 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
 
         $encryptor = $this->createMock(EncryptorInterface::class);
         $encryptor->method('decrypt')->with('ciphertext')->willReturn('decrypted_plain');
-        $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
+        $registry   = new EncryptorRegistry(['default' => $encryptor], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
 
         $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
@@ -343,7 +350,7 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
 
     public function testExecuteDecryptLoopSkipsRowWhenIdIsNull(): void
     {
-        $metadata = $this->createMetadataForUser();
+        $metadata        = $this->createMetadataForUser();
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
@@ -355,8 +362,8 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
         $em->method('getConnection')->willReturn($conn);
 
-        $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
+        $encryptor  = $this->createMock(EncryptorInterface::class);
+        $registry   = new EncryptorRegistry(['default' => $encryptor], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
 
         $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
@@ -372,19 +379,19 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
 
     public function testExecuteDecryptLoopUsesCiphertextAsPlainWhenDecryptThrows(): void
     {
-        $metadata = $this->createMetadataForUser();
+        $metadata        = $this->createMetadataForUser();
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
         $encryptedValue = 'badcipher' . DoctrineEncryptSubscriber::ENCRYPTION_MARKER;
-        $rows = [['id' => 2, 'name' => $encryptedValue, 'address' => null]];
-        $conn = $this->createConnectionMock($rows);
+        $rows           = [['id' => 2, 'name' => $encryptedValue, 'address' => null]];
+        $conn           = $this->createConnectionMock($rows);
         $conn->expects($this->once())->method('executeStatement')->with(
             $this->stringContains('UPDATE'),
-            $this->callback(function (array $params): bool {
+            $this->callback(static function (array $params): bool {
                 return count($params) >= 2 && $params[0] === 'badcipher';
             }),
-            $this->anything()
+            $this->anything(),
         );
 
         $em = $this->createMock(EntityManagerInterface::class);
@@ -392,8 +399,8 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $em->method('getConnection')->willReturn($conn);
 
         $encryptor = $this->createMock(EncryptorInterface::class);
-        $encryptor->method('decrypt')->with('badcipher')->willThrowException(new \RuntimeException('Invalid cipher'));
-        $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
+        $encryptor->method('decrypt')->with('badcipher')->willThrowException(new RuntimeException('Invalid cipher'));
+        $registry   = new EncryptorRegistry(['default' => $encryptor], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
 
         $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);

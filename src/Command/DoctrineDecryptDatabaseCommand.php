@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Command;
 
 use Doctrine\DBAL\ParameterType;
@@ -11,6 +13,14 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Throwable;
+
+use function count;
+use function in_array;
+use function sprintf;
+use function strlen;
+
+use const PHP_EOL;
 
 /**
  * Decrypts all encrypted values in the database using raw SQL (no Doctrine lifecycle events).
@@ -21,7 +31,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
     name: 'doctrine:decrypt:database',
     description: 'Decrypt whole database on tables which are encrypted',
     hidden: false,
-    aliases: ['doctrine:decrypt:database']
+    aliases: ['doctrine:decrypt:database'],
 )]
 class DoctrineDecryptDatabaseCommand extends AbstractCommand
 {
@@ -30,7 +40,7 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
     public function __construct(
         \Doctrine\ORM\EntityManagerInterface $entityManager,
         \Nowo\DoctrineEncryptBundle\Mapping\AttributeReader $attributeReader,
-        \Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber $subscriber,
+        DoctrineEncryptSubscriber $subscriber,
         ?\Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface $defaultEncryptor,
         ?\Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry $encryptorRegistry,
         int $defaultBatchSize = 5
@@ -57,17 +67,18 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $question = $this->getHelper('question');
+        $question  = $this->getHelper('question');
         $batchSize = (int) $input->getArgument('batchSize');
         $configArg = $input->getArgument('config');
 
-        $registry = $this->encryptorRegistry;
+        $registry          = $this->encryptorRegistry;
         $defaultConfigName = $registry?->getDefaultName();
 
         if ($configArg !== null && $configArg !== '') {
             if ($registry === null || !$registry->has($configArg)) {
                 $available = $registry ? implode(', ', $registry->getConfigNames()) : 'default';
                 $output->writeln('<error>Unknown config "' . $configArg . '". Available: ' . $available . '</error>');
+
                 return self::FAILURE;
             }
             $configsToProcess = [$configArg];
@@ -75,7 +86,7 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
             if ($registry === null) {
                 $configsToProcess = $defaultConfigName !== null ? [$defaultConfigName] : [];
             } else {
-                $configsToProcess = array_values(array_filter($registry->getConfigNames(), fn (string $n) => $n !== 'default'));
+                $configsToProcess = array_values(array_filter($registry->getConfigNames(), static fn (string $n) => $n !== 'default'));
                 if ($configsToProcess === []) {
                     $configsToProcess = [$registry->getDefaultName()];
                 }
@@ -84,6 +95,7 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
 
         if ($configsToProcess === []) {
             $output->writeln('<error>No encryptor configured. Configure nowo_doctrine_encrypt in config.</error>');
+
             return self::FAILURE;
         }
 
@@ -102,16 +114,17 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
         }
         if ($encryptor === null) {
             $output->writeln('<error>No encryptor configured.</error>');
+
             return self::FAILURE;
         }
 
-        $configList = implode(', ', $configsToProcess);
+        $configList           = implode(', ', $configsToProcess);
         $confirmationQuestion = new ConfirmationQuestion(
             '<question>' . count($configsToProcess) . ' config(s): [' . $configList . '], ' . $propertyCount . ' encrypted properties.' . PHP_EOL .
             'Which are going to be decrypted. Wrong settings can mess up your data.' . PHP_EOL .
             'I advise you to make <bg=yellow;options=bold>a backup</bg=yellow;options=bold>. ' . PHP_EOL .
             'Continue? (y/yes)</question>',
-            false
+            false,
         );
 
         $proceed = $input->getOption('force') || $question->ask($input, $output, $confirmationQuestion);
@@ -121,8 +134,8 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
 
         $output->writeln('' . PHP_EOL . 'Decrypting all fields with raw SQL (no Doctrine events). This can take several minutes depending on the database size.');
 
-        $conn = $this->entityManager->getConnection();
-        $platform = $conn->getDatabasePlatform();
+        $conn         = $this->entityManager->getConnection();
+        $platform     = $conn->getDatabasePlatform();
         $valueCounter = 0;
 
         foreach ($configsToProcess as $configName) {
@@ -140,19 +153,19 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
                     continue;
                 }
 
-                $table = $tableInfo['table'];
-                $idColumns = $tableInfo['idColumns'];
+                $table      = $tableInfo['table'];
+                $idColumns  = $tableInfo['idColumns'];
                 $encColumns = array_column($tableInfo['columns'], 'column');
 
-                $quotedTable = $platform->quoteIdentifier($table);
-                $quotedIdCols = array_map(fn (string $c) => $platform->quoteIdentifier($c), $idColumns);
-                $quotedEncCols = array_map(fn (string $c) => $platform->quoteIdentifier($c), $encColumns);
+                $quotedTable   = $platform->quoteIdentifier($table);
+                $quotedIdCols  = array_map(static fn (string $c) => $platform->quoteIdentifier($c), $idColumns);
+                $quotedEncCols = array_map(static fn (string $c) => $platform->quoteIdentifier($c), $encColumns);
 
                 // Select only ID columns + encrypted columns for this config (each config is independent)
                 $selectCols = array_merge($quotedIdCols, $quotedEncCols);
-                $sqlSelect = 'SELECT ' . implode(', ', $selectCols) . ' FROM ' . $quotedTable;
-                $result = $conn->executeQuery($sqlSelect);
-                $rows = $result->fetchAllAssociative();
+                $sqlSelect  = 'SELECT ' . implode(', ', $selectCols) . ' FROM ' . $quotedTable;
+                $result     = $conn->executeQuery($sqlSelect);
+                $rows       = $result->fetchAllAssociative();
                 $totalCount = count($rows);
 
                 $output->writeln(sprintf('  Processing <comment>%s</comment> (%s)', $metaData->name, $table));
@@ -168,10 +181,10 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
                         continue;
                     }
                     $updates = [];
-                    $params = [];
-                    $types = [];
+                    $params  = [];
+                    $types   = [];
                     foreach ($tableInfo['columns'] as $colInfo) {
-                        $col = $colInfo['column'];
+                        $col   = $colInfo['column'];
                         $value = $this->getRowValue($row, $col);
                         if ($value === null || $value === '') {
                             continue;
@@ -182,21 +195,21 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
                         $ciphertext = substr((string) $value, 0, -strlen(self::ENCRYPTION_MARKER));
                         try {
                             $plain = $encryptorForConfig->decrypt($ciphertext);
-                        } catch (\Throwable $e) {
+                        } catch (Throwable $e) {
                             $plain = $ciphertext;
                         }
                         $updates[] = $platform->quoteIdentifier($col) . ' = ?';
-                        $params[] = $plain;
-                        $types[] = ParameterType::STRING;
-                        $valueCounter++;
+                        $params[]  = $plain;
+                        $types[]   = ParameterType::STRING;
+                        ++$valueCounter;
                     }
                     if ($updates !== []) {
-                        $setClause = implode(', ', $updates);
+                        $setClause  = implode(', ', $updates);
                         $whereParts = [];
                         foreach ($idColumns as $idCol) {
                             $whereParts[] = $platform->quoteIdentifier($idCol) . ' = ?';
-                            $params[] = $idValues[$idCol];
-                            $types[] = ParameterType::STRING;
+                            $params[]     = $idValues[$idCol];
+                            $types[]      = ParameterType::STRING;
                         }
                         $sqlUpdate = 'UPDATE ' . $quotedTable . ' SET ' . $setClause . ' WHERE ' . implode(' AND ', $whereParts);
                         $conn->executeStatement($sqlUpdate, $params, $types);

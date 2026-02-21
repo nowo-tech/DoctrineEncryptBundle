@@ -34,7 +34,7 @@ class SecretMessageController extends AbstractController
     public function rawIndex(Connection $conn): Response
     {
         $rows = $conn->fetchAllAssociative(
-            'SELECT id, title, message FROM secret_message ORDER BY id DESC'
+            'SELECT id, title, message FROM secret_message ORDER BY id DESC',
         );
 
         return $this->render('secret_message/raw_index.html.twig', [
@@ -46,7 +46,7 @@ class SecretMessageController extends AbstractController
     public function new(Request $request, EntityManagerInterface $em): Response
     {
         $secretMessage = new SecretMessage();
-        $form = $this->createForm(SecretMessageType::class, $secretMessage);
+        $form          = $this->createForm(SecretMessageType::class, $secretMessage);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -59,7 +59,7 @@ class SecretMessageController extends AbstractController
 
         return $this->render('secret_message/new.html.twig', [
             'secret_message' => $secretMessage,
-            'form' => $form,
+            'form'           => $form,
         ]);
     }
 
@@ -86,7 +86,7 @@ class SecretMessageController extends AbstractController
 
         return $this->render('secret_message/edit.html.twig', [
             'secret_message' => $secretMessage,
-            'form' => $form,
+            'form'           => $form,
         ]);
     }
 

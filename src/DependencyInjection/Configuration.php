@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
+
+use function call_user_func;
 
 /**
  * Defines and validates the bundle configuration tree (default_config, configs per encryptor).
@@ -17,20 +21,18 @@ class Configuration implements ConfigurationInterface
 
     /**
      * Builds the configuration tree (default_config, configs with encryptor_class, secret_directory_path, etc.).
-     *
-     * @return TreeBuilder
      */
     public function getConfigTreeBuilder(): TreeBuilder
     {
         // Create tree builder
         $treeBuilder = new TreeBuilder(self::ALIAS);
-        if (\method_exists($treeBuilder, 'getRootNode')) {
+        if (method_exists($treeBuilder, 'getRootNode')) {
             $rootNode = $treeBuilder->getRootNode();
         } else {
             // BC layer for symfony/config 4.1 and older (TreeBuilder::root() before getRootNode() existed)
             /** @codeCoverageIgnoreStart - getRootNode() exists in current symfony/config */
-            $rootNode = \call_user_func([$treeBuilder, 'root'], self::ALIAS);
-            /** @codeCoverageIgnoreEnd */
+            $rootNode = call_user_func([$treeBuilder, 'root'], self::ALIAS);
+            /* @codeCoverageIgnoreEnd */
         }
 
         // Single grammar: default_config + configs. When #[Encrypted] has no alias (or "default"), the encryptor for default_config is used.
@@ -56,8 +58,9 @@ class Configuration implements ConfigurationInterface
                         ->end()
                         ->validate()
                             ->ifTrue(static function (array $v): bool {
-                                $useEnv = isset($v['secret_key_env_var']) && $v['secret_key_env_var'] !== '' && $v['secret_key_env_var'] !== null;
+                                $useEnv  = isset($v['secret_key_env_var']) && $v['secret_key_env_var'] !== '' && $v['secret_key_env_var'] !== null;
                                 $usePath = isset($v['secret_directory_path']) && $v['secret_directory_path'] !== '' && $v['secret_directory_path'] !== null;
+
                                 return $useEnv && $usePath;
                             })
                             ->thenInvalid('Cannot set both secret_key_env_var and secret_directory_path.')
@@ -68,6 +71,7 @@ class Configuration implements ConfigurationInterface
                             })
                             ->then(static function (array $v): array {
                                 $v['secret_directory_path'] = '%kernel.project_dir%';
+
                                 return $v;
                             })
                         ->end()
@@ -75,7 +79,7 @@ class Configuration implements ConfigurationInterface
                     ->info('Map of config alias => { encryptor_class, secret_directory_path?, secret_key_filename?, secret_key_env_var? }.')
                 ->end()
             ->end();
-        //
+
         return $treeBuilder;
     }
 }

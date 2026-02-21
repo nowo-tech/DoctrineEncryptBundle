@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Functional\DoctrineEncryptSubscriber;
 
 use Nowo\DoctrineEncryptBundle\Tests\Functional\AbstractFunctionalTestCase;
@@ -10,10 +12,10 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
 {
     public function testEncryptionHappensOnOnlyAnnotatedFields(): void
     {
-        $secret = "It's a secret";
+        $secret    = "It's a secret";
         $notSecret = "You're all welcome to know this.";
-        $em = $this->entityManager;
-        $owner = new Owner();
+        $em        = $this->entityManager;
+        $owner     = new Owner();
         $owner->setSecret($secret);
         $owner->setNotSecret($notSecret);
         $em->persist($owner);
@@ -22,7 +24,7 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
         unset($owner);
 
         $connection = $em->getConnection();
-        $owners = $em->getRepository(Owner::class)->findAll();
+        $owners     = $em->getRepository(Owner::class)->findAll();
         $this->assertCount(1, $owners);
         /** @var Owner $owner */
         $owner = $owners[0];
@@ -40,10 +42,10 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
 
     public function testEncryptionCascades(): void
     {
-        $secret = "It's a secret";
+        $secret    = "It's a secret";
         $notSecret = "You're all welcome to know this.";
-        $em = $this->entityManager;
-        $owner = new Owner();
+        $em        = $this->entityManager;
+        $owner     = new Owner();
         $em->persist($owner); // persist cascades
         $em->flush();
 
@@ -56,7 +58,7 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
         unset($owner);
         unset($cascadeTarget);
 
-        $connection = $em->getConnection();
+        $connection     = $em->getConnection();
         $cascadeTargets = $em->getRepository(CascadeTarget::class)->findAll();
         $this->assertCount(1, $cascadeTargets);
         /** @var CascadeTarget $cascadeTarget */
@@ -73,17 +75,16 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
         $this->assertEquals($secret, $decrypted);
     }
 
-
     /**
      * @throws \Doctrine\DBAL\DBALException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
     public function testEncryptionDoesNotHappenWhenThereIsNoChange(): void
     {
-        $secret = "It's a secret";
+        $secret    = "It's a secret";
         $notSecret = "You're all welcome to know this.";
-        $em = $this->entityManager;
-        $owner1 = new Owner();
+        $em        = $this->entityManager;
+        $owner1    = new Owner();
         $owner1->setSecret($secret);
         $owner1->setNotSecret($notSecret);
         $em->persist($owner1);
@@ -100,9 +101,9 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
 
         // test that it was encrypted correctly
         $connection = $em->getConnection();
-        $results = $connection->fetchAllAssociative('SELECT * from owner WHERE id = ?', [$owner1Id]);
+        $results    = $connection->fetchAllAssociative('SELECT * from owner WHERE id = ?', [$owner1Id]);
         $this->assertCount(1, $results);
-        $result = $results[0];
+        $result             = $results[0];
         $originalEncryption = $result['secret'];
         $this->assertStringEndsWith('<ENC>', $originalEncryption); // is encrypted
 
@@ -113,9 +114,9 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
             $this->assertEquals($notSecret, $owner->getNotSecret());
         }
         $beforeQueryCount = $this->getCurrentQueryCount();
-        $beforeFlush = $this->subscriber->encryptCounter;
+        $beforeFlush      = $this->subscriber->encryptCounter;
         $em->flush();
-        $afterFlush = $this->subscriber->encryptCounter;
+        $afterFlush      = $this->subscriber->encryptCounter;
         $afterQueryCount = $this->getCurrentQueryCount();
         // No encryption should have happened because we didn't change anything.
         $this->assertEquals($beforeFlush, $afterFlush);
@@ -125,14 +126,14 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
         // flush again
         $beforeFlush = $this->subscriber->encryptCounter;
         $em->flush();
-        $afterFlush = $this->subscriber->encryptCounter;
+        $afterFlush       = $this->subscriber->encryptCounter;
         $afterQueryCount2 = $this->getCurrentQueryCount();
         $this->assertEquals($beforeFlush, $afterFlush);
         $this->assertEquals($afterQueryCount, $afterQueryCount2, 'Unexpected queries on second flush');
 
         $results = $connection->fetchAllAssociative('SELECT * from owner WHERE id = ?', [$owner1Id]);
         $this->assertCount(1, $results);
-        $result = $results[0];
+        $result                  = $results[0];
         $shouldBeTheSameAsBefore = $result['secret'];
         $this->assertStringEndsWith('<ENC>', $shouldBeTheSameAsBefore); // is encrypted
         $this->assertEquals($originalEncryption, $shouldBeTheSameAsBefore);
@@ -141,10 +142,10 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
 
     public function testEncryptionDoesHappenWhenASecretIsChanged(): void
     {
-        $secret = "It's a secret";
+        $secret    = "It's a secret";
         $notSecret = "You're all welcome to know this.";
-        $em = $this->entityManager;
-        $owner = new Owner();
+        $em        = $this->entityManager;
+        $owner     = new Owner();
         $owner->setSecret($secret);
         $owner->setNotSecret($notSecret);
         $em->persist($owner);
@@ -155,9 +156,9 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
 
         // test that it was encrypted correctly
         $connection = $em->getConnection();
-        $results = $connection->fetchAllAssociative('SELECT * from owner WHERE id = ?', [$ownerId]);
+        $results    = $connection->fetchAllAssociative('SELECT * from owner WHERE id = ?', [$ownerId]);
         $this->assertCount(1, $results);
-        $result = $results[0];
+        $result             = $results[0];
         $originalEncryption = $result['secret'];
         $this->assertStringEndsWith('<ENC>', $originalEncryption); // is encrypted
 
@@ -172,7 +173,7 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
 
         $results = $connection->fetchAllAssociative('SELECT * from owner WHERE id = ?', [$ownerId]);
         $this->assertCount(1, $results);
-        $result = $results[0];
+        $result                      = $results[0];
         $shouldBeDifferentFromBefore = $result['secret'];
         $this->assertStringEndsWith('<ENC>', $shouldBeDifferentFromBefore); // is encrypted
         $this->assertNotEquals($originalEncryption, $shouldBeDifferentFromBefore);

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -18,7 +20,7 @@ class WithUser
     public function __construct(string $name, string $foo, User $user)
     {
         $this->name = $name;
-        $this->foo = $foo;
+        $this->foo  = $foo;
         $this->user = $user;
     }
 }

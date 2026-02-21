@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\DependencyInjection;
 
 use Nowo\DoctrineEncryptBundle\DependencyInjection\Configuration;
@@ -53,13 +55,13 @@ class ConfigurationTest extends TestCase
     {
         $config = $this->process([
             'default_config' => 'financial_data',
-            'configs' => [
+            'configs'        => [
                 'personal_data' => [
-                    'encryptor_class' => 'Halite',
+                    'encryptor_class'       => 'Halite',
                     'secret_directory_path' => '%kernel.project_dir%',
                 ],
                 'financial_data' => [
-                    'encryptor_class' => 'Defuse',
+                    'encryptor_class'       => 'Defuse',
                     'secret_directory_path' => '/var/secrets',
                 ],
             ],
@@ -75,7 +77,7 @@ class ConfigurationTest extends TestCase
     public function testGetConfigTreeBuilderReturnsTreeWithExpectedStructure(): void
     {
         $configuration = new Configuration();
-        $treeBuilder = $configuration->getConfigTreeBuilder();
+        $treeBuilder   = $configuration->getConfigTreeBuilder();
 
         $this->assertInstanceOf(\Symfony\Component\Config\Definition\Builder\TreeBuilder::class, $treeBuilder);
         $this->assertNotNull($treeBuilder->getRootNode());
@@ -115,9 +117,9 @@ class ConfigurationTest extends TestCase
         $config = $this->process([
             'configs' => [
                 'default' => [
-                    'encryptor_class' => 'Halite',
+                    'encryptor_class'       => 'Halite',
                     'secret_directory_path' => '/var/keys',
-                    'secret_key_filename' => '.my_app.key',
+                    'secret_key_filename'   => '.my_app.key',
                 ],
             ],
         ]);
@@ -130,7 +132,7 @@ class ConfigurationTest extends TestCase
         $config = $this->process([
             'configs' => [
                 'default' => [
-                    'encryptor_class' => 'Halite',
+                    'encryptor_class'    => 'Halite',
                     'secret_key_env_var' => 'APP_ENCRYPT_KEY',
                 ],
             ],
@@ -148,9 +150,9 @@ class ConfigurationTest extends TestCase
         $this->process([
             'configs' => [
                 'default' => [
-                    'encryptor_class' => 'Halite',
+                    'encryptor_class'       => 'Halite',
                     'secret_directory_path' => '/var/keys',
-                    'secret_key_env_var' => 'APP_ENCRYPT_KEY',
+                    'secret_key_env_var'    => 'APP_ENCRYPT_KEY',
                 ],
             ],
         ]);
@@ -159,7 +161,7 @@ class ConfigurationTest extends TestCase
     private function process(array $config): array
     {
         $configuration = new Configuration();
-        $processor = new Processor();
+        $processor     = new Processor();
 
         return $processor->processConfiguration($configuration, [$config]);
     }

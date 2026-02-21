@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Encryptors;
 
+use InvalidArgumentException;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use PHPUnit\Framework\TestCase;
@@ -13,7 +14,7 @@ class EncryptorRegistryTest extends TestCase
     public function testGetReturnsEncryptorByName(): void
     {
         $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry(['personal_data' => $encryptor], 'personal_data');
+        $registry  = new EncryptorRegistry(['personal_data' => $encryptor], 'personal_data');
 
         $this->assertSame($encryptor, $registry->get('personal_data'));
     }
@@ -21,9 +22,9 @@ class EncryptorRegistryTest extends TestCase
     public function testGetThrowsForUnknownName(): void
     {
         $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry(['personal_data' => $encryptor], 'personal_data');
+        $registry  = new EncryptorRegistry(['personal_data' => $encryptor], 'personal_data');
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Unknown encryptor config "other"');
         $this->expectExceptionMessage('personal_data');
 
@@ -33,7 +34,7 @@ class EncryptorRegistryTest extends TestCase
     public function testGetDefaultReturnsDefaultEncryptor(): void
     {
         $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
+        $registry  = new EncryptorRegistry(['default' => $encryptor], 'default');
 
         $this->assertSame($encryptor, $registry->getDefault());
     }
@@ -41,7 +42,7 @@ class EncryptorRegistryTest extends TestCase
     public function testGetDefaultName(): void
     {
         $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry(['a' => $encryptor, 'b' => $encryptor], 'b');
+        $registry  = new EncryptorRegistry(['a' => $encryptor, 'b' => $encryptor], 'b');
 
         $this->assertSame('b', $registry->getDefaultName());
     }
@@ -49,7 +50,7 @@ class EncryptorRegistryTest extends TestCase
     public function testHasReturnsTrueWhenConfigExists(): void
     {
         $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry(['personal_data' => $encryptor], 'personal_data');
+        $registry  = new EncryptorRegistry(['personal_data' => $encryptor], 'personal_data');
 
         $this->assertTrue($registry->has('personal_data'));
     }
@@ -57,7 +58,7 @@ class EncryptorRegistryTest extends TestCase
     public function testHasReturnsFalseWhenConfigMissing(): void
     {
         $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry(['personal_data' => $encryptor], 'personal_data');
+        $registry  = new EncryptorRegistry(['personal_data' => $encryptor], 'personal_data');
 
         $this->assertFalse($registry->has('financial_data'));
     }
@@ -65,8 +66,8 @@ class EncryptorRegistryTest extends TestCase
     public function testGetConfigNamesReturnsAllKeys(): void
     {
         $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry([
-            'personal_data' => $encryptor,
+        $registry  = new EncryptorRegistry([
+            'personal_data'  => $encryptor,
             'financial_data' => $encryptor,
         ], 'personal_data');
 
@@ -76,9 +77,9 @@ class EncryptorRegistryTest extends TestCase
     public function testGetDefaultThrowsWhenDefaultNameNotInRegistry(): void
     {
         $encryptor = $this->createMock(EncryptorInterface::class);
-        $registry = new EncryptorRegistry(['personal_data' => $encryptor], 'default');
+        $registry  = new EncryptorRegistry(['personal_data' => $encryptor], 'default');
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Unknown encryptor config "default"');
         $this->expectExceptionMessage('personal_data');
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Command;
 
 use Doctrine\ORM\Mapping\ClassMetadataFactory;
@@ -10,14 +12,15 @@ use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\EntityWithConfigAlias;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 use Symfony\Component\Console\Tester\CommandTester;
 
 class DoctrineEncryptStatusCommandTest extends TestCase
 {
     public function testExecuteOutputsEncryptedPropertiesCount(): void
     {
-        $metadata = new \stdClass();
-        $metadata->name = User::class;
+        $metadata                     = new stdClass();
+        $metadata->name               = User::class;
         $metadata->isMappedSuperclass = false;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -27,10 +30,10 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $attributeReader = new AttributeReader();
-        $subscriber = $this->createMock(DoctrineEncryptSubscriber::class);
+        $subscriber      = $this->createMock(DoctrineEncryptSubscriber::class);
 
         $command = new DoctrineEncryptStatusCommand($em, $attributeReader, $subscriber);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -43,8 +46,8 @@ class DoctrineEncryptStatusCommandTest extends TestCase
 
     public function testExecuteOutputsNoEncryptedWhenEntityHasNone(): void
     {
-        $metadata = new \stdClass();
-        $metadata->name = \stdClass::class;
+        $metadata                     = new stdClass();
+        $metadata->name               = stdClass::class;
         $metadata->isMappedSuperclass = false;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -54,10 +57,10 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $attributeReader = new AttributeReader();
-        $subscriber = $this->createMock(DoctrineEncryptSubscriber::class);
+        $subscriber      = $this->createMock(DoctrineEncryptSubscriber::class);
 
         $command = new DoctrineEncryptStatusCommand($em, $attributeReader, $subscriber);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -67,8 +70,8 @@ class DoctrineEncryptStatusCommandTest extends TestCase
 
     public function testExecuteOutputsSummaryWithEntityAndPropertyCounts(): void
     {
-        $metadata = new \stdClass();
-        $metadata->name = User::class;
+        $metadata                     = new stdClass();
+        $metadata->name               = User::class;
         $metadata->isMappedSuperclass = false;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -78,10 +81,10 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $attributeReader = new AttributeReader();
-        $subscriber = $this->createMock(DoctrineEncryptSubscriber::class);
+        $subscriber      = $this->createMock(DoctrineEncryptSubscriber::class);
 
         $command = new DoctrineEncryptStatusCommand($em, $attributeReader, $subscriber);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -92,12 +95,12 @@ class DoctrineEncryptStatusCommandTest extends TestCase
 
     public function testExecuteSkipsMappedSuperclassAndOutputsOthers(): void
     {
-        $metadataSuper = new \stdClass();
-        $metadataSuper->name = 'BaseEntity';
+        $metadataSuper                     = new stdClass();
+        $metadataSuper->name               = 'BaseEntity';
         $metadataSuper->isMappedSuperclass = true;
 
-        $metadataEntity = new \stdClass();
-        $metadataEntity->name = User::class;
+        $metadataEntity                     = new stdClass();
+        $metadataEntity->name               = User::class;
         $metadataEntity->isMappedSuperclass = false;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -107,10 +110,10 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $attributeReader = new AttributeReader();
-        $subscriber = $this->createMock(DoctrineEncryptSubscriber::class);
+        $subscriber      = $this->createMock(DoctrineEncryptSubscriber::class);
 
         $command = new DoctrineEncryptStatusCommand($em, $attributeReader, $subscriber);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -129,10 +132,10 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $attributeReader = new AttributeReader();
-        $subscriber = $this->createMock(DoctrineEncryptSubscriber::class);
+        $subscriber      = $this->createMock(DoctrineEncryptSubscriber::class);
 
         $command = new DoctrineEncryptStatusCommand($em, $attributeReader, $subscriber);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -144,12 +147,12 @@ class DoctrineEncryptStatusCommandTest extends TestCase
 
     public function testExecuteOutputsMultipleEntitiesWithEncryptedProperties(): void
     {
-        $metadataUser = new \stdClass();
-        $metadataUser->name = User::class;
+        $metadataUser                     = new stdClass();
+        $metadataUser->name               = User::class;
         $metadataUser->isMappedSuperclass = false;
 
-        $metadataEntityWithAlias = new \stdClass();
-        $metadataEntityWithAlias->name = EntityWithConfigAlias::class;
+        $metadataEntityWithAlias                     = new stdClass();
+        $metadataEntityWithAlias->name               = EntityWithConfigAlias::class;
         $metadataEntityWithAlias->isMappedSuperclass = false;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -159,10 +162,10 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $attributeReader = new AttributeReader();
-        $subscriber = $this->createMock(DoctrineEncryptSubscriber::class);
+        $subscriber      = $this->createMock(DoctrineEncryptSubscriber::class);
 
         $command = new DoctrineEncryptStatusCommand($em, $attributeReader, $subscriber);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -181,7 +184,7 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $command = new DoctrineEncryptStatusCommand($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class), null, null, []);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
         $tester->execute([]);
 
         $this->assertSame(0, $tester->getStatusCode());
@@ -197,13 +200,13 @@ class DoctrineEncryptStatusCommandTest extends TestCase
 
         $registry = new EncryptorRegistry(
             ['default' => $this->createMock(\Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface::class)],
-            'default'
+            'default',
         );
         $keyPaths = [
             'default' => ['path' => null, 'encryptor_class' => 'Nowo\\DoctrineEncryptBundle\\Encryptors\\HaliteEncryptor'],
         ];
         $command = new DoctrineEncryptStatusCommand($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class), null, $registry, $keyPaths);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
         $tester->execute([]);
 
         $this->assertSame(0, $tester->getStatusCode());
@@ -221,8 +224,8 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $registry = new EncryptorRegistry([], 'default');
-        $command = new DoctrineEncryptStatusCommand($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class), null, $registry, []);
-        $tester = new CommandTester($command);
+        $command  = new DoctrineEncryptStatusCommand($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class), null, $registry, []);
+        $tester   = new CommandTester($command);
         $tester->execute([]);
 
         $this->assertSame(0, $tester->getStatusCode());

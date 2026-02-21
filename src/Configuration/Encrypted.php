@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Configuration;
 
 use Attribute;
+
+use function is_array;
 
 /**
  * The `Encrypted` class is a PHP attribute that can be applied to properties and is used as a
@@ -12,6 +16,7 @@ use Attribute;
  * When an alias is given (e.g. #[Encrypted('personal_data')]), that config from configs is used.
  *
  * @Annotation
+ *
  * @Target("PROPERTY")
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
@@ -21,8 +26,8 @@ class Encrypted implements Annotation
     public string $config = 'default';
 
     /**
-     * @param string|array $configOrValues Config alias (e.g. 'personal_data'), or annotation array with 'config'/'value' key
-     * @param string|null  $config         Config alias when using named argument (e.g. #[Encrypted(config: 'financial_data')])
+     * @param array|string $configOrValues Config alias (e.g. 'personal_data'), or annotation array with 'config'/'value' key
+     * @param string|null $config Config alias when using named argument (e.g. #[Encrypted(config: 'financial_data')])
      */
     public function __construct(string|array $configOrValues = 'default', ?string $config = null)
     {

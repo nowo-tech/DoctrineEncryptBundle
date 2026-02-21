@@ -30,7 +30,7 @@ class SensitiveRecordController extends AbstractController
     public function rawIndex(Connection $conn): Response
     {
         $rows = $conn->fetchAllAssociative(
-            'SELECT id, personal_note, financial_note FROM sensitive_record ORDER BY id DESC'
+            'SELECT id, personal_note, financial_note FROM sensitive_record ORDER BY id DESC',
         );
 
         return $this->render('sensitive_record/raw_index.html.twig', [
@@ -42,7 +42,7 @@ class SensitiveRecordController extends AbstractController
     public function new(Request $request, EntityManagerInterface $em): Response
     {
         $record = new SensitiveRecord();
-        $form = $this->createForm(SensitiveRecordType::class, $record);
+        $form   = $this->createForm(SensitiveRecordType::class, $record);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -55,7 +55,7 @@ class SensitiveRecordController extends AbstractController
 
         return $this->render('sensitive_record/new.html.twig', [
             'sensitive_record' => $record,
-            'form' => $form,
+            'form'             => $form,
         ]);
     }
 
@@ -82,7 +82,7 @@ class SensitiveRecordController extends AbstractController
 
         return $this->render('sensitive_record/edit.html.twig', [
             'sensitive_record' => $sensitiveRecord,
-            'form' => $form,
+            'form'             => $form,
         ]);
     }
 

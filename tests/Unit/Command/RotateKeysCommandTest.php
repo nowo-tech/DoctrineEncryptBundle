@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Command;
 
+use Closure;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadataFactory;
 use Nowo\DoctrineEncryptBundle\Command\DoctrineDecryptDatabaseCommand;
@@ -40,7 +41,7 @@ class RotateKeysCommandTest extends TestCase
 
         $registry ??= new EncryptorRegistry(
             ['default' => $this->createMock(EncryptorInterface::class)],
-            'default'
+            'default',
         );
         $subscriber = new DoctrineEncryptSubscriber($registry);
 
@@ -57,7 +58,7 @@ class RotateKeysCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
         $subscriber = new DoctrineEncryptSubscriber(null);
-        $command = new RotateKeysCommand($em, new AttributeReader(), $subscriber, null, null, $kernel, []);
+        $command    = new RotateKeysCommand($em, new AttributeReader(), $subscriber, null, null, $kernel, []);
         $command->setApplication(new Application());
         $tester = new CommandTester($command);
 
@@ -83,21 +84,21 @@ class RotateKeysCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
         $em->method('getConnection')->willReturn($this->createConnectionMock());
 
-        $registry = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
+        $registry   = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
 
         $kernel = $this->createMock(KernelInterface::class);
         $kernel->method('getProjectDir')->willReturn(sys_get_temp_dir());
 
-        $decryptCmd = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
-        $encryptCmd = new EncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
+        $decryptCmd  = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
+        $encryptCmd  = new EncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
         $generateCmd = new GenerateSecretKeyCommand($em, new AttributeReader(), $subscriber, $kernel, $keyPaths);
-        $rotateCmd = $this->createRotateCommand($keyPaths, sys_get_temp_dir(), $registry);
+        $rotateCmd   = $this->createRotateCommand($keyPaths, sys_get_temp_dir(), $registry);
 
         $app = $this->createApplicationWithCommands([
-            'doctrine:encrypt:rotate-keys' => $rotateCmd,
-            'doctrine:decrypt:database' => $decryptCmd,
-            'doctrine:encrypt:database' => $encryptCmd,
+            'doctrine:encrypt:rotate-keys'         => $rotateCmd,
+            'doctrine:decrypt:database'            => $decryptCmd,
+            'doctrine:encrypt:database'            => $encryptCmd,
             'doctrine:encrypt:generate-secret-key' => $generateCmd,
         ]);
         $rotateCmd->setApplication($app);
@@ -120,7 +121,7 @@ class RotateKeysCommandTest extends TestCase
             'default' => ['path' => '/tmp/nowo.key', 'encryptor_class' => 'Halite'],
         ];
         $command = $this->createRotateCommand($keyPaths);
-        $app = $this->createApplicationWithCommands(['doctrine:encrypt:rotate-keys' => $command]);
+        $app     = $this->createApplicationWithCommands(['doctrine:encrypt:rotate-keys' => $command]);
         $command->setApplication($app);
         $tester = new CommandTester($command);
         $tester->setInputs(['no']);
@@ -137,7 +138,7 @@ class RotateKeysCommandTest extends TestCase
             'default' => ['path' => '/nonexistent/key.key', 'encryptor_class' => 'Halite'],
         ];
         $command = $this->createRotateCommand($keyPaths);
-        $app = $this->createApplicationWithCommands(['doctrine:encrypt:rotate-keys' => $command]);
+        $app     = $this->createApplicationWithCommands(['doctrine:encrypt:rotate-keys' => $command]);
         $command->setApplication($app);
         $tester = new CommandTester($command);
         $tester->setInputs(['no']);
@@ -154,7 +155,7 @@ class RotateKeysCommandTest extends TestCase
             'default' => ['path' => '%kernel.project_dir%/var/keys/default.key', 'encryptor_class' => 'Halite'],
         ];
         $command = $this->createRotateCommand($keyPaths, '/app');
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
         $tester->setInputs(['no']);
         $command->setApplication(new Application());
         $tester->execute([], ['interactive' => true]);
@@ -171,15 +172,15 @@ class RotateKeysCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
         $em->method('getConnection')->willReturn($this->createConnectionMock());
-        $registry = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
+        $registry   = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
-        $kernel = $this->createMock(KernelInterface::class);
+        $kernel     = $this->createMock(KernelInterface::class);
         $kernel->method('getProjectDir')->willReturn(sys_get_temp_dir());
         $rotateCmd = new RotateKeysCommand($em, new AttributeReader(), $subscriber, null, $registry, $kernel, $keyPaths);
-        $app = $this->createApplicationWithCommands([
-            'doctrine:encrypt:rotate-keys' => $rotateCmd,
-            'doctrine:decrypt:database' => new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry),
-            'doctrine:encrypt:database' => new EncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry),
+        $app       = $this->createApplicationWithCommands([
+            'doctrine:encrypt:rotate-keys'         => $rotateCmd,
+            'doctrine:decrypt:database'            => new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry),
+            'doctrine:encrypt:database'            => new EncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry),
             'doctrine:encrypt:generate-secret-key' => new GenerateSecretKeyCommand($em, new AttributeReader(), $subscriber, $kernel, $keyPaths),
         ]);
         $rotateCmd->setApplication($app);
@@ -214,20 +215,20 @@ class RotateKeysCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
         $em->method('getConnection')->willReturn($conn);
 
-        $registry = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
+        $registry   = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
-        $kernel = $this->createMock(KernelInterface::class);
+        $kernel     = $this->createMock(KernelInterface::class);
         $kernel->method('getProjectDir')->willReturn($projectDir);
 
-        $decryptCmd = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
-        $encryptCmd = new EncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
+        $decryptCmd  = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
+        $encryptCmd  = new EncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
         $generateCmd = new GenerateSecretKeyCommand($em, new AttributeReader(), $subscriber, $kernel, $keyPaths);
-        $rotateCmd = new RotateKeysCommand($em, new AttributeReader(), $subscriber, null, $registry, $kernel, $keyPaths);
+        $rotateCmd   = new RotateKeysCommand($em, new AttributeReader(), $subscriber, null, $registry, $kernel, $keyPaths);
 
         $app = $this->createApplicationWithCommands([
-            'doctrine:encrypt:rotate-keys' => $rotateCmd,
-            'doctrine:decrypt:database' => $decryptCmd,
-            'doctrine:encrypt:database' => $encryptCmd,
+            'doctrine:encrypt:rotate-keys'         => $rotateCmd,
+            'doctrine:decrypt:database'            => $decryptCmd,
+            'doctrine:encrypt:database'            => $encryptCmd,
             'doctrine:encrypt:generate-secret-key' => $generateCmd,
         ]);
         $rotateCmd->setApplication($app);
@@ -263,7 +264,7 @@ class RotateKeysCommandTest extends TestCase
         $keyPath = $projectDir . '/var/default.key';
         file_put_contents($keyPath, 'key');
 
-        $keyPaths = ['default' => ['path' => $keyPath, 'encryptor_class' => 'Halite']];
+        $keyPaths        = ['default' => ['path' => $keyPath, 'encryptor_class' => 'Halite']];
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([]);
         $conn = $this->createConnectionMock();
@@ -271,18 +272,18 @@ class RotateKeysCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
         $em->method('getConnection')->willReturn($conn);
-        $registry = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
+        $registry   = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
-        $kernel = $this->createMock(KernelInterface::class);
+        $kernel     = $this->createMock(KernelInterface::class);
         $kernel->method('getProjectDir')->willReturn($projectDir);
-        $rotateCmd = new RotateKeysCommand($em, new AttributeReader(), $subscriber, null, $registry, $kernel, $keyPaths);
-        $decryptCmd = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
-        $encryptCmd = new EncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
+        $rotateCmd   = new RotateKeysCommand($em, new AttributeReader(), $subscriber, null, $registry, $kernel, $keyPaths);
+        $decryptCmd  = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
+        $encryptCmd  = new EncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
         $generateCmd = new GenerateSecretKeyCommand($em, new AttributeReader(), $subscriber, $kernel, $keyPaths);
-        $app = $this->createApplicationWithCommands([
-            'doctrine:encrypt:rotate-keys' => $rotateCmd,
-            'doctrine:decrypt:database' => $decryptCmd,
-            'doctrine:encrypt:database' => $encryptCmd,
+        $app         = $this->createApplicationWithCommands([
+            'doctrine:encrypt:rotate-keys'         => $rotateCmd,
+            'doctrine:decrypt:database'            => $decryptCmd,
+            'doctrine:encrypt:database'            => $encryptCmd,
             'doctrine:encrypt:generate-secret-key' => $generateCmd,
         ]);
         $rotateCmd->setApplication($app);
@@ -305,7 +306,7 @@ class RotateKeysCommandTest extends TestCase
         $keyPath = $projectDir . '/var/default.key';
         file_put_contents($keyPath, 'key');
 
-        $keyPaths = ['default' => ['path' => $keyPath, 'encryptor_class' => 'Halite']];
+        $keyPaths        = ['default' => ['path' => $keyPath, 'encryptor_class' => 'Halite']];
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([]);
         $conn = $this->createConnectionMock();
@@ -313,12 +314,12 @@ class RotateKeysCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
         $em->method('getConnection')->willReturn($conn);
-        $registry = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
+        $registry   = new EncryptorRegistry(['default' => $this->createMock(EncryptorInterface::class)], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
-        $kernel = $this->createMock(KernelInterface::class);
+        $kernel     = $this->createMock(KernelInterface::class);
         $kernel->method('getProjectDir')->willReturn($projectDir);
 
-        $failingBackupCmd = new class () extends Command {
+        $failingBackupCmd = new class extends Command {
             public function execute(InputInterface $input, OutputInterface $output): int
             {
                 return self::FAILURE;
@@ -327,11 +328,11 @@ class RotateKeysCommandTest extends TestCase
         $failingBackupCmd->setName('app:fake-backup');
 
         $rotateCmd = new RotateKeysCommand($em, new AttributeReader(), $subscriber, null, $registry, $kernel, $keyPaths);
-        $app = $this->createApplicationWithCommands([
-            'doctrine:encrypt:rotate-keys' => $rotateCmd,
-            'app:fake-backup' => $failingBackupCmd,
-            'doctrine:decrypt:database' => new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry),
-            'doctrine:encrypt:database' => new EncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry),
+        $app       = $this->createApplicationWithCommands([
+            'doctrine:encrypt:rotate-keys'         => $rotateCmd,
+            'app:fake-backup'                      => $failingBackupCmd,
+            'doctrine:decrypt:database'            => new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry),
+            'doctrine:encrypt:database'            => new EncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry),
             'doctrine:encrypt:generate-secret-key' => new GenerateSecretKeyCommand($em, new AttributeReader(), $subscriber, $kernel, $keyPaths),
         ]);
         $rotateCmd->setApplication($app);
@@ -355,7 +356,7 @@ class RotateKeysCommandTest extends TestCase
             @unlink($keyPath);
         }
         $keyPaths = [
-            'default' => ['path' => $keyPath, 'encryptor_class' => 'Halite'],
+            'default'    => ['path' => $keyPath, 'encryptor_class' => 'Halite'],
             'env_config' => ['path' => null, 'encryptor_class' => 'Halite'],
         ];
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -364,20 +365,20 @@ class RotateKeysCommandTest extends TestCase
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
         $em->method('getConnection')->willReturn($this->createConnectionMock());
         $registry = new EncryptorRegistry([
-            'default' => $this->createMock(EncryptorInterface::class),
+            'default'    => $this->createMock(EncryptorInterface::class),
             'env_config' => $this->createMock(EncryptorInterface::class),
         ], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
-        $kernel = $this->createMock(KernelInterface::class);
+        $kernel     = $this->createMock(KernelInterface::class);
         $kernel->method('getProjectDir')->willReturn(sys_get_temp_dir());
-        $decryptCmd = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
-        $encryptCmd = new EncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
+        $decryptCmd  = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
+        $encryptCmd  = new EncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry);
         $generateCmd = new GenerateSecretKeyCommand($em, new AttributeReader(), $subscriber, $kernel, $keyPaths);
-        $rotateCmd = new RotateKeysCommand($em, new AttributeReader(), $subscriber, null, $registry, $kernel, $keyPaths);
-        $app = $this->createApplicationWithCommands([
-            'doctrine:encrypt:rotate-keys' => $rotateCmd,
-            'doctrine:decrypt:database' => $decryptCmd,
-            'doctrine:encrypt:database' => $encryptCmd,
+        $rotateCmd   = new RotateKeysCommand($em, new AttributeReader(), $subscriber, null, $registry, $kernel, $keyPaths);
+        $app         = $this->createApplicationWithCommands([
+            'doctrine:encrypt:rotate-keys'         => $rotateCmd,
+            'doctrine:decrypt:database'            => $decryptCmd,
+            'doctrine:encrypt:database'            => $encryptCmd,
             'doctrine:encrypt:generate-secret-key' => $generateCmd,
         ]);
         $rotateCmd->setApplication($app);
@@ -399,11 +400,12 @@ class RotateKeysCommandTest extends TestCase
      */
     private function createApplicationWithCommands(array $commandMap): Application
     {
-        $app = new Application();
+        $app    = new Application();
         $loader = new FactoryCommandLoader(
-            array_map(static fn (Command $cmd): \Closure => fn (): Command => $cmd, $commandMap)
+            array_map(static fn (Command $cmd): Closure => static fn (): Command => $cmd, $commandMap),
         );
         $app->setCommandLoader($loader);
+
         return $app;
     }
 
@@ -416,6 +418,7 @@ class RotateKeysCommandTest extends TestCase
         $conn = $this->createMock(\Doctrine\DBAL\Connection::class);
         $conn->method('getDatabasePlatform')->willReturn($platform);
         $conn->method('executeQuery')->willReturn($result);
+
         return $conn;
     }
 }

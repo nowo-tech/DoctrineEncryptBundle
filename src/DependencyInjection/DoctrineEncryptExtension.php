@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\DependencyInjection;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
@@ -9,6 +11,9 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+
+use function array_key_exists;
+use function count;
 
 /**
  * Loads bundle configuration and registers encryptor services per config.
@@ -22,28 +27,27 @@ class DoctrineEncryptExtension extends Extension
 {
     /** Short names mapped to encryptor FQCN (Halite, Defuse). */
     public const SUPPORTED_ENCRYPTOR_CLASSES = [
-      'Defuse' => DefuseEncryptor::class, // 'Ambta\DoctrineEncryptBundle\Encryptors\DefuseEncryptor',
-      'Halite' => HaliteEncryptor::class, // 'Ambta\DoctrineEncryptBundle\Encryptors\HaliteEncryptor',
+        'Defuse' => DefuseEncryptor::class, // 'Ambta\DoctrineEncryptBundle\Encryptors\DefuseEncryptor',
+        'Halite' => HaliteEncryptor::class, // 'Ambta\DoctrineEncryptBundle\Encryptors\HaliteEncryptor',
     ];
 
     /**
      * Loads the bundle configuration, service definitions, and registers encryptor configs.
      *
-     * @param array            $configs   Merged config from config files
+     * @param array $configs Merged config from config files
      * @param ContainerBuilder $container Container to register services and parameters in
-     * @return void
      */
     public function load(array $configs, ContainerBuilder $container): void
     {
         $configuration = new Configuration();
-        $config = $this->processConfiguration($configuration, $configs);
+        $config        = $this->processConfiguration($configuration, $configs);
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('services.yml');
 
         $configs = $config['configs'];
         if (count($configs) === 0) {
-            $configs = ['default' => ['encryptor_class' => 'Halite', 'secret_directory_path' => '%kernel.project_dir%']];
+            $configs                  = ['default' => ['encryptor_class' => 'Halite', 'secret_directory_path' => '%kernel.project_dir%']];
             $config['default_config'] = 'default';
         }
         $config['configs'] = $configs;
@@ -55,31 +59,30 @@ class DoctrineEncryptExtension extends Extension
      * Registers one encryptor service per config and sets the registry and parameters.
      *
      * @param ContainerBuilder $container Container builder
-     * @param array            $config   Processed config (configs, default_config)
-     * @return void
+     * @param array $config Processed config (configs, default_config)
      */
     private function registerConfigs(ContainerBuilder $container, array $config): void
     {
-        $configs = $config['configs'];
+        $configs       = $config['configs'];
         $defaultConfig = $config['default_config'] ?? array_key_first($configs);
         if (!isset($configs[$defaultConfig])) {
             $defaultConfig = array_key_first($configs);
         }
 
         $encryptorRefs = [];
-        $keyPaths = [];
+        $keyPaths      = [];
         foreach ($configs as $name => $options) {
             $encryptorClass = $this->resolveEncryptorClass($options['encryptor_class']);
-            $useEnv = !empty($options['secret_key_env_var']);
+            $useEnv         = !empty($options['secret_key_env_var']);
             if ($useEnv) {
-                $secretKeyPath = '';
-                $keyContent = $options['secret_key_env_var'];
+                $secretKeyPath   = '';
+                $keyContent      = $options['secret_key_env_var'];
                 $keyPaths[$name] = ['path' => null, 'encryptor_class' => $options['encryptor_class']];
             } else {
-                $dir = $options['secret_directory_path'] ?? '%kernel.project_dir%';
-                $filename = $options['secret_key_filename'] ?? ('.' . $options['encryptor_class'] . '.' . $name . '.key');
-                $secretKeyPath = $dir . '/' . $filename;
-                $keyContent = null;
+                $dir             = $options['secret_directory_path'] ?? '%kernel.project_dir%';
+                $filename        = $options['secret_key_filename'] ?? ('.' . $options['encryptor_class'] . '.' . $name . '.key');
+                $secretKeyPath   = $dir . '/' . $filename;
+                $keyContent      = null;
                 $keyPaths[$name] = ['path' => $secretKeyPath, 'encryptor_class' => $options['encryptor_class']];
             }
             $def = $container->register($serviceId = 'nowo_doctrine_encrypt.encryptor.' . $name, $encryptorClass)
@@ -103,8 +106,8 @@ class DoctrineEncryptExtension extends Extension
         if (!empty($opts['secret_key_env_var'])) {
             $secretKeyPathDefault = '';
         } else {
-            $dir = $opts['secret_directory_path'] ?? '%kernel.project_dir%';
-            $filename = $opts['secret_key_filename'] ?? ('.' . $opts['encryptor_class'] . '.' . $defaultConfig . '.key');
+            $dir                  = $opts['secret_directory_path'] ?? '%kernel.project_dir%';
+            $filename             = $opts['secret_key_filename'] ?? ('.' . $opts['encryptor_class'] . '.' . $defaultConfig . '.key');
             $secretKeyPathDefault = $dir . '/' . $filename;
         }
         $container->setParameter('nowo_doctrine_encrypt.encryptor_class_name', $this->resolveEncryptorClass($configs[$defaultConfig]['encryptor_class']));
@@ -116,6 +119,7 @@ class DoctrineEncryptExtension extends Extension
      * Resolves short encryptor name (Halite, Defuse) to FQCN, or returns custom class name as-is.
      *
      * @param string $encryptorClass Halite, Defuse, or a custom class FQCN
+     *
      * @return string Encryptor FQCN
      */
     private function resolveEncryptorClass(string $encryptorClass): string
@@ -127,8 +131,6 @@ class DoctrineEncryptExtension extends Extension
 
     /**
      * Returns the configuration alias (e.g. nowo_doctrine_encrypt).
-     *
-     * @return string
      */
     public function getAlias(): string
     {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -41,14 +43,14 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->encryptor
             ->expects($this->any())
             ->method('encrypt')
-            ->willReturnCallback(function (string $arg) {
+            ->willReturnCallback(static function (string $arg) {
                 return 'encrypted-' . $arg;
             })
         ;
         $this->encryptor
             ->expects($this->any())
             ->method('decrypt')
-            ->willReturnCallback(function (string $arg) {
+            ->willReturnCallback(static function (string $arg) {
                 return preg_replace('/^encrypted-/', '', $arg);
             })
         ;
@@ -79,7 +81,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $overrideEncryptor = $this->createMock(EncryptorInterface::class);
         $overrideEncryptor->expects($this->exactly(2))
             ->method('encrypt')
-            ->willReturnCallback(fn (string $s) => 'OVR-' . $s);
+            ->willReturnCallback(static fn (string $s) => 'OVR-' . $s);
 
         $this->subscriber->setEncryptor($overrideEncryptor);
 
@@ -135,7 +137,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
 
     public function testProcessFieldsNoEncryptor(): void
     {
-        $user = new User('David', 'Switzerland');
+        $user       = new User('David', 'Switzerland');
         $subscriber = new DoctrineEncryptSubscriber($this->createMock(EncryptorInterface::class));
         $subscriber->setEncryptor(null);
         $subscriber->processFields($user, true);
@@ -244,7 +246,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
     }
 
     /**
-     * Test that fields are decrypted again after flushing
+     * Test that fields are decrypted again after flushing.
      */
     public function testPostFlush(): void
     {
@@ -272,9 +274,9 @@ class DoctrineEncryptSubscriberTest extends TestCase
     {
         $user = new User('David', 'Switzerland');
 
-        $em = $this->createMock(EntityManagerInterface::class);
+        $em        = $this->createMock(EntityManagerInterface::class);
         $changeSet = [];
-        $args = new PreUpdateEventArgs($user, $em, $changeSet);
+        $args      = new PreUpdateEventArgs($user, $em, $changeSet);
 
         $this->subscriber->preUpdate($args);
 
@@ -286,7 +288,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
     {
         $user = new User('encrypted-David<ENC>', 'encrypted-Switzerland<ENC>');
 
-        $em = $this->createMock(EntityManagerInterface::class);
+        $em   = $this->createMock(EntityManagerInterface::class);
         $args = new PostUpdateEventArgs($user, $em);
 
         $this->subscriber->postUpdate($args);
@@ -299,7 +301,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
     {
         $user = new User('encrypted-David<ENC>', 'encrypted-Switzerland<ENC>');
 
-        $em = $this->createMock(EntityManagerInterface::class);
+        $em   = $this->createMock(EntityManagerInterface::class);
         $args = new PostLoadEventArgs($user, $em);
 
         $this->subscriber->postLoad($args);
@@ -347,7 +349,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
 
     public function testEncryptCounterIncrementsOnEncrypt(): void
     {
-        $user = new User('David', 'Switzerland');
+        $user   = new User('David', 'Switzerland');
         $before = $this->subscriber->encryptCounter;
 
         $this->subscriber->processFields($user, true);
@@ -357,7 +359,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
 
     public function testDecryptCounterIncrementsOnDecrypt(): void
     {
-        $user = new User('encrypted-David<ENC>', 'encrypted-Switzerland<ENC>');
+        $user   = new User('encrypted-David<ENC>', 'encrypted-Switzerland<ENC>');
         $before = $this->subscriber->decryptCounter;
 
         $this->subscriber->processFields($user, false);
@@ -389,12 +391,12 @@ class DoctrineEncryptSubscriberTest extends TestCase
     public function testOnFlushRecomputesChangeSetWhenEncryptionOccurs(): void
     {
         $user = new User('David', 'Switzerland');
-        $uow = $this->createMock(UnitOfWork::class);
+        $uow  = $this->createMock(UnitOfWork::class);
         $uow->expects($this->any())
             ->method('getScheduledEntityInsertions')
             ->willReturn([$user]);
         $classMetaData = $this->createMock(ClassMetadata::class);
-        $em = $this->createMock(EntityManagerInterface::class);
+        $em            = $this->createMock(EntityManagerInterface::class);
         $em->expects($this->any())
             ->method('getUnitOfWork')
             ->willReturn($uow);
@@ -414,7 +416,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
     public function testOnFlushDoesNotRecomputeChangeSetWhenNoEncryptionOccurs(): void
     {
         $user = new User('', '');
-        $uow = $this->createMock(UnitOfWork::class);
+        $uow  = $this->createMock(UnitOfWork::class);
         $uow->expects($this->any())
             ->method('getScheduledEntityInsertions')
             ->willReturn([$user]);
@@ -462,7 +464,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
     {
         $defaultEncryptor = $this->createMock(EncryptorInterface::class);
         $defaultEncryptor->method('encrypt')->willReturn('from-default');
-        $registry = new EncryptorRegistry(['default' => $defaultEncryptor], 'default');
+        $registry   = new EncryptorRegistry(['default' => $defaultEncryptor], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
 
         $this->assertSame($defaultEncryptor, $subscriber->getEncryptor());
@@ -478,7 +480,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
     public function testProcessFieldsReturnsEntityWhenRegistryIsNull(): void
     {
         $subscriber = new DoctrineEncryptSubscriber(null);
-        $user = new User('David', 'Switzerland');
+        $user       = new User('David', 'Switzerland');
 
         $result = $subscriber->processFields($user, true);
 
@@ -493,7 +495,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $otherEncryptor = $this->createMock(EncryptorInterface::class);
         $otherEncryptor->method('encrypt')->willReturn('enc-other');
         $registry = new EncryptorRegistry([
-            'default' => $defaultEncryptor,
+            'default'      => $defaultEncryptor,
             'other_config' => $otherEncryptor,
         ], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
@@ -535,7 +537,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $otherEncryptor = $this->createMock(EncryptorInterface::class);
         $otherEncryptor->method('encrypt')->willReturn('enc-other');
         $registry = new EncryptorRegistry([
-            'default' => $defaultEncryptor,
+            'default'      => $defaultEncryptor,
             'other_config' => $otherEncryptor,
         ], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);
@@ -567,7 +569,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $otherEncryptor = $this->createMock(EncryptorInterface::class);
         $otherEncryptor->method('decrypt')->willReturn('dec-other');
         $registry = new EncryptorRegistry([
-            'default' => $defaultEncryptor,
+            'default'      => $defaultEncryptor,
             'other_config' => $otherEncryptor,
         ], 'default');
         $subscriber = new DoctrineEncryptSubscriber($registry);

@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Subscribers;
 
 // use Doctrine\Common\EventSubscriber;
 // events
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
-//
 use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
@@ -22,6 +23,10 @@ use ReflectionClass;
 use ReflectionProperty;
 // attributes
 use Symfony\Component\PropertyAccess\PropertyAccess;
+use Throwable;
+
+use function count;
+use function strlen;
 
 /**
  * Doctrine event listener that encrypts entity properties on persist/update and decrypts on load.
@@ -35,22 +40,22 @@ use Symfony\Component\PropertyAccess\PropertyAccess;
 #[AsDoctrineListener(event: Events::onFlush, priority: 500, connection: 'default')]
 #[AsDoctrineListener(event: Events::preFlush, priority: 500, connection: 'default')]
 #[AsDoctrineListener(event: Events::postFlush, priority: 500, connection: 'default')]
-class DoctrineEncryptSubscriber /*implements EventSubscriber*/
+class DoctrineEncryptSubscriber /* implements EventSubscriber */
 {
     /**
-     * Appended to end of encrypted value
+     * Appended to end of encrypted value.
      */
     public const ENCRYPTION_MARKER = '<ENC>';
 
     /**
-     * Encryptor interface namespace
+     * Encryptor interface namespace.
      */
-    public const ENCRYPTOR_INTERFACE_NS = EncryptorInterface::class;// 'Ambta\DoctrineEncryptBundle\Encryptors\EncryptorInterface';
+    public const ENCRYPTOR_INTERFACE_NS = EncryptorInterface::class; // 'Ambta\DoctrineEncryptBundle\Encryptors\EncryptorInterface';
 
     /**
-     * Encrypted annotation full name
+     * Encrypted annotation full name.
      */
-    public const ENCRYPTED_ANN_NAME = Encrypted::class;// 'Ambta\DoctrineEncryptBundle\Configuration\Encrypted';
+    public const ENCRYPTED_ANN_NAME = Encrypted::class; // 'Ambta\DoctrineEncryptBundle\Configuration\Encrypted';
 
     private ?EncryptorRegistry $registry = null;
 
@@ -63,22 +68,19 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
     private ?EncryptorInterface $restoreEncryptor = null;
 
     /**
-     * Count amount of decrypted values in this service
-     * @var integer
+     * Count amount of decrypted values in this service.
      */
     public int $decryptCounter = 0;
 
     /**
-     * Count amount of encrypted values in this service
-     * @var integer
+     * Count amount of encrypted values in this service.
      */
     public int $encryptCounter = 0;
 
-    /** @var array */
     private array $cachedDecryptions = [];
 
     /**
-     * @param EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor Registry (normal DI), a single encryptor (BC/tests), or null
+     * @param EncryptorInterface|EncryptorRegistry|null $registryOrEncryptor Registry (normal DI), a single encryptor (BC/tests), or null
      */
     public function __construct(EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor = null)
     {
@@ -112,31 +114,29 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
      * Temporarily overrides the encryptor (used by encrypt/decrypt database commands). Pass null to disable encryption.
      *
      * @param EncryptorInterface|null $encryptor Encryptor to use, or null to disable
-     * @return void
      */
     public function setEncryptor(?EncryptorInterface $encryptor = null): void
     {
-        $this->encryptorOverride = $encryptor;
+        $this->encryptorOverride    = $encryptor;
         $this->encryptorOverrideSet = true;
     }
 
     /**
      * Returns the current encryptor: override if set (including null), otherwise default from registry.
-     *
-     * @return EncryptorInterface|null
      */
     public function getEncryptor(): ?EncryptorInterface
     {
         if ($this->encryptorOverrideSet) {
             return $this->encryptorOverride;
         }
+
         return $this->registry?->getDefault();
     }
 
     /** Restore after override (used by decrypt command). */
     public function restoreEncryptor(): void
     {
-        $this->encryptorOverride = null;
+        $this->encryptorOverride    = null;
         $this->encryptorOverrideSet = false;
     }
 
@@ -154,8 +154,6 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
      *
      * So for example after form submit the preUpdate encrypted the entity
      * We have to decrypt them before showing them again.
-     *
-     * @param PostUpdateEventArgs $args
      */
     public function postUpdate(PostUpdateEventArgs $args)
     {
@@ -165,9 +163,7 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
 
     /**
      * Listen a preUpdate lifecycle event.
-     * Encrypt entities property's values on preUpdate, so they will be stored encrypted
-     *
-     * @param PreUpdateEventArgs $args
+     * Encrypt entities property's values on preUpdate, so they will be stored encrypted.
      */
     public function preUpdate(PreUpdateEventArgs $args)
     {
@@ -177,7 +173,7 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
 
     /**
      * Listen a postLoad lifecycle event.
-     * Decrypt entities property's values when loaded into the entity manger
+     * Decrypt entities property's values when loaded into the entity manger.
      *
      * @param LifecycleEventArgs $args
      */
@@ -189,9 +185,7 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
 
     /**
      * Listen to onflush event
-     * Encrypt entities that are inserted into the database
-     *
-     * @param PreFlushEventArgs $preFlushEventArgs
+     * Encrypt entities that are inserted into the database.
      */
     public function preFlush(PreFlushEventArgs $preFlushEventArgs)
     {
@@ -208,9 +202,7 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
 
     /**
      * Listen to onflush event
-     * Encrypt entities that are inserted into the database
-     *
-     * @param OnFlushEventArgs $onFlushEventArgs
+     * Encrypt entities that are inserted into the database.
      */
     public function onFlush(OnFlushEventArgs $onFlushEventArgs)
     {
@@ -219,7 +211,7 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
             $encryptCounterBefore = $this->encryptCounter;
             $this->processFields($entity);
             if ($this->encryptCounter > $encryptCounterBefore) {
-                $classMetadata = $onFlushEventArgs->getObjectManager()->getClassMetadata(get_class($entity));
+                $classMetadata = $onFlushEventArgs->getObjectManager()->getClassMetadata($entity::class);
                 $unitOfWork->recomputeSingleEntityChangeSet($classMetadata, $entity);
             }
         }
@@ -227,9 +219,7 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
 
     /**
      * Listen to postFlush event
-     * Decrypt entities after having been inserted into the database
-     *
-     * @param PostFlushEventArgs $postFlushEventArgs
+     * Decrypt entities after having been inserted into the database.
      */
     public function postFlush(PostFlushEventArgs $postFlushEventArgs)
     {
@@ -245,10 +235,8 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
      * Process (encrypt/decrypt) entities fields.
      *
      * @param object $entity doctrine entity
-     * @param bool   $isEncryptOperation If true - encrypt, false - decrypt entity
+     * @param bool $isEncryptOperation If true - encrypt, false - decrypt entity
      * @param string|null $configFilter When set, only process properties that use this config (e.g. personal_data). Resolves "default" via registry default.
-     *
-     * @return object|null
      */
     public function processFields(object $entity, bool $isEncryptOperation = true, ?string $configFilter = null): ?object
     {
@@ -257,14 +245,14 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
             return $entity;
         }
 
-        $encryptorMethod = $isEncryptOperation ? 'encrypt' : 'decrypt';
-        $realClass = $this->getRealClass($entity);
-        $properties = $this->getClassProperties($realClass);
+        $encryptorMethod   = $isEncryptOperation ? 'encrypt' : 'decrypt';
+        $realClass         = $this->getRealClass($entity);
+        $properties        = $this->getClassProperties($realClass);
         $defaultConfigName = $this->registry?->getDefaultName();
 
         foreach ($properties as $refProperty) {
             $attributes = $refProperty->getAttributes();
-            $isEmbebed = $this->defineAtributeType($attributes, 'Doctrine\ORM\Mapping\Embedded');
+            $isEmbebed  = $this->defineAtributeType($attributes, 'Doctrine\ORM\Mapping\Embedded');
             if ($isEmbebed) {
                 $this->handleEmbeddedAnnotation($entity, $refProperty, $isEncryptOperation, $configFilter);
                 continue;
@@ -286,7 +274,7 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
                 ? $encryptor
                 : $this->registry->get($encryptedAttr->config);
 
-            $pac = PropertyAccess::createPropertyAccessor();
+            $pac   = PropertyAccess::createPropertyAccessor();
             $value = $pac->getValue($entity, $refProperty->getName());
             if ($encryptorMethod === 'decrypt') {
                 if ($value !== null && $value !== '') {
@@ -294,21 +282,21 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
                         $ciphertext = substr($value, 0, -strlen(self::ENCRYPTION_MARKER));
                         try {
                             $currentPropValue = $propertyEncryptor->decrypt($ciphertext);
-                            $this->decryptCounter++;
-                        } catch (\Throwable $e) {
+                            ++$this->decryptCounter;
+                        } catch (Throwable $e) {
                             // Ciphertext not valid (e.g. Halite "Invalid version tag", wrong key, or value was plain with <ENC> appended)
                             $currentPropValue = $ciphertext;
                         }
                         $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
-                        $this->cachedDecryptions[get_class($entity)][spl_object_id($entity)][$refProperty->getName()][$currentPropValue] = $value;
+                        $this->cachedDecryptions[$entity::class][spl_object_id($entity)][$refProperty->getName()][$currentPropValue] = $value;
                     }
                 }
             } else {
                 if ($value !== null && $value !== '') {
-                    if (isset($this->cachedDecryptions[get_class($entity)][spl_object_id($entity)][$refProperty->getName()][$value])) {
-                        $pac->setValue($entity, $refProperty->getName(), $this->cachedDecryptions[get_class($entity)][spl_object_id($entity)][$refProperty->getName()][$value]);
+                    if (isset($this->cachedDecryptions[$entity::class][spl_object_id($entity)][$refProperty->getName()][$value])) {
+                        $pac->setValue($entity, $refProperty->getName(), $this->cachedDecryptions[$entity::class][spl_object_id($entity)][$refProperty->getName()][$value]);
                     } elseif (!str_ends_with($value, self::ENCRYPTION_MARKER)) {
-                        $this->encryptCounter++;
+                        ++$this->encryptCounter;
                         $currentPropValue = $propertyEncryptor->encrypt($value) . self::ENCRYPTION_MARKER;
                         $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
                     }
@@ -324,9 +312,11 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
         foreach ($attributes as $attribute) {
             if ($attribute->getName() === self::ENCRYPTED_ANN_NAME) {
                 $instance = $attribute->newInstance();
+
                 return $instance instanceof Encrypted ? $instance : null;
             }
         }
+
         return null;
     }
 
@@ -343,16 +333,15 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
         }
     }
 
-
     /**
      * The function checks if a given string class exists in an array of attributes.
      *
-     * @param array attributes An array of objects representing attributes.
+     * @param array attributes An array of objects representing attributes
      * @param string stringClass The parameter `` is a string that represents the name of a
-     * class.
+     * class
      *
      * @return bool a boolean value. It returns true if the given string class is found in the array of
-     * attributes, and false otherwise.
+     *              attributes, and false otherwise.
      */
     private function defineAtributeType(array $attributes, string $stringClass): bool
     {
@@ -361,6 +350,7 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
                 return true;
             }
         }
+
         return false;
     }
 
@@ -376,31 +366,31 @@ class DoctrineEncryptSubscriber /*implements EventSubscriber*/
         if (class_exists(\Doctrine\Common\Util\ClassUtils::class)) {
             return \Doctrine\Common\Util\ClassUtils::getClass($entity);
         }
-        $class = get_class($entity);
+        $class = $entity::class;
         // Resolve Doctrine proxy to real entity class
         if (str_contains($class, '\\__CG__\\') || str_contains($class, 'Proxies\\')) {
             $parent = get_parent_class($entity);
+
             return $parent ?: $class;
         }
+
         return $class;
     }
 
     /**
      * Recursive function to get an associative array of class properties
-     * including inherited ones from extended classes
+     * including inherited ones from extended classes.
      *
      * @param string $className Class name
-     *
-     * @return array
      */
     private function getClassProperties(string $className): array
     {
         $reflectionClass = new ReflectionClass($className);
-        $properties = $reflectionClass->getProperties();
+        $properties      = $reflectionClass->getProperties();
         $propertiesArray = [];
 
         foreach ($properties as $property) {
-            $propertyName = $property->getName();
+            $propertyName                   = $property->getName();
             $propertiesArray[$propertyName] = $property;
         }
 

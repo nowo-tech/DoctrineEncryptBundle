@@ -17,21 +17,21 @@ class SecretMessageType extends AbstractType
     {
         $builder
             ->add('title', TextType::class, [
-                'required' => false,
-                'label' => 'Title (stored in plain text)',
+                'required'   => false,
+                'label'      => 'Title (stored in plain text)',
                 'label_attr' => ['class' => 'form-label'],
-                'attr' => [
-                    'class' => 'form-control',
+                'attr'       => [
+                    'class'       => 'form-control',
                     'placeholder' => 'e.g. My note',
                 ],
             ])
             ->add('message', TextareaType::class, [
-                'required' => false,
-                'label' => 'Message (encrypted in database)',
+                'required'   => false,
+                'label'      => 'Message (encrypted in database)',
                 'label_attr' => ['class' => 'form-label'],
-                'attr' => [
-                    'class' => 'form-control',
-                    'rows' => 5,
+                'attr'       => [
+                    'class'       => 'form-control',
+                    'rows'        => 5,
                     'placeholder' => 'Sensitive content – stored encrypted with Halite',
                 ],
             ]);

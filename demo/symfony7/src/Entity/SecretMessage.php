@@ -36,6 +36,7 @@ class SecretMessage
     public function setMessage(?string $message): static
     {
         $this->message = $message;
+
         return $this;
     }
 
@@ -47,6 +48,7 @@ class SecretMessage
     public function setTitle(?string $title): static
     {
         $this->title = $title;
+
         return $this;
     }
 }

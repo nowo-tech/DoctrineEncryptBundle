@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Functional;
 
 use Psr\Log\AbstractLogger;
@@ -18,7 +20,7 @@ final class SqlQueryCollector extends AbstractLogger
     public function log($level, $message, array $context = []): void
     {
         $this->queries[] = [
-            'sql' => $context['sql'] ?? $message,
+            'sql'    => $context['sql'] ?? $message,
             'params' => $context['params'] ?? [],
         ];
     }

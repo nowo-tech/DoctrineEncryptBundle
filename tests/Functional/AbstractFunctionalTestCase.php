@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Functional;
 
 use Doctrine\DBAL\DriverManager;
@@ -8,11 +10,18 @@ use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\Driver\AttributeDriver;
 use Doctrine\ORM\ORMSetup;
 use Doctrine\ORM\Tools\SchemaTool;
+use InvalidArgumentException;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use PHPUnit\Framework\Constraint\LogicalNot;
 use PHPUnit\Framework\Constraint\StringContains;
 use PHPUnit\Framework\TestCase;
+
+use function count;
+use function is_bool;
+use function is_string;
+
+use const E_ALL;
 
 /**
  * @property \Doctrine\DBAL\Logging\DebugStack|SqlQueryCollector $sqlLoggerStack
@@ -32,7 +41,7 @@ abstract class AbstractFunctionalTestCase extends TestCase
 
     abstract protected function getEncryptor(): EncryptorInterface;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         $paths = [__DIR__ . '/fixtures/Entity'];
         if (class_exists(ORMSetup::class)) {
@@ -46,36 +55,36 @@ abstract class AbstractFunctionalTestCase extends TestCase
         }
 
         $this->dbFile = tempnam(sys_get_temp_dir(), 'nowo_encrypt_db');
-        $conn = [
+        $conn         = [
             'driver' => 'pdo_sqlite',
-            'path' => $this->dbFile,
+            'path'   => $this->dbFile,
         ];
 
         $useDbal4 = !class_exists(\Doctrine\DBAL\Logging\DebugStack::class);
 
         if (!$useDbal4 && method_exists(EntityManager::class, 'create')) {
-            $this->entityManager = EntityManager::create($conn, $config);
+            $this->entityManager  = EntityManager::create($conn, $config);
             $this->sqlLoggerStack = new \Doctrine\DBAL\Logging\DebugStack();
             $this->entityManager->getConnection()->getConfiguration()->setSQLLogger($this->sqlLoggerStack);
         } else {
             $sqlCollector = new SqlQueryCollector();
-            $dbalConfig = new \Doctrine\DBAL\Configuration();
+            $dbalConfig   = new \Doctrine\DBAL\Configuration();
             if (class_exists(\Doctrine\DBAL\Logging\Middleware::class)) {
                 $dbalConfig->setMiddlewares([new \Doctrine\DBAL\Logging\Middleware($sqlCollector)]);
             }
-            $connection = DriverManager::getConnection($conn, $dbalConfig);
-            $this->entityManager = new EntityManager($connection, $config);
+            $connection           = DriverManager::getConnection($conn, $dbalConfig);
+            $this->entityManager  = new EntityManager($connection, $config);
             $this->sqlLoggerStack = $sqlCollector;
         }
 
         $schemaTool = new SchemaTool($this->entityManager);
-        $classes = $this->entityManager->getMetadataFactory()->getAllMetadata();
+        $classes    = $this->entityManager->getMetadataFactory()->getAllMetadata();
         $schemaTool->dropSchema($classes);
         $schemaTool->createSchema($classes);
 
-        $this->encryptor = $this->getEncryptor();
+        $this->encryptor  = $this->getEncryptor();
         $this->subscriber = new DoctrineEncryptSubscriber($this->encryptor);
-        $eventManager = $this->entityManager->getEventManager();
+        $eventManager     = $this->entityManager->getEventManager();
         $eventManager->addEventListener(
             [
                 Events::postUpdate,
@@ -85,13 +94,13 @@ abstract class AbstractFunctionalTestCase extends TestCase
                 Events::preFlush,
                 Events::postFlush,
             ],
-            $this->subscriber
+            $this->subscriber,
         );
 
         error_reporting(E_ALL);
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->entityManager->getConnection()->close();
         unlink($this->dbFile);
@@ -126,27 +135,26 @@ abstract class AbstractFunctionalTestCase extends TestCase
     /**
      * Asserts that a string starts with a given prefix.
      *
-     * @param string $stringn
      * @param string $string
      * @param string $message
      */
     public function assertStringDoesNotContain($needle, $string, $ignoreCase = false, $message = ''): void
     {
-        if (!\is_string($needle)) {
-            throw new \InvalidArgumentException('Argument 1 must be a string');
+        if (!is_string($needle)) {
+            throw new InvalidArgumentException('Argument 1 must be a string');
         }
 
-        if (!\is_string($string)) {
-            throw new \InvalidArgumentException('Argument 2 must be a string');
+        if (!is_string($string)) {
+            throw new InvalidArgumentException('Argument 2 must be a string');
         }
 
-        if (!\is_bool($ignoreCase)) {
-            throw new \InvalidArgumentException('Argument 3 must be a boolean');
+        if (!is_bool($ignoreCase)) {
+            throw new InvalidArgumentException('Argument 3 must be a boolean');
         }
 
         $constraint = new LogicalNot(new StringContains(
             $needle,
-            $ignoreCase
+            $ignoreCase,
         ));
 
         static::assertThat($string, $constraint, $message);

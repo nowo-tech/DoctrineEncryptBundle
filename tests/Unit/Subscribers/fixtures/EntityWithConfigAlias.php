@@ -17,6 +17,6 @@ class EntityWithConfigAlias
     public function __construct(string $defaultField = '', string $otherField = '')
     {
         $this->defaultField = $defaultField;
-        $this->otherField = $otherField;
+        $this->otherField   = $otherField;
     }
 }

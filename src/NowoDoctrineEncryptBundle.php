@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle;
 
 use Nowo\DoctrineEncryptBundle\DependencyInjection\DoctrineEncryptExtension;
@@ -15,8 +17,6 @@ class NowoDoctrineEncryptBundle extends Bundle
 {
     /**
      * Returns the container extension that configures the bundle.
-     *
-     * @return ExtensionInterface|null
      */
     public function getContainerExtension(): ?ExtensionInterface
     {

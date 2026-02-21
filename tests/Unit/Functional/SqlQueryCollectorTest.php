@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Functional;
 
 use Nowo\DoctrineEncryptBundle\Tests\Functional\SqlQueryCollector;

@@ -1,8 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Encryptors;
 
+use InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
+
+use function sprintf;
 
 /**
  * Registry of named encryptors. Used when multiple encryptor configs are defined (e.g. personal_data, financial_data).
@@ -22,7 +27,7 @@ final class EncryptorRegistry
      */
     public function __construct(array $encryptors, string $defaultName = 'default')
     {
-        $this->encryptors = $encryptors;
+        $this->encryptors  = $encryptors;
         $this->defaultName = $defaultName;
     }
 
@@ -30,13 +35,13 @@ final class EncryptorRegistry
      * Returns the encryptor for the given config name.
      *
      * @param string $name Config alias (e.g. personal_data, financial_data)
-     * @return EncryptorInterface
-     * @throws \InvalidArgumentException When the config name is not registered
+     *
+     * @throws InvalidArgumentException When the config name is not registered
      */
     public function get(string $name): EncryptorInterface
     {
         if (!isset($this->encryptors[$name])) {
-            throw new \InvalidArgumentException(sprintf('Unknown encryptor config "%s". Available: %s.', $name, implode(', ', array_keys($this->encryptors))));
+            throw new InvalidArgumentException(sprintf('Unknown encryptor config "%s". Available: %s.', $name, implode(', ', array_keys($this->encryptors))));
         }
 
         return $this->encryptors[$name];
@@ -44,8 +49,6 @@ final class EncryptorRegistry
 
     /**
      * Returns the default encryptor (used when no config is specified).
-     *
-     * @return EncryptorInterface
      */
     public function getDefault(): EncryptorInterface
     {
@@ -54,8 +57,6 @@ final class EncryptorRegistry
 
     /**
      * Returns the name of the default config.
-     *
-     * @return string
      */
     public function getDefaultName(): string
     {
@@ -66,7 +67,6 @@ final class EncryptorRegistry
      * Checks whether an encryptor is registered for the given config name.
      *
      * @param string $name Config alias
-     * @return bool
      */
     public function has(string $name): bool
     {

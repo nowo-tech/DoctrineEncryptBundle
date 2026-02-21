@@ -1,11 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Command;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+
+use function count;
+use function sprintf;
 
 /**
  * Console command that lists entities, their encrypted properties with config, and the configured encryptor configs.
@@ -14,7 +19,7 @@ use Symfony\Component\Console\Output\OutputInterface;
     name: 'doctrine:encrypt:status',
     description: 'Get status of doctrine encrypt bundle and the database',
     hidden: false,
-    aliases: ['doctrine:encrypt:status']
+    aliases: ['doctrine:encrypt:status'],
 )]
 class DoctrineEncryptStatusCommand extends AbstractCommand
 {
@@ -43,17 +48,18 @@ class DoctrineEncryptStatusCommand extends AbstractCommand
     /**
      * Outputs each entity with its encrypted properties and config, then a summary and the configured configs.
      *
-     * @param InputInterface  $input  Console input
+     * @param InputInterface $input Console input
      * @param OutputInterface $output Console output
+     *
      * @return int Command::SUCCESS
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $defaultConfigName = $this->encryptorRegistry?->getDefaultName() ?? 'default';
 
-        $metaDataArray = $this->entityManager->getMetadataFactory()->getAllMetadata();
+        $metaDataArray          = $this->entityManager->getMetadataFactory()->getAllMetadata();
         $entitiesWithEncryption = 0;
-        $totalCount = 0;
+        $totalCount             = 0;
 
         foreach ($metaDataArray as $metaData) {
             if (isset($metaData->isMappedSuperclass) && $metaData->isMappedSuperclass) {
@@ -61,10 +67,10 @@ class DoctrineEncryptStatusCommand extends AbstractCommand
             }
 
             $propertiesWithConfig = $this->getEncryptionablePropertiesWithConfig($metaData, $defaultConfigName);
-            $count = count($propertiesWithConfig);
+            $count                = count($propertiesWithConfig);
 
             if ($count > 0) {
-                $entitiesWithEncryption++;
+                ++$entitiesWithEncryption;
                 $totalCount += $count;
                 $output->writeln(sprintf('<info>%s</info> has <info>%d</info> encrypted property(ies):', $metaData->name, $count));
                 foreach ($propertiesWithConfig as ['property' => $property, 'config' => $config]) {
@@ -80,7 +86,7 @@ class DoctrineEncryptStatusCommand extends AbstractCommand
             '<info>%d</info> entit(y/ies) with encryption, <info>%d</info> encrypted properties in total (out of <info>%d</info> entities).',
             $entitiesWithEncryption,
             $totalCount,
-            count($metaDataArray)
+            count($metaDataArray),
         ));
 
         $this->outputConfiguredConfigs($output, $defaultConfigName);
@@ -95,6 +101,7 @@ class DoctrineEncryptStatusCommand extends AbstractCommand
 
         if ($this->encryptorRegistry === null) {
             $output->writeln('  (registry not available)');
+
             return;
         }
 
@@ -104,14 +111,15 @@ class DoctrineEncryptStatusCommand extends AbstractCommand
 
         if (count($namesToShow) === 0) {
             $output->writeln('  (none)');
+
             return;
         }
 
         $keyPaths = $this->keyPaths;
         foreach ($namesToShow as $name) {
             $encryptorClass = $keyPaths[$name]['encryptor_class'] ?? null;
-            $label = $encryptorClass ? sprintf('%s (%s)', $name, $encryptorClass) : $name;
-            $defaultLabel = $name === $defaultConfigName ? ' [default]' : '';
+            $label          = $encryptorClass ? sprintf('%s (%s)', $name, $encryptorClass) : $name;
+            $defaultLabel   = $name === $defaultConfigName ? ' [default]' : '';
             $output->writeln(sprintf('  - %s%s', $label, $defaultLabel));
         }
     }

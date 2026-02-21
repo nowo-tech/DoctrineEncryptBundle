@@ -51,7 +51,6 @@
   },
   "require-dev": {
     "defuse/php-encryption": "^2.1",
-    "doctrine/annotations": "^2.0",
     "friendsofphp/php-cs-fixer": "^3.0",
     "phpunit/phpunit": "^10.0 || ^11.0",
     "symfony/cache": "^7.0 || ^8.0"

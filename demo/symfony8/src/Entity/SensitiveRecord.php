@@ -46,6 +46,7 @@ class SensitiveRecord
     public function setPersonalNote(?string $personalNote): static
     {
         $this->personalNote = $personalNote;
+
         return $this;
     }
 
@@ -57,6 +58,7 @@ class SensitiveRecord
     public function setFinancialNote(?string $financialNote): static
     {
         $this->financialNote = $financialNote;
+
         return $this;
     }
 
@@ -68,6 +70,7 @@ class SensitiveRecord
     public function setEnvVarNote(?string $envVarNote): static
     {
         $this->envVarNote = $envVarNote;
+
         return $this;
     }
 }

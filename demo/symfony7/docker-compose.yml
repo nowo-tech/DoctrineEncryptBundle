@@ -1,3 +1,4 @@
+name: doctrine-encrypt-bundle-demo-symfony-7
 services:
   php:
     build:
@@ -10,6 +11,7 @@ services:
       - "${PORT:-8007}:80"
     volumes:
       - .:/app
+      # Mount bundle root so the demo uses bundle files from the repo
       - ../..:/var/doctrine-encrypt-bundle
       - composer-cache:/root/.composer/cache
     environment:

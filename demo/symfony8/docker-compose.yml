@@ -1,3 +1,4 @@
+name: doctrine-encrypt-bundle-demo-symfony-8
 services:
   php:
     build:
@@ -10,6 +11,7 @@ services:
       - "${PORT:-8008}:80"
     volumes:
       - .:/app
+      # Mount bundle root so the demo uses bundle files from the repo
       - ../..:/var/doctrine-encrypt-bundle
       - composer-cache:/root/.composer/cache
     environment:

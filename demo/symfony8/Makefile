@@ -5,14 +5,14 @@ COMPOSE_FILE := docker-compose.yml
 COMPOSE := docker-compose -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
-.PHONY: help up down build install shell logs setup db-create db-schema key fixtures cache-clear update-bundle test encrypt-status encrypt-database decrypt-database ensure-up
+.PHONY: help up down build install shell logs setup db-create db-schema key fixtures cache-clear update-bundle test test-coverage encrypt-status encrypt-database decrypt-database ensure-up
 .PHONY: encrypt-database-all decrypt-database-all encrypt-database-personal_data decrypt-database-personal_data encrypt-database-financial_data decrypt-database-financial_data encrypt-database-env_var decrypt-database-env_var
 .PHONY: rotate-keys rotate-keys-backup
 
 help:
 	@echo "Doctrine Encrypt Bundle Demo - Symfony 8"
 	@echo ""
-	@echo "  make up                 Start containers (FrankenPHP on port \$${PORT:-8008})"
+	@echo "  make up                 Start containers, install deps, create DB, schema and load fixtures (FrankenPHP on port \$${PORT:-8008}); if exit 137 (OOM), run 'make install' then 'make setup'"
 	@echo "  make down               Stop containers"
 	@echo "  make build              Build image (no cache)"
 	@echo "  make install            Install dependencies in container"
@@ -39,11 +39,18 @@ help:
 	@echo "  make cache-clear        Clear Symfony cache"
 	@echo "  make update-bundle      Update bundle from path repo"
 	@echo "  make test               Run tests"
+	@echo "  make test-coverage      Run tests with coverage (console output)"
 	@echo ""
 
 up:
 	@if [ ! -f .env ]; then cp .env.example .env 2>/dev/null || (echo "APP_ENV=dev" > .env; echo "APP_SECRET=change-me" >> .env; echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/data.db" >> .env); fi
 	$(COMPOSE) up -d
+	@echo "Waiting for container to be ready..."
+	@sleep 5
+	@echo "Installing dependencies..."
+	@$(COMPOSE) exec -T -e COMPOSER_MEMORY_LIMIT=-1 $(SERVICE_PHP) composer install --no-interaction
+	@echo "Creating database, schema and loading fixtures..."
+	@$(MAKE) db-create db-schema key fixtures
 	@echo "App: http://localhost:$${PORT:-8008}"
 
 down:
@@ -57,12 +64,12 @@ ensure-up:
 	@if ! $(COMPOSE) exec -T $(SERVICE_PHP) true 2>/dev/null; then \
 		echo "Starting container (demo docker-compose)..."; \
 		$(COMPOSE) up -d; \
-		sleep 3; \
-		$(COMPOSE) exec -T $(SERVICE_PHP) composer install --no-interaction; \
+		sleep 5; \
+		$(COMPOSE) exec -T -e COMPOSER_MEMORY_LIMIT=-1 $(SERVICE_PHP) composer install --no-interaction; \
 	fi
 
 install: ensure-up
-	$(COMPOSE) exec -T $(SERVICE_PHP) composer install --no-interaction
+	$(COMPOSE) exec -T -e COMPOSER_MEMORY_LIMIT=-1 $(SERVICE_PHP) composer install --no-interaction
 
 setup: install db-create db-schema key fixtures
 	@echo "Demo ready. App: http://localhost:$${PORT:-8008}"
@@ -137,3 +144,6 @@ update-bundle: ensure-up
 
 test: ensure-up
 	$(COMPOSE) exec -e APP_ENV=test $(SERVICE_PHP) composer test 2>/dev/null || $(COMPOSE) exec $(SERVICE_PHP) php bin/console list doctrine
+
+test-coverage: ensure-up
+	$(COMPOSE) exec -e APP_ENV=test $(SERVICE_PHP) composer test-coverage 2>/dev/null || $(COMPOSE) exec $(SERVICE_PHP) composer test

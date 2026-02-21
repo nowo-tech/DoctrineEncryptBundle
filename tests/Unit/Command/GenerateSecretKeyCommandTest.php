@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Command;
 
 use Nowo\DoctrineEncryptBundle\Command\GenerateSecretKeyCommand;
@@ -10,6 +12,8 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\HttpKernel\KernelInterface;
 
+use function extension_loaded;
+
 class GenerateSecretKeyCommandTest extends TestCase
 {
     private function createCommand(array $keyPaths, string $projectDir = '/tmp'): GenerateSecretKeyCommand
@@ -17,9 +21,9 @@ class GenerateSecretKeyCommandTest extends TestCase
         $kernel = $this->createMock(KernelInterface::class);
         $kernel->method('getProjectDir')->willReturn($projectDir);
 
-        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em              = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
         $attributeReader = new AttributeReader();
-        $subscriber = $this->createMock(DoctrineEncryptSubscriber::class);
+        $subscriber      = $this->createMock(DoctrineEncryptSubscriber::class);
 
         return new GenerateSecretKeyCommand($em, $attributeReader, $subscriber, $kernel, $keyPaths);
     }
@@ -38,7 +42,7 @@ class GenerateSecretKeyCommandTest extends TestCase
             'default' => ['path' => $keyPath, 'encryptor_class' => 'Halite'],
         ];
         $command = $this->createCommand($keyPaths, sys_get_temp_dir());
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -64,7 +68,7 @@ class GenerateSecretKeyCommandTest extends TestCase
             'default' => ['path' => $keyPath, 'encryptor_class' => 'Halite'],
         ];
         $command = $this->createCommand($keyPaths, sys_get_temp_dir());
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -88,7 +92,7 @@ class GenerateSecretKeyCommandTest extends TestCase
             'default' => ['path' => $keyPath, 'encryptor_class' => 'Halite'],
         ];
         $command = $this->createCommand($keyPaths, sys_get_temp_dir());
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute(['config' => 'default']);
 
@@ -112,7 +116,7 @@ class GenerateSecretKeyCommandTest extends TestCase
         $keyPaths = [
             'default' => ['path' => $keyPath, 'encryptor_class' => 'Halite'],
         ];
-        $command = $this->createCommand($keyPaths, sys_get_temp_dir());
+        $command     = $this->createCommand($keyPaths, sys_get_temp_dir());
         $application = new Application();
         $command->setApplication($application);
         $tester = new CommandTester($command);
@@ -138,7 +142,7 @@ class GenerateSecretKeyCommandTest extends TestCase
         $keyPaths = [
             'default' => ['path' => $keyPath, 'encryptor_class' => 'Halite'],
         ];
-        $command = $this->createCommand($keyPaths, sys_get_temp_dir());
+        $command     = $this->createCommand($keyPaths, sys_get_temp_dir());
         $application = new Application();
         $command->setApplication($application);
         $tester = new CommandTester($command);
@@ -161,7 +165,7 @@ class GenerateSecretKeyCommandTest extends TestCase
             'default' => ['path' => '/tmp/default.key', 'encryptor_class' => 'Halite'],
         ];
         $command = $this->createCommand($keyPaths);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute(['config' => 'nonexistent']);
 
@@ -176,7 +180,7 @@ class GenerateSecretKeyCommandTest extends TestCase
             'custom' => ['path' => '/tmp/custom.key', 'encryptor_class' => 'CustomEncryptor'],
         ];
         $command = $this->createCommand($keyPaths);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute(['config' => 'custom']);
 
@@ -196,7 +200,7 @@ class GenerateSecretKeyCommandTest extends TestCase
             'default' => ['path' => $keyPath, 'encryptor_class' => 'Defuse'],
         ];
         $command = $this->createCommand($keyPaths, sys_get_temp_dir());
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -213,7 +217,7 @@ class GenerateSecretKeyCommandTest extends TestCase
             'custom' => ['path' => '/tmp/custom.key', 'encryptor_class' => 'CustomEncryptor'],
         ];
         $command = $this->createCommand($keyPaths);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -231,7 +235,7 @@ class GenerateSecretKeyCommandTest extends TestCase
             'default' => ['path' => null, 'encryptor_class' => 'Halite'],
         ];
         $command = $this->createCommand($keyPaths);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -251,7 +255,7 @@ class GenerateSecretKeyCommandTest extends TestCase
             'default' => ['path' => null, 'encryptor_class' => 'Halite'],
         ];
         $command = $this->createCommand($keyPaths);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute(['config' => 'default']);
 
@@ -266,7 +270,7 @@ class GenerateSecretKeyCommandTest extends TestCase
             'custom' => ['path' => null, 'encryptor_class' => 'CustomEncryptor'],
         ];
         $command = $this->createCommand($keyPaths);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -281,7 +285,7 @@ class GenerateSecretKeyCommandTest extends TestCase
             'default' => ['path' => null, 'encryptor_class' => 'Defuse'],
         ];
         $command = $this->createCommand($keyPaths);
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 
@@ -293,7 +297,7 @@ class GenerateSecretKeyCommandTest extends TestCase
     public function testCommandDefinitionHasConfigArgument(): void
     {
         $command = $this->createCommand(['default' => ['path' => '/tmp/k.key', 'encryptor_class' => 'Halite']]);
-        $def = $command->getDefinition();
+        $def     = $command->getDefinition();
         $this->assertTrue($def->hasArgument('config'));
         $this->assertNull($def->getArgument('config')->getDefault(), 'config argument is optional (no default required)');
     }
@@ -303,12 +307,12 @@ class GenerateSecretKeyCommandTest extends TestCase
     {
         $baseDir = sys_get_temp_dir() . '/nowo-encrypt-nested-' . uniqid();
         $this->assertDirectoryDoesNotExist($baseDir);
-        $keyPath = $baseDir . '/subdir/defuse.key';
+        $keyPath  = $baseDir . '/subdir/defuse.key';
         $keyPaths = [
             'default' => ['path' => $keyPath, 'encryptor_class' => 'Defuse'],
         ];
         $command = $this->createCommand($keyPaths, sys_get_temp_dir());
-        $tester = new CommandTester($command);
+        $tester  = new CommandTester($command);
 
         $tester->execute([]);
 

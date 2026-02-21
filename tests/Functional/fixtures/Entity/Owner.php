@@ -25,8 +25,6 @@ class Owner
     #[ORM\OneToOne(targetEntity: CascadeTarget::class, cascade: ['persist'])]
     private ?CascadeTarget $cascaded = null;
 
-
-
     public function getId()
     {
         return $this->id;
@@ -73,6 +71,4 @@ class Owner
     {
         $this->cascaded = $cascaded;
     }
-
-
 }

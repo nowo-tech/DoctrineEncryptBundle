@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Command;
 
+use ArrayIterator;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadataFactory;
 use Doctrine\ORM\Query;
@@ -13,6 +14,8 @@ use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\EntityWithConfigAlias;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
+use stdClass;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -20,12 +23,12 @@ class AbstractCommandTest extends TestCase
 {
     public function testGetEncryptionableEntityMetaDataReturnsOnlyEntitiesWithEncryptedProperties(): void
     {
-        $metadataWithEncrypted = new \stdClass();
-        $metadataWithEncrypted->name = User::class;
+        $metadataWithEncrypted                     = new stdClass();
+        $metadataWithEncrypted->name               = User::class;
         $metadataWithEncrypted->isMappedSuperclass = false;
 
-        $metadataPlain = new \stdClass();
-        $metadataPlain->name = \stdClass::class;
+        $metadataPlain                     = new stdClass();
+        $metadataPlain->name               = stdClass::class;
         $metadataPlain->isMappedSuperclass = false;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -34,7 +37,7 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -54,8 +57,8 @@ class AbstractCommandTest extends TestCase
 
     public function testGetEncryptionableEntityMetaDataSkipsMappedSuperclass(): void
     {
-        $metadataSuper = new \stdClass();
-        $metadataSuper->name = User::class;
+        $metadataSuper                     = new stdClass();
+        $metadataSuper->name               = User::class;
         $metadataSuper->isMappedSuperclass = true;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -64,7 +67,7 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -84,7 +87,7 @@ class AbstractCommandTest extends TestCase
     public function testGetEntityIteratorReturnsIterable(): void
     {
         $query = $this->createMock(Query::class);
-        $query->method('toIterable')->willReturn(new \ArrayIterator([]));
+        $query->method('toIterable')->willReturn(new ArrayIterator([]));
 
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects($this->once())
@@ -92,7 +95,7 @@ class AbstractCommandTest extends TestCase
             ->with('SELECT o FROM ' . User::class . ' o')
             ->willReturn($query);
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -120,7 +123,7 @@ class AbstractCommandTest extends TestCase
             ->with('SELECT COUNT(o) FROM ' . User::class . ' o')
             ->willReturn($query);
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -139,8 +142,8 @@ class AbstractCommandTest extends TestCase
 
     public function testGetEncryptionablePropertiesForConfigReturnsOnlyPropertiesForGivenConfig(): void
     {
-        $metadata = new \stdClass();
-        $metadata->name = EntityWithConfigAlias::class;
+        $metadata                     = new stdClass();
+        $metadata->name               = EntityWithConfigAlias::class;
         $metadata->isMappedSuperclass = false;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -149,13 +152,13 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
             }
 
-            /** @return array<\ReflectionProperty> */
+            /** @return array<ReflectionProperty> */
             public function exposeGetEncryptionablePropertiesForConfig($entityMetaData, string $configName, string $defaultConfigName): array
             {
                 return $this->getEncryptionablePropertiesForConfig($entityMetaData, $configName, $defaultConfigName);
@@ -176,12 +179,12 @@ class AbstractCommandTest extends TestCase
 
     public function testGetEncryptionableEntityMetaDataForConfigReturnsOnlyEntitiesWithPropertiesForConfig(): void
     {
-        $metadataUser = new \stdClass();
-        $metadataUser->name = User::class;
+        $metadataUser                     = new stdClass();
+        $metadataUser->name               = User::class;
         $metadataUser->isMappedSuperclass = false;
 
-        $metadataEntityWithAlias = new \stdClass();
-        $metadataEntityWithAlias->name = EntityWithConfigAlias::class;
+        $metadataEntityWithAlias                     = new stdClass();
+        $metadataEntityWithAlias->name               = EntityWithConfigAlias::class;
         $metadataEntityWithAlias->isMappedSuperclass = false;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -190,7 +193,7 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -204,7 +207,7 @@ class AbstractCommandTest extends TestCase
 
         $forDefault = $command->exposeGetEncryptionableEntityMetaDataForConfig('default', 'default');
         $this->assertCount(2, $forDefault);
-        $names = array_map(fn ($m) => $m->name, $forDefault);
+        $names = array_map(static fn ($m) => $m->name, $forDefault);
         $this->assertContains(User::class, $names);
         $this->assertContains(EntityWithConfigAlias::class, $names);
 
@@ -215,8 +218,8 @@ class AbstractCommandTest extends TestCase
 
     public function testGetEncryptionablePropertiesReturnsOnlyPropertiesWithEncryptedAttribute(): void
     {
-        $metadata = new \stdClass();
-        $metadata->name = User::class;
+        $metadata                     = new stdClass();
+        $metadata->name               = User::class;
         $metadata->isMappedSuperclass = false;
 
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -225,13 +228,13 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
             }
 
-            /** @return array<\ReflectionProperty> */
+            /** @return array<ReflectionProperty> */
             public function exposeGetEncryptionableProperties($entityMetaData): array
             {
                 return $this->getEncryptionableProperties($entityMetaData);
@@ -240,21 +243,21 @@ class AbstractCommandTest extends TestCase
 
         $properties = $command->exposeGetEncryptionableProperties($metadata);
         $this->assertCount(2, $properties);
-        $names = array_map(fn ($p) => $p->getName(), $properties);
+        $names = array_map(static fn ($p) => $p->getName(), $properties);
         $this->assertContains('name', $names);
         $this->assertContains('address', $names);
 
-        $metadataPlain = new \stdClass();
-        $metadataPlain->name = \stdClass::class;
+        $metadataPlain                     = new stdClass();
+        $metadataPlain->name               = stdClass::class;
         $metadataPlain->isMappedSuperclass = false;
-        $propertiesPlain = $command->exposeGetEncryptionableProperties($metadataPlain);
+        $propertiesPlain                   = $command->exposeGetEncryptionableProperties($metadataPlain);
         $this->assertCount(0, $propertiesPlain);
     }
 
     public function testGetEncryptedTableInfoReturnsTableIdColumnsAndEncryptedColumns(): void
     {
-        $metadata = new class () {
-            public string $name = User::class;
+        $metadata = new class {
+            public string $name             = User::class;
             public bool $isMappedSuperclass = false;
 
             public function getTableName(): string
@@ -278,7 +281,7 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -301,8 +304,8 @@ class AbstractCommandTest extends TestCase
 
     public function testGetEncryptedTableInfoUsesGetIdentifierColumnNamesWhenGetIdentifierFieldNamesNotPresent(): void
     {
-        $metadata = new class () {
-            public string $name = User::class;
+        $metadata = new class {
+            public string $name             = User::class;
             public bool $isMappedSuperclass = false;
 
             public function getTableName(): string
@@ -326,7 +329,7 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -345,7 +348,7 @@ class AbstractCommandTest extends TestCase
 
     public function testGetColumnNameFromMetadataUsesGetFieldMappingWhenGetColumnNameNotPresent(): void
     {
-        $metadata = new class () {
+        $metadata = new class {
             public string $name = User::class;
 
             public function getFieldMapping(string $fieldName): array
@@ -359,7 +362,7 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -376,7 +379,7 @@ class AbstractCommandTest extends TestCase
 
     public function testGetColumnNameFromMetadataUsesFieldNameWhenMappingHasNoColumnName(): void
     {
-        $metadata = new class () {
+        $metadata = new class {
             public function getFieldMapping(string $fieldName): array
             {
                 return [];
@@ -386,7 +389,7 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($this->createMock(ClassMetadataFactory::class));
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -406,7 +409,7 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($this->createMock(ClassMetadataFactory::class));
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -428,7 +431,7 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($this->createMock(ClassMetadataFactory::class));
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;
@@ -450,7 +453,7 @@ class AbstractCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($this->createMock(ClassMetadataFactory::class));
 
-        $command = new class ($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
+        $command = new class($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class)) extends AbstractCommand {
             protected function execute(InputInterface $input, OutputInterface $output): int
             {
                 return 0;

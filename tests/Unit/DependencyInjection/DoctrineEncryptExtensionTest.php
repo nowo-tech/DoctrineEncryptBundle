@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\DependencyInjection;
 
 use Nowo\DoctrineEncryptBundle\Command\DoctrineDecryptDatabaseCommand;
@@ -84,7 +86,7 @@ class DoctrineEncryptExtensionTest extends TestCase
             'configs' => [
                 'default' => [
                     'secret_directory_path' => '/var/keys',
-                    'encryptor_class' => 'Defuse',
+                    'encryptor_class'       => 'Defuse',
                 ],
             ],
         ];
@@ -141,7 +143,7 @@ class DoctrineEncryptExtensionTest extends TestCase
     public function testConfigLoadCustom(): void
     {
         $container = $this->createContainer();
-        $config = [
+        $config    = [
             'configs' => [
                 'default' => ['encryptor_class' => self::class],
             ],
@@ -156,15 +158,15 @@ class DoctrineEncryptExtensionTest extends TestCase
     public function testLoadWithConfigsRegistersMultipleEncryptors(): void
     {
         $container = $this->createContainer();
-        $config = [
+        $config    = [
             'default_config' => 'personal_data',
-            'configs' => [
+            'configs'        => [
                 'personal_data' => [
-                    'encryptor_class' => 'Halite',
+                    'encryptor_class'       => 'Halite',
                     'secret_directory_path' => '%kernel.project_dir%',
                 ],
                 'financial_data' => [
-                    'encryptor_class' => 'Defuse',
+                    'encryptor_class'       => 'Defuse',
                     'secret_directory_path' => '/var/keys',
                 ],
             ],
@@ -176,19 +178,19 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->assertTrue($container->hasDefinition('nowo_doctrine_encrypt.encryptor.personal_data'));
         $this->assertTrue($container->hasDefinition('nowo_doctrine_encrypt.encryptor.financial_data'));
         $registryDef = $container->getDefinition('nowo_doctrine_encrypt.encryptor_registry');
-        $args = $registryDef->getArguments();
+        $args        = $registryDef->getArguments();
         $this->assertSame('personal_data', $args[1]);
     }
 
     public function testLoadWithSecretKeyFilenameUsesCustomPath(): void
     {
         $container = $this->createContainer();
-        $config = [
+        $config    = [
             'configs' => [
                 'default' => [
-                    'encryptor_class' => 'Defuse',
+                    'encryptor_class'       => 'Defuse',
                     'secret_directory_path' => '/var/keys',
-                    'secret_key_filename' => '.my_encrypt.key',
+                    'secret_key_filename'   => '.my_encrypt.key',
                 ],
             ],
         ];
@@ -201,12 +203,12 @@ class DoctrineEncryptExtensionTest extends TestCase
 
     public function testLoadWithSecretKeyEnvVarInjectsEnvAndKeyPathsHasNullPath(): void
     {
-        $container = $this->createContainer();
+        $container   = $this->createContainer();
         $resolvedKey = 'resolved-key-from-env';
-        $config = [
+        $config      = [
             'configs' => [
                 'default' => [
-                    'encryptor_class' => 'Halite',
+                    'encryptor_class'    => 'Halite',
                     'secret_key_env_var' => $resolvedKey,
                 ],
             ],
@@ -224,12 +226,12 @@ class DoctrineEncryptExtensionTest extends TestCase
 
     public function testLoadWithSecretKeyEnvVarResolvedValueInjectsKeyContentAsIs(): void
     {
-        $container = $this->createContainer();
+        $container        = $this->createContainer();
         $resolvedKeyValue = str_repeat('a', 512);
-        $config = [
+        $config           = [
             'configs' => [
                 'default' => [
-                    'encryptor_class' => 'Halite',
+                    'encryptor_class'    => 'Halite',
                     'secret_key_env_var' => $resolvedKeyValue,
                 ],
             ],
@@ -242,12 +244,12 @@ class DoctrineEncryptExtensionTest extends TestCase
 
     public function testLoadWithSecretKeyEnvVarInjectsResolvedValueAsIs(): void
     {
-        $container = $this->createContainer();
+        $container   = $this->createContainer();
         $resolvedKey = 'resolved-key-APP_ENCRYPT_KEY_2';
-        $config = [
+        $config      = [
             'configs' => [
                 'default' => [
-                    'encryptor_class' => 'Halite',
+                    'encryptor_class'    => 'Halite',
                     'secret_key_env_var' => $resolvedKey,
                 ],
             ],
@@ -261,11 +263,11 @@ class DoctrineEncryptExtensionTest extends TestCase
     public function testLoadWithConfigsInvalidDefaultConfigFallsBackToFirst(): void
     {
         $container = $this->createContainer();
-        $config = [
+        $config    = [
             'default_config' => 'nonexistent',
-            'configs' => [
+            'configs'        => [
                 'personal_data' => [
-                    'encryptor_class' => 'Halite',
+                    'encryptor_class'       => 'Halite',
                     'secret_directory_path' => '%kernel.project_dir%',
                 ],
             ],
@@ -273,14 +275,14 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->extension->load([$config], $container);
 
         $registryDef = $container->getDefinition('nowo_doctrine_encrypt.encryptor_registry');
-        $args = $registryDef->getArguments();
+        $args        = $registryDef->getArguments();
         $this->assertSame('personal_data', $args[1]);
     }
 
     public function testResolveEncryptorClassReturnsCustomClassWhenNotSupported(): void
     {
         $container = $this->createContainer();
-        $config = [
+        $config    = [
             'configs' => [
                 'default' => ['encryptor_class' => 'Custom\\MyEncryptor'],
             ],
@@ -295,7 +297,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $container = $this->createContainer();
         $this->extension->load([[]], $container);
 
-        $def = $container->getDefinition(DoctrineEncryptDatabaseCommand::class);
+        $def  = $container->getDefinition(DoctrineEncryptDatabaseCommand::class);
         $args = $def->getArguments();
 
         $this->assertArrayHasKey('$encryptorRegistry', $args);
@@ -313,7 +315,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $container = $this->createContainer();
         $this->extension->load([[]], $container);
 
-        $def = $container->getDefinition(DoctrineDecryptDatabaseCommand::class);
+        $def  = $container->getDefinition(DoctrineDecryptDatabaseCommand::class);
         $args = $def->getArguments();
 
         $this->assertArrayHasKey('$encryptorRegistry', $args);
@@ -329,7 +331,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $container = $this->createContainer();
         $this->extension->load([[]], $container);
 
-        $def = $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber');
+        $def  = $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber');
         $args = $def->getArguments();
 
         $this->assertNotEmpty($args);
@@ -344,10 +346,10 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->extension->load([[]], $container);
 
         $registryServiceId = 'nowo_doctrine_encrypt.encryptor_registry';
-        $registryClass = EncryptorRegistry::class;
+        $registryClass     = EncryptorRegistry::class;
 
         $this->assertTrue($container->has(EncryptUtil::class));
-        $utilDef = $container->getDefinition(EncryptUtil::class);
+        $utilDef  = $container->getDefinition(EncryptUtil::class);
         $utilArgs = $utilDef->getArguments();
         if ($utilArgs !== []) {
             $registryRef = $utilArgs['registry'] ?? $utilArgs[0] ?? null;
@@ -358,7 +360,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         // If getArguments() is empty, the registry is injected by autowiring at compile time
 
         $this->assertTrue($container->has(DecryptExtension::class));
-        $twigDef = $container->getDefinition(DecryptExtension::class);
+        $twigDef  = $container->getDefinition(DecryptExtension::class);
         $twigArgs = $twigDef->getArguments();
         if ($twigArgs !== []) {
             $twigRegistryRef = $twigArgs['registry'] ?? $twigArgs[0] ?? null;
@@ -372,7 +374,7 @@ class DoctrineEncryptExtensionTest extends TestCase
     private function createContainer(): ContainerBuilder
     {
         $container = new ContainerBuilder(
-            new ParameterBag(['kernel.debug' => false])
+            new ParameterBag(['kernel.debug' => false]),
         );
 
         return $container;

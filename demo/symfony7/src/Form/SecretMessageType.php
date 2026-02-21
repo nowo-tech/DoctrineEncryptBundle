@@ -18,13 +18,13 @@ class SecretMessageType extends AbstractType
         $builder
             ->add('title', TextType::class, [
                 'required' => false,
-                'label' => 'Title (stored in plain text)',
-                'attr' => ['placeholder' => 'e.g. My note'],
+                'label'    => 'Title (stored in plain text)',
+                'attr'     => ['placeholder' => 'e.g. My note'],
             ])
             ->add('message', TextareaType::class, [
                 'required' => false,
-                'label' => 'Message (encrypted in database)',
-                'attr' => ['rows' => 5, 'placeholder' => 'Sensitive content – stored encrypted with Halite'],
+                'label'    => 'Message (encrypted in database)',
+                'attr'     => ['rows' => 5, 'placeholder' => 'Sensitive content – stored encrypted with Halite'],
             ]);
     }
 

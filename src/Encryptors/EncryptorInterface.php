@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Encryptors;
 
 /**
@@ -13,6 +15,7 @@ interface EncryptorInterface
      * Encrypts plain text and returns the ciphertext.
      *
      * @param string $data Plain text to encrypt
+     *
      * @return string Encrypted (ciphertext) string
      */
     public function encrypt(string $data): string;
@@ -21,6 +24,7 @@ interface EncryptorInterface
      * Decrypts ciphertext and returns the plain text.
      *
      * @param string $data Encrypted (ciphertext) string
+     *
      * @return string Decrypted plain text
      */
     public function decrypt(string $data): string;

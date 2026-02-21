@@ -8,6 +8,8 @@ use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 
+use function strlen;
+
 /**
  * Sensitive data encryption and decryption utility.
  *
@@ -36,8 +38,9 @@ class EncryptUtil
     /**
      * Decrypts a value if it has the encryption marker at the end; otherwise returns the original value.
      *
-     * @param string|null $value  Value to decrypt (ciphertext + marker, or plain)
+     * @param string|null $value Value to decrypt (ciphertext + marker, or plain)
      * @param string|null $config Encryptor config name (e.g. 'personal_data'). Null = default config
+     *
      * @return string|null Decrypted value or original if not encrypted
      */
     public function decrypt(?string $value, ?string $config = null): ?string
@@ -62,8 +65,9 @@ class EncryptUtil
      *
      * Empty strings and '0' are not encrypted and are returned as-is.
      *
-     * @param string|null $value  Plain text to encrypt
+     * @param string|null $value Plain text to encrypt
      * @param string|null $config Encryptor config name. Null = default config
+     *
      * @return string|null Ciphertext + marker, or original value if empty/zero
      */
     public function encrypt(?string $value, ?string $config = null): ?string
@@ -84,7 +88,6 @@ class EncryptUtil
      * Returns the encryptor for the given config name (or the default).
      *
      * @param string|null $config Config alias, or null for default
-     * @return EncryptorInterface
      */
     private function getEncryptor(?string $config): EncryptorInterface
     {

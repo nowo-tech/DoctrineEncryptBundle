@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Command;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
@@ -12,6 +14,9 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\HttpKernel\KernelInterface;
 
+use function count;
+use function sprintf;
+
 /**
  * Rotates encryption keys: optional backup (DB + key files), full decrypt, key change (files or .env), then re-encrypt.
  *
@@ -21,11 +26,11 @@ use Symfony\Component\HttpKernel\KernelInterface;
     name: 'doctrine:encrypt:rotate-keys',
     description: 'Rotate encryption keys: backup (DB + keys), decrypt DB, change keys, re-encrypt',
     hidden: false,
-    aliases: ['doctrine:encrypt:rotate-keys']
+    aliases: ['doctrine:encrypt:rotate-keys'],
 )]
 class RotateKeysCommand extends AbstractCommand
 {
-    private const BACKUP_DIR_PREFIX = 'encrypt_rotation_backup_';
+    private const BACKUP_DIR_PREFIX  = 'encrypt_rotation_backup_';
     private const BACKUP_KEYS_SUBDIR = 'keys';
 
     /**
@@ -57,16 +62,17 @@ class RotateKeysCommand extends AbstractCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $noInteraction = $input->getOption('no-interaction');
-        $doBackup = $input->getOption('backup');
-        $backupDbCmd = $input->getOption('backup-db-cmd');
-        $projectDir = $this->kernel->getProjectDir();
+        $doBackup      = $input->getOption('backup');
+        $backupDbCmd   = $input->getOption('backup-db-cmd');
+        $projectDir    = $this->kernel->getProjectDir();
 
-        $resolved = $this->resolveKeyPaths($projectDir);
+        $resolved    = $this->resolveKeyPaths($projectDir);
         $configNames = $this->encryptorRegistry?->getConfigNames() ?? [];
         $configNames = array_values(array_filter($configNames, static fn (string $n) => $n !== 'default' || count($configNames) === 1));
 
         if ($configNames === []) {
             $output->writeln('<error>No encryptor configs found. Configure nowo_doctrine_encrypt in config.</error>');
+
             return self::FAILURE;
         }
 
@@ -84,6 +90,7 @@ class RotateKeysCommand extends AbstractCommand
         if ($doBackup) {
             if (!$this->confirm($input, $output, $noInteraction, 'Run step 1: backup database and key files?', false)) {
                 $output->writeln('<comment>Rotation aborted.</comment>');
+
                 return self::SUCCESS;
             }
             $backupDir = $this->runBackup($resolved, $projectDir, $output, $input, $backupDbCmd);
@@ -99,12 +106,14 @@ class RotateKeysCommand extends AbstractCommand
         $stepDecrypt = $doBackup ? 'Step 2' : 'Step 1';
         if (!$this->confirm($input, $output, $noInteraction, $stepDecrypt . ': Decrypt database only (data will stay in plain text until you confirm key change and re-encrypt). Continue?', false)) {
             $output->writeln('<comment>Rotation aborted.</comment>');
+
             return self::SUCCESS;
         }
         $output->writeln('<info>Decrypting database (decrypt only, no re-encryption)...</info>');
         $exitCode = $this->runCommand($input, $output, 'doctrine:decrypt:database', ['--no-interaction' => true, '--force' => true]);
         if ($exitCode !== self::SUCCESS) {
             $output->writeln('<error>Decrypt failed. Aborting.</error>');
+
             return $exitCode;
         }
         $output->writeln('');
@@ -115,12 +124,13 @@ class RotateKeysCommand extends AbstractCommand
         $stepKeys = $doBackup ? 'Step 3' : 'Step 2';
         if (!$this->confirm($input, $output, $noInteraction, $stepKeys . ': Change keys (generate new key files / update .env)? After this, data is still in plain text.', false)) {
             $output->writeln('<comment>Rotation paused. Database is decrypted. Run doctrine:encrypt:database when ready, or re-run rotate-keys.</comment>');
+
             return self::SUCCESS;
         }
         $output->writeln('');
 
         // Step 3: Change keys
-        $envConfigs = [];
+        $envConfigs    = [];
         $keysGenerated = 0;
         foreach ($configNames as $name) {
             $info = $resolved[$name] ?? null;
@@ -133,16 +143,17 @@ class RotateKeysCommand extends AbstractCommand
             }
             $output->writeln(sprintf('  Generating new key for config <comment>%s</comment>...', $name));
             $exitCode = $this->runCommand($input, $output, 'doctrine:encrypt:generate-secret-key', [
-                'config' => $name,
+                'config'           => $name,
                 '--no-interaction' => true,
-                '--force' => true,
+                '--force'          => true,
             ]);
             if ($exitCode !== self::SUCCESS) {
                 $output->writeln(sprintf('<error>Failed to generate key for config "%s". Aborting.</error>', $name));
+
                 return $exitCode;
             }
             $output->writeln(sprintf('  <info>New key written to: %s</info>', $info['path']));
-            $keysGenerated++;
+            ++$keysGenerated;
         }
         if ($keysGenerated > 0) {
             $output->writeln(sprintf('<info>%d key file(s) have been replaced with new keys.</info>', $keysGenerated));
@@ -153,7 +164,7 @@ class RotateKeysCommand extends AbstractCommand
             $output->writeln('Update the encryption key in your .env (e.g. APP_ENCRYPT_KEY), then continue.');
             if (!$noInteraction) {
                 $helper = $this->getHelper('question');
-                $q = new Question('Press Enter when .env is updated to continue (or Ctrl+C to abort)...', '');
+                $q      = new Question('Press Enter when .env is updated to continue (or Ctrl+C to abort)...', '');
                 $helper->ask($input, $output, $q);
             } else {
                 $output->writeln('<comment>Running with --no-interaction: ensure .env is updated before re-encryption.</comment>');
@@ -167,6 +178,7 @@ class RotateKeysCommand extends AbstractCommand
         $stepEncrypt = $doBackup ? 'Step 4' : 'Step 3';
         if (!$this->confirm($input, $output, $noInteraction, $stepEncrypt . ': Re-encrypt database with the new keys only. Continue?', false)) {
             $output->writeln('<comment>Rotation paused. Database is decrypted. Run doctrine:encrypt:database when ready.</comment>');
+
             return self::SUCCESS;
         }
         $output->writeln('');
@@ -176,11 +188,13 @@ class RotateKeysCommand extends AbstractCommand
         $exitCode = $this->runCommand($input, $output, 'doctrine:encrypt:database', ['--no-interaction' => true, '--force' => true]);
         if ($exitCode !== self::SUCCESS) {
             $output->writeln('<error>Re-encrypt failed. Restore key backup and run doctrine:decrypt:database if needed.</error>');
+
             return $exitCode;
         }
 
         $output->writeln('');
         $output->writeln('<info>Key rotation completed successfully.</info>');
+
         return self::SUCCESS;
     }
 
@@ -191,9 +205,10 @@ class RotateKeysCommand extends AbstractCommand
     {
         $resolved = [];
         foreach ($this->keyPaths as $name => $info) {
-            $path = $info['path'] === null ? null : str_replace('%kernel.project_dir%', $projectDir, $info['path']);
+            $path            = $info['path'] === null ? null : str_replace('%kernel.project_dir%', $projectDir, $info['path']);
             $resolved[$name] = ['path' => $path, 'encryptor_class' => $info['encryptor_class']];
         }
+
         return $resolved;
     }
 
@@ -217,7 +232,7 @@ class RotateKeysCommand extends AbstractCommand
         $hasBackup = false;
 
         // 1) Database backup
-        $conn = $this->entityManager->getConnection();
+        $conn   = $this->entityManager->getConnection();
         $params = $conn->getParams();
         $driver = $params['driver'] ?? '';
 
@@ -258,9 +273,9 @@ class RotateKeysCommand extends AbstractCommand
                 continue;
             }
             $basename = basename($path);
-            $dest = $keysDir . '/' . $name . '_' . $basename;
+            $dest     = $keysDir . '/' . $name . '_' . $basename;
             if (@copy($path, $dest)) {
-                $copied++;
+                ++$copied;
             }
         }
         if ($copied > 0) {
@@ -276,13 +291,14 @@ class RotateKeysCommand extends AbstractCommand
      */
     private function copyFileGzip(string $sourcePath, string $destGzPath): bool
     {
-        $fp = @fopen($sourcePath, 'rb');
+        $fp = @fopen($sourcePath, 'r');
         if ($fp === false) {
             return false;
         }
         $gz = @gzopen($destGzPath, 'wb9');
         if ($gz === false) {
             fclose($fp);
+
             return false;
         }
         $ok = true;
@@ -304,8 +320,9 @@ class RotateKeysCommand extends AbstractCommand
         if ($noInteraction) {
             return true;
         }
-        $helper = $this->getHelper('question');
+        $helper   = $this->getHelper('question');
         $question = new ConfirmationQuestion('<question>' . $message . '</question> [y/N] ', $default);
+
         return (bool) $helper->ask($input, $output, $question);
     }
 
@@ -322,9 +339,10 @@ class RotateKeysCommand extends AbstractCommand
             return self::FAILURE;
         }
         $args['command'] = $commandName;
-        $childInput = new ArrayInput($args);
+        $childInput      = new ArrayInput($args);
         $childInput->setInteractive($input->isInteractive());
         $command = $app->find($commandName);
+
         return $command->run($childInput, $output);
     }
 }

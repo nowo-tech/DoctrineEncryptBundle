@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Mapping\fixtures;
 
+use Attribute;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 
 /** @internal */
@@ -15,7 +16,7 @@ class PropertyWithEncryptedAndNonAnnotation
 }
 
 /** @internal */
-#[\Attribute(\Attribute::TARGET_PROPERTY)]
+#[Attribute(Attribute::TARGET_PROPERTY)]
 class NonAnnotationAttribute
 {
 }

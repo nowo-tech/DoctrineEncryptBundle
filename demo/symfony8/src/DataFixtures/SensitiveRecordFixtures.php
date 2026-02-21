@@ -20,19 +20,19 @@ class SensitiveRecordFixtures extends Fixture implements FixtureGroupInterface
     {
         $items = [
             [
-                'personalNote' => 'Allergy: penicillin. Emergency contact: +34 600 000 001.',
+                'personalNote'  => 'Allergy: penicillin. Emergency contact: +34 600 000 001.',
                 'financialNote' => 'Bank account ending 1234. Last payment: 2024-01-15.',
-                'envVarNote' => 'Secret from env (APP_ENCRYPT_KEY).',
+                'envVarNote'    => 'Secret from env (APP_ENCRYPT_KEY).',
             ],
             [
-                'personalNote' => 'Preferred doctor: Dr. Smith. Next check-up: March 2024.',
+                'personalNote'  => 'Preferred doctor: Dr. Smith. Next check-up: March 2024.',
                 'financialNote' => 'Credit card expiry 12/25. Monthly limit: 2000 EUR.',
-                'envVarNote' => 'Another env_var encrypted value.',
+                'envVarNote'    => 'Another env_var encrypted value.',
             ],
             [
-                'personalNote' => 'Blood type: O+. Donor registered.',
+                'personalNote'  => 'Blood type: O+. Donor registered.',
                 'financialNote' => 'IBAN ES12 3456 7890 1234 5678 9012. BIC: EXAMPLE.',
-                'envVarNote' => 'Third record env_var field.',
+                'envVarNote'    => 'Third record env_var field.',
             ],
         ];
 

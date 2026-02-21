@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Mapping;
 
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
@@ -13,6 +15,7 @@ use Nowo\DoctrineEncryptBundle\Tests\Unit\Mapping\fixtures\RepeatableTestAnnotat
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use stdClass;
 
 class AttributeReaderTest extends TestCase
 {
@@ -25,7 +28,7 @@ class AttributeReaderTest extends TestCase
 
     public function testGetPropertyAnnotationReturnsEncryptedForEncryptedProperty(): void
     {
-        $ref = new ReflectionClass(User::class);
+        $ref      = new ReflectionClass(User::class);
         $nameProp = $ref->getProperty('name');
 
         $annotation = $this->reader->getPropertyAnnotation($nameProp, Encrypted::class);
@@ -35,17 +38,17 @@ class AttributeReaderTest extends TestCase
 
     public function testGetPropertyAnnotationReturnsNullForNonEncryptedProperty(): void
     {
-        $ref = new ReflectionClass(User::class);
+        $ref      = new ReflectionClass(User::class);
         $nameProp = $ref->getProperty('name');
 
-        $annotation = $this->reader->getPropertyAnnotation($nameProp, \stdClass::class);
+        $annotation = $this->reader->getPropertyAnnotation($nameProp, stdClass::class);
 
         $this->assertNull($annotation);
     }
 
     public function testGetPropertyAnnotationsReturnsEncryptedInstances(): void
     {
-        $ref = new ReflectionClass(User::class);
+        $ref      = new ReflectionClass(User::class);
         $nameProp = $ref->getProperty('name');
 
         $annotations = $this->reader->getPropertyAnnotations($nameProp);
@@ -75,7 +78,7 @@ class AttributeReaderTest extends TestCase
 
     public function testGetPropertyAnnotationReturnsNullForPropertyWithoutEncrypted(): void
     {
-        $ref = new ReflectionClass(PropertyWithoutEncrypted::class);
+        $ref  = new ReflectionClass(PropertyWithoutEncrypted::class);
         $prop = $ref->getProperty('plain');
 
         $annotation = $this->reader->getPropertyAnnotation($prop, Encrypted::class);
@@ -85,7 +88,7 @@ class AttributeReaderTest extends TestCase
 
     public function testGetPropertyAnnotationsDoesNotContainEncryptedWhenPropertyHasNone(): void
     {
-        $ref = new ReflectionClass(PropertyWithoutEncrypted::class);
+        $ref  = new ReflectionClass(PropertyWithoutEncrypted::class);
         $prop = $ref->getProperty('plain');
 
         $annotations = $this->reader->getPropertyAnnotations($prop);
@@ -114,7 +117,7 @@ class AttributeReaderTest extends TestCase
 
     public function testGetPropertyAnnotationsReturnsArrayForRepeatableAttribute(): void
     {
-        $ref = new ReflectionClass(ClassWithRepeatableAttribute::class);
+        $ref  = new ReflectionClass(ClassWithRepeatableAttribute::class);
         $prop = $ref->getProperty('multi');
 
         $annotations = $this->reader->getPropertyAnnotations($prop);
@@ -130,7 +133,7 @@ class AttributeReaderTest extends TestCase
 
     public function testGetPropertyAnnotationsSkipsNonAnnotationAttributes(): void
     {
-        $ref = new ReflectionClass(PropertyWithEncryptedAndNonAnnotation::class);
+        $ref  = new ReflectionClass(PropertyWithEncryptedAndNonAnnotation::class);
         $prop = $ref->getProperty('value');
 
         $annotations = $this->reader->getPropertyAnnotations($prop);

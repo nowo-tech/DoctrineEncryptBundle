@@ -22,9 +22,6 @@ class CascadeTarget
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $notSecret = null;
 
-    /**
-     * @return int
-     */
     public function getId(): int
     {
         return $this->id;
@@ -61,5 +58,4 @@ class CascadeTarget
     {
         $this->notSecret = $notSecret;
     }
-
 }

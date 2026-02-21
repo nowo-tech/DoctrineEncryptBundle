@@ -32,6 +32,13 @@
 
 ---
 
+## v2.0.9 (2026-02-21)
+
+- **Scope:** Code style (PHP-CS-Fixer) and internal refactors across src/tests/demos; demo apps and demo/Makefile updates; CI and Makefile/docker-compose adjustments. No API or config changes.
+- **Checklist:** CHANGELOG and UPGRADING updated; run `make qa` (or `composer cs-check` and `composer test`); commit; tag `v2.0.9`; push branch and tag.
+
+---
+
 ## v2.0.8 (2026-02-20)
 
 - **Scope:** Fix RotateKeysCommandTest for Symfony Console 7.0/8.0: replace `Application::add()` with `FactoryCommandLoader` + `setCommandLoader()` and `setApplication()` on the rotate command so all 8 unit tests pass on PHP 8.4 with Symfony 7.0 (CI).

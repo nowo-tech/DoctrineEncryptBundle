@@ -21,6 +21,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.9] - 2026-02-21
+
+### Changed
+
+- **Code style:** PHP-CS-Fixer configuration updated and applied across the codebase (src, tests, demos).
+- **Internal:** Refactors in commands, encryptors, subscriber, mapping, Twig extensions and utilities; tests aligned with updated style and structure.
+- **Demos:** Symfony 7 and 8 demo apps updated (config, controllers, entities, forms, fixtures, bootstrap); added `demo/Makefile` for running demos.
+- **CI & tooling:** GitHub Actions workflow, root and demo Makefiles, and docker-compose adjustments.
+
+No upgrade steps required from 2.0.8. See [UPGRADING.md](UPGRADING.md#upgrading-to-209).
+
+---
+
 ## [2.0.8] - 2026-02-20
 
 ### Fixed

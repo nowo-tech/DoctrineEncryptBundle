@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures;
 
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
@@ -14,7 +16,7 @@ class User
 
     public function __construct(string $name, ?string $address)
     {
-        $this->name = $name;
+        $this->name    = $name;
         $this->address = $address;
     }
 

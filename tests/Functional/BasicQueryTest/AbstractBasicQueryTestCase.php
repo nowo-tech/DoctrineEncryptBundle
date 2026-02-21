@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nowo\DoctrineEncryptBundle\Tests\Functional\BasicQueryTest;
 
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
@@ -11,7 +13,7 @@ abstract class AbstractBasicQueryTestCase extends AbstractFunctionalTestCase
     public function testPersistEntity(): void
     {
         $beforeCount = $this->getCurrentQueryCount();
-        $user = new CascadeTarget();
+        $user        = new CascadeTarget();
         $user->setNotSecret('My public information');
         $user->setSecret('top secret information');
         $this->entityManager->persist($user);
@@ -73,8 +75,8 @@ abstract class AbstractBasicQueryTestCase extends AbstractFunctionalTestCase
 
         $queryData = $this->getLatestInsertQuery();
         $this->assertNotNull($queryData);
-        $params = $queryData['params'] ?? [];
-        $params = array_values($params);
+        $params       = $queryData['params'] ?? [];
+        $params       = array_values($params);
         $passwordData = $params !== [] && $params[0] === 'My public information' ? $params[1] : ($params[0] ?? $queryData['sql']);
 
         $this->assertStringEndsWith(DoctrineEncryptSubscriber::ENCRYPTION_MARKER, (string) $passwordData);
@@ -85,7 +87,7 @@ abstract class AbstractBasicQueryTestCase extends AbstractFunctionalTestCase
 
         $queryData = $this->getLatestUpdateQuery();
         $this->assertNotNull($queryData);
-        $params = array_values($queryData['params'] ?? []);
+        $params       = array_values($queryData['params'] ?? []);
         $passwordData = $params[0] ?? $queryData['sql'];
 
         $this->assertStringEndsWith(DoctrineEncryptSubscriber::ENCRYPTION_MARKER, (string) $passwordData);
