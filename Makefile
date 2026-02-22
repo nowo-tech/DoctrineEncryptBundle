@@ -5,7 +5,7 @@ COMPOSE_FILE := docker-compose.yml
 COMPOSE := docker-compose -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
-.PHONY: help up down build shell install update validate test test-coverage cs-check cs-fix qa clean ensure-up assets
+.PHONY: help up down build shell install update validate test test-coverage cs-check cs-fix qa clean ensure-up assets release-check release-check-demos composer-sync
 
 help:
 	@echo "Doctrine Encrypt Bundle - Development Commands"
@@ -25,6 +25,8 @@ help:
 	@echo "  cs-check      Check code style"
 	@echo "  cs-fix        Fix code style"
 	@echo "  qa            Run all QA checks (validate + cs-check + test)"
+	@echo "  release-check Pre-release: cs-fix, cs-check, test-coverage, demo healthchecks"
+	@echo "  composer-sync Validate composer.json and align composer.lock (no install)"
 	@echo "  clean         Remove vendor and cache"
 	@echo "  assets        No frontend assets in this bundle (no-op)"
 	@echo ""
@@ -77,6 +79,15 @@ cs-fix: ensure-up
 
 qa: ensure-up validate
 	$(COMPOSE) exec $(SERVICE_PHP) composer qa
+
+release-check: ensure-up composer-sync cs-fix cs-check test-coverage release-check-demos
+
+release-check-demos:
+	@$(MAKE) -C demo release-verify
+
+composer-sync: ensure-up
+	$(COMPOSE) exec -T $(SERVICE_PHP) composer validate --strict
+	$(COMPOSE) exec -T $(SERVICE_PHP) composer update --no-install
 
 # No frontend assets in this bundle
 assets:

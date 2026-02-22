@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Demos:** Symfony 7 and 8 demo apps updated (config, controllers, entities, forms, fixtures, bootstrap); added `demo/Makefile` for running demos.
 - **CI & tooling:** GitHub Actions workflow, root and demo Makefiles, and docker-compose adjustments.
 
+### Fixed
+
+- **PHP 8.1+:** `DefuseEncryptorTest::testGenerateKey` and `HaliteEncryptorTest::testGenerateKey` no longer pass an int to `md5()`; use `md5((string) time())` so the test suite passes with strict types.
+
 No upgrade steps required from 2.0.8. See [UPGRADING.md](UPGRADING.md#upgrading-to-209).
 
 ---
