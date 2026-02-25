@@ -29,6 +29,19 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.0.10
+
+No breaking changes. This release fixes the Symfony 7.1+ deprecation (Extension class) and corrects COMMANDS.md (batchSize default). No changes required in your application.
+
+Update as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+---
+
 ## Upgrading to 2.0.9
 
 No breaking changes. This release applies code style (PHP-CS-Fixer), internal refactors, and demo/CI updates; no changes required in your application.

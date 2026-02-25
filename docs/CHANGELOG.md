@@ -21,6 +21,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.10] - 2026-02-21
+
+### Fixed
+
+- **Symfony 7.1+:** `DoctrineEncryptExtension` now extends `Symfony\Component\DependencyInjection\Extension\Extension` instead of `Symfony\Component\HttpKernel\DependencyInjection\Extension`. The latter is considered internal since Symfony 7.1 and will be deprecated in 8.1; this change removes the deprecation notice.
+
+### Changed
+
+- **Documentation:** [COMMANDS.md](COMMANDS.md) — batchSize default for encrypt/decrypt database is documented as 5 (from config); link to CONFIGURATION added.
+
+No upgrade steps required from 2.0.9. See [UPGRADING.md](UPGRADING.md#upgrading-to-2010).
+
+---
+
 ## [2.0.9] - 2026-02-21
 
 ### Changed

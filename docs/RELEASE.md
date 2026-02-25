@@ -32,6 +32,13 @@
 
 ---
 
+## v2.0.10 (2026-02-21)
+
+- **Scope:** (1) DoctrineEncryptExtension extends `DependencyInjection\Extension\Extension` instead of `HttpKernel\DependencyInjection\Extension` (fixes Symfony 7.1+ internal/deprecation). (2) COMMANDS.md: batchSize default 5 and link to CONFIGURATION.
+- **Checklist:** CHANGELOG and UPGRADING updated; run `make qa`; commit; tag `v2.0.10`; push branch and tag.
+
+---
+
 ## v2.0.9 (2026-02-21)
 
 - **Scope:** Code style (PHP-CS-Fixer) and internal refactors across src/tests/demos; demo apps and demo/Makefile updates; CI and Makefile/docker-compose adjustments. No API or config changes.
