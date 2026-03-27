@@ -2,6 +2,18 @@
 
 This guide covers installing Doctrine Encrypt Bundle in a Symfony application.
 
+## Table of contents
+
+- [Requirements](#requirements)
+- [Install with Composer](#install-with-composer)
+- [Register the bundle](#register-the-bundle)
+  - [With Symfony Flex](#with-symfony-flex)
+  - [Manual registration](#manual-registration)
+- [Using Defuse](#using-defuse)
+- [Secret key](#secret-key)
+- [FrankenPHP (runtime and worker mode)](#frankenphp-runtime-and-worker-mode)
+- [Next steps](#next-steps)
+
 ## Requirements
 
 The bundle is **compatible with Symfony 7 and 8** (and PHP 8.1+).
@@ -10,7 +22,7 @@ The bundle is **compatible with Symfony 7 and 8** (and PHP 8.1+).
 - **Symfony** ^7.0 || ^8.0
 - **Doctrine ORM** ^2.15 || ^3.0
 - **paragonie/halite** (included) and **paragonie/sodium_compat** (included); for Defuse, you must require `defuse/php-encryption` yourself.
-- **ext-sodium** is required for Halite (or the bundle can rely on sodium_compat where applicable).
+- **ext-sodium** is recommended for Halite (performance); **paragonie/sodium_compat** is required by Halite and provides a fallback when the extension is missing.
 
 ## Install with Composer
 

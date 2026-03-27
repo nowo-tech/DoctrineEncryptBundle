@@ -1,6 +1,10 @@
 #!/bin/sh
 set -e
 
+if [ "${APP_ENV:-prod}" = "dev" ] && [ -f /etc/frankenphp/Caddyfile.dev ]; then
+	cp /etc/frankenphp/Caddyfile.dev /etc/frankenphp/Caddyfile
+fi
+
 mkdir -p /app/var/cache /app/var/log /app/var
 chmod -R 777 /app/var 2>/dev/null || true
 

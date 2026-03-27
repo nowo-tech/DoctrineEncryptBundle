@@ -1,26 +1,25 @@
-# IDE / editor
-.idea/
-
 # Dependencies
 /vendor
 
 # Environment and secrets
 .env
-
-# Cache (code style, PHPUnit)
-.php-cs-fixer.cache
-.phpunit.cache
-.phpunit.result.cache
+.env.local
+.env.*.local
 
 # Test coverage
-coverage.xml
-coverage/
+/coverage
+/coverage.xml
+/coverage-php.txt
 
-# Runtime and build output
-var/
-public/bundles/
-public/css/
-public/js/
-public/images/
-public/favicon.ico
-public/robots.txt
+# PHP tool caches
+/.php-cs-fixer.cache
+/.phpunit.cache
+/.phpunit.result.cache
+
+# Archives / compressed
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z

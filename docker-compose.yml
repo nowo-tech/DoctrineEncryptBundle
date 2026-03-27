@@ -9,6 +9,7 @@ services:
     volumes:
       - .:/app
       - composer-cache:/root/.composer/cache
+      - coverage-data:/app/coverage
     environment:
       - COMPOSER_ALLOW_SUPERUSER=1
     command: ["tail", "-f", "/dev/null"]
@@ -17,6 +18,8 @@ services:
 
 volumes:
   composer-cache:
+    driver: local
+  coverage-data:
     driver: local
 
 networks:

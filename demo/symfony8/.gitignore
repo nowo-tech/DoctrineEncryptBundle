@@ -1,22 +1,37 @@
+# Local environment (do not version secrets or machine-specific env)
+.env
+.env.dev
+.env.local
+.env.local.php
+.env.*.local
 
-###> symfony/framework-bundle ###
-/.env.local
-/.env.local.php
-/.env.*.local
-/config/secrets/prod/prod.decrypt.private.php
-/public/bundles/
-/var/
+# Dependencies and build
 /vendor/
-###< symfony/framework-bundle ###
+/node_modules/
+/public/build/
 
-###> phpunit/phpunit ###
+# Symfony runtime
+/var/
+/public/bundles/
+
+# PHPUnit
 /phpunit.xml
 /.phpunit.cache/
-###< phpunit/phpunit ###
 
+# Secret key files (Doctrine Encrypt Bundle demo)
 .Halite.key
 .Defuse.key
 .Halite.*.key
 .Defuse.*.key
 .demo_financial.key
 
+# Config secrets (if generated)
+/config/secrets/prod/prod.decrypt.private.php
+
+# Archives / compressed
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z

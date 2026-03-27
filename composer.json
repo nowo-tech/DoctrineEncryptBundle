@@ -37,23 +37,28 @@
     }
   ],
   "require": {
-    "php": ">=8.1",
+    "php": ">=8.1 <8.6",
     "doctrine/orm": "^2.15 || ^3.0",
     "paragonie/halite": "^5.1",
     "paragonie/sodium_compat": "^1.20 || ^2.0",
-    "symfony/config": "^7.0 || ^8.0",
-    "symfony/dependency-injection": "^7.0 || ^8.0",
-    "symfony/http-kernel": "^7.0 || ^8.0",
-    "symfony/property-access": "^7.0 || ^8.0",
-    "symfony/var-exporter": "^7.0 || ^8.0",
-    "symfony/yaml": "^7.0 || ^8.0",
+    "symfony/config": "^6.0 || ^7.0 || ^8.0",
+    "symfony/dependency-injection": "^6.0 || ^7.0 || ^8.0",
+    "symfony/http-kernel": "^6.0 || ^7.0 || ^8.0",
+    "symfony/property-access": "^6.0 || ^7.0 || ^8.0",
+    "symfony/var-exporter": "^6.0 || ^7.0 || ^8.0",
+    "symfony/yaml": "^6.0 || ^7.0 || ^8.0",
     "twig/twig": "^3.2"
   },
   "require-dev": {
     "defuse/php-encryption": "^2.1",
     "friendsofphp/php-cs-fixer": "^3.0",
+    "phpstan/extension-installer": "^1.4",
+    "phpstan/phpstan": "^2.0",
+    "phpstan/phpstan-phpunit": "^2.0",
+    "phpstan/phpstan-symfony": "^2.0",
     "phpunit/phpunit": "^10.0 || ^11.0",
-    "symfony/cache": "^7.0 || ^8.0"
+    "rector/rector": "^2.0",
+    "symfony/cache": "^6.0 || ^7.0 || ^8.0"
   },
   "suggest": {
     "defuse/php-encryption": "Alternative to Halite for encryption",
@@ -70,24 +75,38 @@
     }
   },
   "archive": {
-    "exclude": ["/demo"]
+    "exclude": ["/demo", "/.cursor"]
   },
   "config": {
     "sort-packages": true,
     "allow-plugins": {
-      "composer/package-versions-deprecated": true
+      "composer/package-versions-deprecated": true,
+      "phpstan/extension-installer": true
     }
   },
   "minimum-stability": "stable",
   "prefer-stable": true,
   "scripts": {
-    "test": "phpunit",
-    "test-coverage": "phpunit --coverage-html coverage --coverage-clover coverage.xml --coverage-text",
-    "cs-check": "php-cs-fixer fix --dry-run --diff",
-    "cs-fix": "php-cs-fixer fix",
+    "test": "phpunit --colors=always",
+    "test-coverage": "phpunit --colors=always --coverage-html coverage --coverage-clover coverage.xml --coverage-text",
+    "cs-check": "php-cs-fixer fix --dry-run --diff --config=.php-cs-fixer.dist.php",
+    "cs-fix": "php-cs-fixer fix --config=.php-cs-fixer.dist.php",
+    "phpstan": "phpstan analyse --memory-limit=512M",
+    "rector": "rector process",
+    "rector-dry": "rector process --dry-run --no-progress-bar",
     "qa": [
       "@cs-check",
       "@test"
     ]
+  },
+  "scripts-descriptions": {
+    "test": "Run PHPUnit tests",
+    "test-coverage": "Run PHPUnit tests with code coverage",
+    "cs-check": "Check code style with PHP-CS-Fixer",
+    "cs-fix": "Fix code style with PHP-CS-Fixer",
+    "phpstan": "Run PHPStan static analysis",
+    "rector": "Apply Rector refactoring",
+    "rector-dry": "Run Rector in dry-run mode",
+    "qa": "Run all quality assurance checks"
   }
 }

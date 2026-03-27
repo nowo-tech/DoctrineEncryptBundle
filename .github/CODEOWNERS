@@ -1,0 +1,16 @@
+# CODEOWNERS for DoctrineEncryptBundle
+# Default owner for everything in the repository
+* @HecFranco
+
+# GitHub metadata and workflows
+/.github/ @HecFranco
+
+# Source code
+/src/ @HecFranco
+
+# Tests
+/tests/ @HecFranco
+
+# Optional: scripts / tooling
+/.scripts/ @HecFranco
+/bin/ @HecFranco

@@ -7,17 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### Documentation
 
-- (Nothing yet.)
-
-### Changed
-
-- (Nothing yet.)
-
-### Fixed
-
-- (Nothing yet.)
+- **README** — Requirements: removed misleading Symfony 6 / `^1.0` note; current package requires Symfony 7–8 per `composer.json`. FrankenPHP: clarified default demo **`APP_ENV=dev`** (Caddyfile.dev, no worker) vs worker in production. **Demo** section: host ports **8007** / **8008** and link to `DEMO-FRANKENPHP.md`.
+- **DEMO-FRANKENPHP.md** — Example `bundles.php` aligned with **demo/symfony8** (Doctrine, DoctrineFixtures, profiler bundles).
+- **INSTALLATION.md** — **ext-sodium** described as recommended for Halite; **sodium_compat** as fallback (aligned with Composer metadata).
+- **demo/README.md** — Desarrollo vs producción (Caddyfile.dev sin worker; Caddyfile con worker); `docker-compose` y estructura alineados con el uso real.
 
 ---
 

@@ -2,6 +2,8 @@
 
 Cada demo es una app Symfony mínima con **FrankenPHP** y un **Caddyfile** propio, dockerizada y con Makefile.
 
+Por defecto **`docker-compose`** usa **`APP_ENV=dev`** y **`Caddyfile.dev`** (sin worker PHP) para que los cambios de código/plantillas se vean al refrescar. El modo worker corresponde al **`Caddyfile`** de producción (véase [docs/DEMO-FRANKENPHP.md](../docs/DEMO-FRANKENPHP.md)).
+
 | Demo        | Puerto por defecto | PHP   |
 |------------|--------------------|-------|
 | symfony7   | 8007               | 8.2   |
@@ -51,8 +53,8 @@ PORT=9008 make up   # Symfony 8 en http://localhost:9008
 ## Estructura de cada demo
 
 - **Dockerfile** – Imagen FrankenPHP (Alpine), extensiones `zip`, `intl`, `sodium`, `pdo_sqlite`, Caddyfile custom.
-- **docker/frankenphp/Caddyfile** – Caddy: raíz en `/app/public`, worker `index.php`, compresión.
-- **docker-compose.yml** – Servicio `php`, montaje del código de la demo y del bundle (`../..` → `/var/doctrine-encrypt-bundle`).
+- **docker/frankenphp/Caddyfile** – Producción: worker en `index.php`. **Caddyfile.dev** – desarrollo: sin worker (se copia al arrancar si `APP_ENV=dev`).
+- **docker-compose.yml** – Servicio `php`, montaje del código de la demo y del bundle (`../..` → `/var/doctrine-encrypt-bundle`), `Caddyfile.dev` y `php-dev.ini` para desarrollo.
 - **Makefile** – Objetivos anteriores.
 - **public/index.php** – Front controller de Symfony.
 

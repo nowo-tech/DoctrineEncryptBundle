@@ -1,7 +1,7 @@
 # Makefile for Doctrine Encrypt Bundle demos (symfony7, symfony8)
 # Run from demo/: make up-symfony7, make up-symfony8, etc.
 
-.PHONY: help up-symfony7 up-symfony8 down-symfony7 down-symfony8 restart-symfony7 restart-symfony8 build-symfony7 build-symfony8 install-symfony7 install-symfony8 setup-symfony7 setup-symfony8 shell-symfony7 shell-symfony8 update-bundle-symfony7 update-bundle-symfony8 release-verify
+.PHONY: help up-symfony7 up-symfony8 down-symfony7 down-symfony8 restart-symfony7 restart-symfony8 build-symfony7 build-symfony8 install-symfony7 install-symfony8 setup-symfony7 setup-symfony8 shell-symfony7 shell-symfony8 update-bundle-symfony7 update-bundle-symfony8 update-bundle-all release-check release-verify
 
 help:
 	@echo "Doctrine Encrypt Bundle - Demos"
@@ -22,7 +22,8 @@ help:
 	@echo "  make shell-symfony8   Shell in Symfony 8 container"
 	@echo "  make update-bundle-symfony7  Update bundle from path repo (Symfony 7)"
 	@echo "  make update-bundle-symfony8  Update bundle from path repo (Symfony 8)"
-	@echo "  make release-verify  Start each demo, healthcheck (HTTP 200), then stop (for release-check)"
+	@echo "  make release-check   Pre-release: test-coverage-all, release-verify"
+	@echo "  make release-verify  Start each demo, healthcheck (HTTP 200), then stop"
 	@echo ""
 
 up-symfony7:
@@ -72,6 +73,23 @@ update-bundle-symfony7:
 
 update-bundle-symfony8:
 	$(MAKE) -C symfony8 update-bundle
+
+# update-bundle-all: refresh path-repo bundle before tests (REQ-DEMO-007)
+update-bundle-all:
+	$(MAKE) update-bundle-symfony7
+	$(MAKE) update-bundle-symfony8
+	@echo "✅ update-bundle-all done."
+
+# release-check: test-coverage-all, then release-verify
+test-coverage-all:
+	@for demo in symfony7 symfony8; do $(MAKE) test-coverage-$$demo || exit 1; done
+	@echo "✅ test-coverage-all done."
+test-coverage-symfony7:
+	$(MAKE) -C symfony7 test-coverage
+test-coverage-symfony8:
+	$(MAKE) -C symfony8 test-coverage
+release-check: update-bundle-all test-coverage-all release-verify
+	@echo "✅ All demos passed release-check."
 
 # Release verify: for each demo, up → sleep → healthcheck (HTTP 200) → down
 release-verify:

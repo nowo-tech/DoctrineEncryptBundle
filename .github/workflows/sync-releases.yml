@@ -1,0 +1,35 @@
+# Backfill or create GitHub Releases for existing v* tags that have no release, or refresh notes when needed.
+name: Sync releases
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create missing releases for v* tags
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for tag in $(git tag -l 'v*' | sort -V); do
+            if ! gh release view "$tag" --repo "${{ github.repository }}" &>/dev/null; then
+              echo "Creating release for $tag"
+              gh release create "$tag" --repo "${{ github.repository }}" \
+                --title "Release $tag" \
+                --notes "Release $tag (synced from tag; see docs/CHANGELOG.md for details)."
+            else
+              echo "Release exists for $tag — skip"
+            fi
+          done

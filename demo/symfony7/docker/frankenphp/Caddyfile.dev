@@ -1,0 +1,13 @@
+{
+	skip_install_trust
+}
+
+:80 {
+	root * /app/public
+	encode zstd br gzip
+	# Disable cache in development so changes are reflected immediately
+	header Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+	header Pragma "no-cache"
+	# Classic mode (no worker): each request runs in a new PHP process so the app always responds and file changes are visible
+	php_server
+}

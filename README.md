@@ -1,6 +1,6 @@
 # Doctrine Encrypt Bundle
 
-[![CI](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml/badge.svg)](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml) [![Packagist Version](https://img.shields.io/packagist/v/nowo-tech/doctrine-encrypt-bundle.svg?style=flat)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![Packagist Downloads](https://img.shields.io/packagist/dt/nowo-tech/doctrine-encrypt-bundle.svg)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php)](https://php.net) [![Symfony](https://img.shields.io/badge/Symfony-7%20%7C%208-000000?logo=symfony)](https://symfony.com) [![GitHub stars](https://img.shields.io/github/stars/nowo-tech/doctrine-encrypt-bundle.svg?style=social&label=Star)](https://github.com/nowo-tech/DoctrineEncryptBundle)
+[![CI](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml/badge.svg)](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml) [![Packagist Version](https://img.shields.io/packagist/v/nowo-tech/doctrine-encrypt-bundle.svg?style=flat)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![Packagist Downloads](https://img.shields.io/packagist/dt/nowo-tech/doctrine-encrypt-bundle.svg)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php)](https://php.net) [![Symfony](https://img.shields.io/badge/Symfony-7%20%7C%208-000000?logo=symfony)](https://symfony.com) [![GitHub stars](https://img.shields.io/github/stars/nowo-tech/doctrine-encrypt-bundle.svg?style=social&label=Star)](https://github.com/nowo-tech/DoctrineEncryptBundle) [![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen)](#tests-and-coverage)
 
 **Symfony bundle to encrypt Doctrine entity fields at rest** using [Halite](https://github.com/paragonie/halite) or [Defuse](https://github.com/defuse/php-encryption)—audited libraries, no custom crypto. For **Symfony 7 and 8** · PHP 8.1+. Suits **GDPR** and compliance (e.g. Art. 32); supports key rotation and [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for anonymization and erasure.
 
@@ -37,7 +37,7 @@ Looking for **Doctrine encryption**, **encrypt entity fields**, **Halite Symfony
 - ✅ **Key rotation** — one command or manual steps; combinable with [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for GDPR-compliant anonymization and erasure
 - ✅ **Symfony Flex** recipe (register bundle + config; see [docs/INSTALLATION.md](docs/INSTALLATION.md))
 - ✅ Compatible with **Symfony 7 and 8** and **Doctrine ORM 2.x and 3.x**
-- ✅ Compatible with **FrankenPHP** (runtime and worker mode; see [Installation → FrankenPHP](docs/INSTALLATION.md#frankenphp-runtime-and-worker-mode))
+- ✅ Compatible with **FrankenPHP** (HTTP runtime and optional **worker** mode; demos default to **`APP_ENV=dev`** with **Caddyfile.dev**, i.e. no PHP worker — see [docs/DEMO-FRANKENPHP.md](docs/DEMO-FRANKENPHP.md) and [Installation → FrankenPHP](docs/INSTALLATION.md#frankenphp-runtime-and-worker-mode))
 
 ## Installation
 
@@ -55,8 +55,8 @@ With **Symfony Flex**, the recipe (when enabled) registers the bundle and create
 <?php
 
 return [
-    // ...
-    Nowo\DoctrineEncryptBundle\NowoDoctrineEncryptBundle::class => ['all' => true],
+  // ...
+  Nowo\DoctrineEncryptBundle\NowoDoctrineEncryptBundle::class => ['all' => true],
 ];
 ```
 
@@ -70,14 +70,14 @@ Use different encryptors and keys per kind of data (e.g. personal vs financial):
 
 ```yaml
 nowo_doctrine_encrypt:
-    default_config: personal_data   # used when attribute has no config or uses "default"
-    configs:
-        personal_data:
-            encryptor_class: Halite
-            secret_directory_path: '%kernel.project_dir%'
-        financial_data:
-            encryptor_class: Defuse
-            secret_directory_path: '%kernel.project_dir%'
+  default_config: personal_data  # used when attribute has no config or uses "default"
+  configs:
+    personal_data:
+      encryptor_class: Halite
+      secret_directory_path: '%kernel.project_dir%'
+    financial_data:
+      encryptor_class: Defuse
+      secret_directory_path: '%kernel.project_dir%'
 ```
 
 **Defuse:** `composer require defuse/php-encryption ^2.1`
@@ -99,11 +99,11 @@ Use one entry under `configs` (e.g. `default`):
 
 ```yaml
 nowo_doctrine_encrypt:
-    default_config: default
-    configs:
-        default:
-            encryptor_class: Halite   # or Defuse
-            secret_directory_path: '%kernel.project_dir%'
+  default_config: default
+  configs:
+    default:
+      encryptor_class: Halite  # or Defuse
+      secret_directory_path: '%kernel.project_dir%'
 ```
 
 Key file: `.Halite.default.key` (or `.Defuse.default.key`). Full options: [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
@@ -118,9 +118,9 @@ use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 #[ORM\Entity]
 class User
 {
-    #[ORM\Column(type: 'string')]
-    #[Encrypted]   // or #[Encrypted('default')] — uses default_config
-    private ?string $email = null;
+  #[ORM\Column(type: 'string')]
+  #[Encrypted]  // or #[Encrypted('default')] — uses default_config
+  private ?string $email = null;
 }
 ```
 
@@ -140,27 +140,30 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [**Installation**](docs/INSTALLATION.md) | Requirements, Flex and manual install, secret key, **FrankenPHP (runtime & worker)**, IDE (optional) |
-| [**Configuration**](docs/CONFIGURATION.md) | All options and defaults |
-| [**Usage**](docs/USAGE.md) | Encrypted attribute, EncryptUtil, MaskUtil, Twig filters (decrypt, mask), embedded entities, inheritance |
-| [**Example**](docs/EXAMPLE.md) | Full example: entity, fixtures, controller, template |
-| [**Commands**](docs/COMMANDS.md) | Status (per-entity properties and configs), generate key, encrypt/decrypt database, rotate keys |
-| [**Key rotation**](docs/KEY_ROTATION.md) | Strategy to change keys: backup, decrypt, replace keys, re-encrypt. Supports GDPR compliance; combinable with Nowo\AnonymizedBundle. |
-| [**Demo**](docs/DEMO.md) | Demo projects (Symfony 7/8) and how to run them |
-| [**Changelog**](docs/CHANGELOG.md) | Version history |
-| [**Upgrading**](docs/UPGRADING.md) | Upgrade notes between versions |
-| [**Roadmap**](docs/ROADMAP.md) | Vision and future ideas |
-| [**Security**](docs/SECURITY.md) | Reporting vulnerabilities |
-| [**Contributing**](docs/CONTRIBUTING.md) | How to contribute and code style |
-| [**Release**](docs/RELEASE.md) | Release checklist (for maintainers) |
-| [**Custom encryptor**](docs/custom_encryptor.md) | Implement your own encryptor |
+- [Installation](docs/INSTALLATION.md)
+- [Configuration](docs/CONFIGURATION.md)
+- [Usage](docs/USAGE.md)
+- [Contributing](docs/CONTRIBUTING.md)
+- [Changelog](docs/CHANGELOG.md)
+- [Upgrading](docs/UPGRADING.md)
+- [Release](docs/RELEASE.md)
+- [Security](docs/SECURITY.md)
+- [Engram](docs/ENGRAM.md)
+- [Roadmap](docs/ROADMAP.md)
+
+### Additional documentation
+
+- [Demo with FrankenPHP (development and production)](docs/DEMO-FRANKENPHP.md)
+- [Example](docs/EXAMPLE.md)
+- [Commands](docs/COMMANDS.md)
+- [Key rotation](docs/KEY_ROTATION.md)
+- [Demo](docs/DEMO.md)
+- [Custom encryptor](docs/custom_encryptor.md)
 
 ## Requirements
 
 - PHP >= 8.1
-- **Symfony 7 or 8** (^7.0 \|\| ^8.0). The bundle is compatible with Symfony 7 and 8 only; for Symfony 6 use `^1.0` of this bundle.
+- **Symfony 7 or 8** (^7.0 \|\| ^8.0). Current releases of this package require Symfony 7 or 8 (see `composer.json`).
 - Doctrine ORM ^2.15 \|\| ^3.0
 - paragonie/halite (included); for Defuse: `defuse/php-encryption ^2.1`
 - ext-sodium recommended for Halite (or sodium_compat)
@@ -169,11 +172,18 @@ See [docs/INSTALLATION.md](docs/INSTALLATION.md#requirements) and [docs/UPGRADIN
 
 ## Demo
 
-Demos for Symfony 7 and 8 are in `demo/symfony7`, `demo/symfony8`. Each runs with **FrankenPHP** and **Caddy**. Quick start: [docs/DEMO.md](docs/DEMO.md).
+Demos for Symfony 7 and 8 are in `demo/symfony7`, `demo/symfony8`. Each runs with **FrankenPHP** and **Caddy** (HTTP on port 80 in the container). **`docker-compose`** defaults to **`APP_ENV=dev`**, so the entrypoint uses **Caddyfile.dev** (no PHP worker; changes visible on refresh). **Worker mode** is for a production-style setup — [docs/DEMO-FRANKENPHP.md](docs/DEMO-FRANKENPHP.md). Default host ports: **8007** (symfony7), **8008** (symfony8) via `PORT`. Quick start: [docs/DEMO.md](docs/DEMO.md).
 
 ## Development
 
 Run tests and QA with Docker: `make up && make install && make test` (or `make test-coverage`, `make qa`). Without Docker: `composer install && composer test`. See [Makefile](Makefile) for all targets.
+
+## Tests and coverage
+
+- Tests: PHPUnit (unit and functional suites)
+- PHP: 100%
+- TS/JS: N/A
+- Python: N/A
 
 ## License
 
