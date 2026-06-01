@@ -69,7 +69,7 @@ Each config has its own key file: `.{encryptor_class}.{alias}.key` (e.g. `.Halit
   ```
 
 - **MysqlAes**  
-  Compatible with MySQL [`AES_ENCRYPT()`](https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html) / [`AES_DECRYPT()`](https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html) (AES-128-ECB, default `block_encryption_mode`). The passphrase is a plain string (file or env). Use a **BLOB** column when encrypting in SQL. See [MYSQL_AES.md](MYSQL_AES.md) and the symfony8 demo (`/mysql-aes-note`). **Performance:** PHP OpenSSL on every ORM read/write; SQL `AES_ENCRYPT` only avoids PHP on insert/update for columns you manage in raw SQL. Searching secrets via `LIKE` on decrypted values in SQL is among the most expensive patterns — see [PERFORMANCE.md](PERFORMANCE.md).
+  Compatible with MySQL [`AES_ENCRYPT()`](https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html) / [`AES_DECRYPT()`](https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html) (AES-128-ECB, default `block_encryption_mode`). The passphrase is a plain string (file or env). Use a **BLOB** column when encrypting in SQL. See [MYSQL_AES.md](MYSQL_AES.md) (INSERT examples, repository pattern, demo `/mysql-aes-note`) and the symfony8 demo routes under `/mysql-aes-note`. **Performance:** PHP OpenSSL on every ORM read/write; SQL `AES_ENCRYPT` only avoids PHP on insert/update for columns you manage in raw SQL. Searching secrets via `LIKE` on decrypted values in SQL is among the most expensive patterns — see [PERFORMANCE.md](PERFORMANCE.md).
 
 ### Encryptor and query performance (overview)
 
