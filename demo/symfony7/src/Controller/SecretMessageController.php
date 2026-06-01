@@ -8,6 +8,7 @@ use App\Entity\SecretMessage;
 use App\Form\SecretMessageType;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
+use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,15 +27,38 @@ class SecretMessageController extends AbstractController
         ]);
     }
 
+    /**
+     * List rows via raw SQL (encrypted fields shown as stored in DB).
+     * Show / Edit / Delete use the same Doctrine routes (decrypted).
+     */
     #[Route('/raw', name: 'secret_message_raw_index', methods: ['GET'])]
-    public function rawIndex(Connection $conn): Response
+    public function rawIndex(): Response
     {
-        $rows = $conn->fetchAllAssociative(
-            'SELECT id, title, message FROM secret_message ORDER BY id DESC',
-        );
+        return $this->redirectToRoute('secret_message_db_values', ['mode' => 'raw']);
+    }
 
-        return $this->render('secret_message/raw_index.html.twig', [
+    #[Route('/db-values', name: 'secret_message_db_values', methods: ['GET'])]
+    public function dbValues(Request $request, Connection $conn, EncryptUtil $encryptUtil): Response
+    {
+        $mode = $request->query->getString('mode', 'both');
+        if (!\in_array($mode, ['raw', 'decrypted', 'both'], true)) {
+            $mode = 'both';
+        }
+
+        $rows = [];
+        foreach ($conn->fetchAllAssociative('SELECT id, title, message FROM secret_message ORDER BY id DESC') as $row) {
+            $raw = isset($row['message']) && $row['message'] !== '' ? (string) $row['message'] : null;
+            $rows[] = [
+                'id'                 => (int) $row['id'],
+                'title'              => $row['title'],
+                'message_raw'        => $raw,
+                'message_decrypted'  => $raw !== null ? $encryptUtil->decrypt($raw, 'personal_data') : null,
+            ];
+        }
+
+        return $this->render('secret_message/db_values.html.twig', [
             'rows' => $rows,
+            'mode' => $mode,
         ]);
     }
 

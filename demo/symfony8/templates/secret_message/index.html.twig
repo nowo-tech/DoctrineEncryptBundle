@@ -6,9 +6,9 @@
 <div class="card shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h2 class="mb-0">Secret messages</h2>
-        <div class="d-flex gap-2">
-            <a href="{{ path('secret_message_raw_index') }}" class="btn btn-outline-light btn-sm">View raw (SQL)</a>
-            <a href="{{ path('secret_message_new') }}" class="btn btn-primary">Create new</a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ path('secret_message_db_values') }}" class="btn btn-outline-secondary btn-sm">DB: raw vs decrypted</a>
+            <a href="{{ path('secret_message_new') }}" class="btn btn-primary btn-sm">Create new</a>
         </div>
     </div>
     <div class="card-body">

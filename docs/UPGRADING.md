@@ -29,6 +29,42 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.1.0
+
+No breaking changes for existing applications using Halite or Defuse.
+
+### Optional: MySQL AES interoperability
+
+To use the new **`MysqlAes`** encryptor (compatible with MySQL `AES_ENCRYPT` / `AES_DECRYPT`):
+
+```yaml
+# config/packages/nowo_doctrine_encrypt.yaml
+nowo_doctrine_encrypt:
+    configs:
+        mysql_aes:
+            encryptor_class: MysqlAes
+            secret_key_env_var: '%env(MYSQL_AES_KEY)%'
+```
+
+Generate a passphrase:
+
+```bash
+php bin/console doctrine:encrypt:generate-secret-key mysql_aes
+```
+
+Use on entity properties: `#[Encrypted('mysql_aes')]`. For **native SQL** on BLOB columns (no `<ENC>` marker), see [MYSQL_AES.md](MYSQL_AES.md).
+
+Requires PHP **ext-openssl** (typically enabled). Prefer Halite/Defuse for new application-level encryption unless you must interoperate with MySQL functions.
+
+Update as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+---
+
 ## Upgrading to 2.0.10
 
 No breaking changes. This release fixes the Symfony 7.1+ deprecation (Extension class) and corrects COMMANDS.md (batchSize default). No changes required in your application.

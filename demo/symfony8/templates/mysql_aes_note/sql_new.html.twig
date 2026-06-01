@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Insert with AES_ENCRYPT{% endblock %}
+
+{% block body %}
+<div class="mb-3">
+    <a href="{{ path('mysql_aes_note_sql_index') }}" class="btn btn-outline-secondary">← Back to SQL list</a>
+</div>
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h2 class="mb-0 h5">Repository: INSERT … AES_ENCRYPT(:plain, :key)</h2>
+    </div>
+    <div class="card-body">
+        {{ form_start(form) }}
+        <div class="vstack gap-3">
+            {{ form_row(form.title) }}
+            {{ form_row(form.secret) }}
+        </div>
+        {% include 'mysql_aes_note/_form_actions.html.twig' with {
+            submit_label: 'Insert via SQL',
+            cancel_path: path('mysql_aes_note_sql_index'),
+        } %}
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

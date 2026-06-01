@@ -6,6 +6,7 @@ namespace Nowo\DoctrineEncryptBundle\DependencyInjection;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
+use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -27,8 +28,9 @@ class DoctrineEncryptExtension extends Extension
 {
     /** Short names mapped to encryptor FQCN (Halite, Defuse). */
     public const SUPPORTED_ENCRYPTOR_CLASSES = [
-        'Defuse' => DefuseEncryptor::class, // 'Ambta\DoctrineEncryptBundle\Encryptors\DefuseEncryptor',
-        'Halite' => HaliteEncryptor::class, // 'Ambta\DoctrineEncryptBundle\Encryptors\HaliteEncryptor',
+        'Defuse' => DefuseEncryptor::class,
+        'Halite' => HaliteEncryptor::class,
+        'MysqlAes' => MysqlAesEncryptor::class,
     ];
 
     /**

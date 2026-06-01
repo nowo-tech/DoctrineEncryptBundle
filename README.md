@@ -27,7 +27,7 @@ Looking for **Doctrine encryption**, **encrypt entity fields**, **Halite Symfony
 
 - ✅ Encrypt and decrypt entity properties with a single attribute
 - ✅ **Multiple encryptor configs** — e.g. `personal_data` (Halite) and `financial_data` (Defuse) in the same app, each with its own key
-- ✅ **Halite** and **Defuse** — audited crypto libraries, no custom algorithms
+- ✅ **Halite**, **Defuse**, and **MysqlAes** (MySQL `AES_ENCRYPT` / `AES_DECRYPT` compatible) — audited or interoperable crypto; see [MYSQL_AES.md](docs/MYSQL_AES.md)
 - ✅ Transparent: encrypt on persist/update, decrypt on load
 - ✅ **EncryptUtil** — programmatic `encrypt()` / `decrypt()` with optional config name (default or e.g. `financial_data`)
 - ✅ **MaskUtil** — mask sensitive values in PHP (e.g. show only last N chars); usable in services
@@ -149,6 +149,7 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 - [Release](docs/RELEASE.md)
 - [Security](docs/SECURITY.md)
 - [Engram](docs/ENGRAM.md)
+- [Spec-driven development](docs/SPEC-DRIVEN-DEVELOPMENT.md)
 - [Roadmap](docs/ROADMAP.md)
 
 ### Additional documentation
@@ -159,6 +160,8 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 - [Key rotation](docs/KEY_ROTATION.md)
 - [Demo](docs/DEMO.md)
 - [Custom encryptor](docs/custom_encryptor.md)
+- [MySQL AES_ENCRYPT / AES_DECRYPT (MysqlAes)](docs/MYSQL_AES.md)
+- [Performance (encryptors, LIKE, scalability)](docs/PERFORMANCE.md)
 
 ## Requirements
 

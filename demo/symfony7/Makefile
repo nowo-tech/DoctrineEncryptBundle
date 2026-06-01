@@ -22,7 +22,7 @@ help:
 	@echo "  make db-create          Create SQLite DB"
 	@echo "  make db-schema          Update schema"
 	@echo "  make key                Generate encryption secret key"
-	@echo "  make fixtures           Load data fixtures (SecretMessage + SensitiveRecord)"
+	@echo "  make fixtures           Load data fixtures (SecretMessage + SensitiveRecord + MysqlAesNote)"
 	@echo "  make encrypt-status     List entities and encrypted properties"
 	@echo "  make encrypt-database   Encrypt: all configs (interactive)"
 	@echo "  make encrypt-database-all            Same: all configs"
@@ -51,8 +51,9 @@ up:
 	@$(COMPOSE) exec -T -e COMPOSER_MEMORY_LIMIT=-1 $(SERVICE_PHP) composer install --no-interaction
 	@echo "Creating database, schema and loading fixtures..."
 	@$(MAKE) db-create db-schema key fixtures
-	@echo "App: http://localhost:$${PORT:-8007}"
-
+	@PORT=$$(grep "^PORT=" .env 2>/dev/null | cut -d= -f2 | tr -d '\r'); \
+	[ -z "$$PORT" ] && PORT=$$(grep "^PORT=" .env.example 2>/dev/null | cut -d= -f2 | tr -d '\r'); \
+	echo "Demo started at: http://localhost:$$PORT"
 down:
 	$(COMPOSE) down
 
@@ -79,7 +80,7 @@ setup: install db-create db-schema key fixtures
 
 fixtures: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:fixtures:load --no-interaction
-	@echo "Fixtures loaded (SecretMessage + SensitiveRecord)."
+	@echo "Fixtures loaded (SecretMessage + SensitiveRecord + MysqlAesNote)."
 
 shell: ensure-up
 	$(COMPOSE) exec $(SERVICE_PHP) sh

@@ -37,6 +37,9 @@
     "nowo-tech/doctrine-encrypt-bundle": {
         "version": "dev-master"
     },
+    "nowo-tech/twig-inspector-bundle": {
+        "version": "v1.0.31"
+    },
     "phpunit/phpunit": {
         "version": "11.5",
         "recipe": {

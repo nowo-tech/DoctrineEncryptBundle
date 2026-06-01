@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New MySQL AES note (Doctrine){% endblock %}
+
+{% block body %}
+<div class="mb-3">
+    <a href="{{ path('mysql_aes_note_index') }}" class="btn btn-outline-secondary">← Back to list</a>
+</div>
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h2 class="mb-0 h5">Create via Doctrine (MysqlAes encryptor)</h2>
+    </div>
+    <div class="card-body">
+        {{ form_start(form) }}
+        <div class="vstack gap-3">
+            {{ form_row(form.title) }}
+            {{ form_row(form.secretOrm) }}
+        </div>
+        {% include 'mysql_aes_note/_form_actions.html.twig' with {
+            submit_label: 'Save',
+            cancel_path: path('mysql_aes_note_index'),
+        } %}
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

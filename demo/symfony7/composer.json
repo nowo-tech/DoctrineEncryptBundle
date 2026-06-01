@@ -25,15 +25,23 @@
     "doctrine/doctrine-fixtures-bundle": "^3.0",
     "nowo-tech/twig-inspector-bundle": "*",
     "phpunit/phpunit": "^10.0 || ^11.0",
-    "symfony/debug-bundle": "7.0.*",
-    "symfony/web-profiler-bundle": "7.0.*"
+    "symfony/debug-bundle": "7.4.*",
+    "symfony/web-profiler-bundle": "7.4.*"
   },
   "config": {
     "allow-plugins": {
       "symfony/flex": true,
       "symfony/runtime": true
     },
-    "sort-packages": true
+    "sort-packages": true,
+    "audit": {
+      "block-insecure": false
+    }
+  },
+  "policy": {
+    "advisories": {
+      "block": false
+    }
   },
   "autoload": {
     "psr-4": {
@@ -70,7 +78,7 @@
   "extra": {
     "symfony": {
       "allow-contrib": false,
-      "require": "7.0.*"
+      "require": "7.4.*"
     }
   },
   "repositories": [

@@ -14,7 +14,7 @@ Per-config options (under each entry in `configs`):
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `encryptor_class` | `string` | `Halite` | `Halite`, `Defuse`, or a custom class. |
+| `encryptor_class` | `string` | `Halite` | `Halite`, `Defuse`, `MysqlAes`, or a custom class. |
 | `secret_directory_path` | `string` | `%kernel.project_dir%` | Directory for the key file. **Required** unless `secret_key_env_var` is set. Cannot be set together with `secret_key_env_var`. |
 | `secret_key_filename` | `string` | *(pattern)* | Optional custom key filename (e.g. `.my_app.key`). Only used when `secret_directory_path` is set; default pattern is `.{encryptor_class}.{alias}.key`. |
 | `secret_key_env_var` | `string` | `null` | Use `%env(APP_ENCRYPT_KEY)%`. Symfony resolves it at config load and the bundle receives the key value. When set, **must not** set `secret_directory_path` or `secret_key_filename`. |
@@ -68,12 +68,25 @@ Each config has its own key file: `.{encryptor_class}.{alias}.key` (e.g. `.Halit
   composer require defuse/php-encryption ^2.1
   ```
 
+- **MysqlAes**  
+  Compatible with MySQL [`AES_ENCRYPT()`](https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html) / [`AES_DECRYPT()`](https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html) (AES-128-ECB, default `block_encryption_mode`). The passphrase is a plain string (file or env). Use a **BLOB** column when encrypting in SQL. See [MYSQL_AES.md](MYSQL_AES.md) and the symfony8 demo (`/mysql-aes-note`). **Performance:** PHP OpenSSL on every ORM read/write; SQL `AES_ENCRYPT` only avoids PHP on insert/update for columns you manage in raw SQL. Searching secrets via `LIKE` on decrypted values in SQL is among the most expensive patterns — see [PERFORMANCE.md](PERFORMANCE.md).
+
+### Encryptor and query performance (overview)
+
+| Encryptor | Persist/load (Doctrine) | Typical use |
+|-----------|-------------------------|-------------|
+| **Halite** | Fastest in PHP (especially with `ext-sodium`) | Default; best security/performance balance |
+| **Defuse** | Moderate | When Defuse is required |
+| **MysqlAes** | Moderate; weaker algorithm | MySQL legacy interop only |
+
+Searching or filtering encrypted fields is **not index-friendly** on plaintext. Compare all options (including `AES_DECRYPT(...) LIKE`, PHP filters, and `LIKE` on ciphertext) in **[PERFORMANCE.md](PERFORMANCE.md)**.
+
 ## Secret key: file or env
 
 For each config you either use a **key file** or a **env var**:
 
 - **Key file:** Set `secret_directory_path` (and optionally `secret_key_filename`). The key file path is `{secret_directory_path}/{secret_key_filename}` or, if `secret_key_filename` is omitted, `{secret_directory_path}/.{encryptor_class}.{alias}.key` (e.g. `.Halite.default.key`, `.Defuse.financial_data.key`).
-- **Env var:** Set `secret_key_env_var` to `%env(APP_ENCRYPT_KEY)%`. Symfony resolves it when loading config and the bundle receives the key value. Do **not** set `secret_directory_path` or `secret_key_filename`. The value must be the same format as the key file content (for Halite: hex-encoded key; for Defuse: the password string). Run `doctrine:encrypt:generate-secret-key` for configs without path to get the key value, then set it in your `.env` or environment.
+- **Env var:** Set `secret_key_env_var` to `%env(APP_ENCRYPT_KEY)%`. Symfony resolves it when loading config and the bundle receives the key value. Do **not** set `secret_directory_path` or `secret_key_filename`. The value must be the same format as the key file content (for Halite: hex-encoded key; for Defuse or MysqlAes: the password/passphrase string). Run `doctrine:encrypt:generate-secret-key` for configs without path to get the key value, then set it in your `.env` or environment.
 
 ## Secret key files (when using path)
 

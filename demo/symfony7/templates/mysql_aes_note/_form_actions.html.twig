@@ -1,0 +1,6 @@
+<div class="d-flex flex-wrap gap-2 mt-4 pt-2 border-top">
+    <button type="submit" class="btn btn-primary">{{ submit_label|default('Save') }}</button>
+    {% if cancel_path is defined %}
+        <a href="{{ cancel_path }}" class="btn btn-outline-secondary">Cancel</a>
+    {% endif %}
+</div>

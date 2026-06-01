@@ -7,12 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Documentation
+---
 
-- **README** — Requirements: removed misleading Symfony 6 / `^1.0` note; current package requires Symfony 7–8 per `composer.json`. FrankenPHP: clarified default demo **`APP_ENV=dev`** (Caddyfile.dev, no worker) vs worker in production. **Demo** section: host ports **8007** / **8008** and link to `DEMO-FRANKENPHP.md`.
-- **DEMO-FRANKENPHP.md** — Example `bundles.php` aligned with **demo/symfony8** (Doctrine, DoctrineFixtures, profiler bundles).
-- **INSTALLATION.md** — **ext-sodium** described as recommended for Halite; **sodium_compat** as fallback (aligned with Composer metadata).
-- **demo/README.md** — Desarrollo vs producción (Caddyfile.dev sin worker; Caddyfile con worker); `docker-compose` y estructura alineados con el uso real.
+## [2.1.0] - 2026-06-01
+
+### Added
+
+- **`MysqlAes` encryptor** — AES-128-ECB compatible with MySQL [`AES_ENCRYPT()`](https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html) / [`AES_DECRYPT()`](https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html) (default `block_encryption_mode`). Configure with `encryptor_class: MysqlAes` and a passphrase (env or key file). See [MYSQL_AES.md](MYSQL_AES.md).
+- **`doctrine:encrypt:generate-secret-key`** — generates a passphrase for `MysqlAes` configs.
+- **Documentation:** [MYSQL_AES.md](MYSQL_AES.md) (native SQL, LIKE demos, preset fixtures); [PERFORMANCE.md](PERFORMANCE.md) (encryptors and query patterns compared).
+- **Demos (Symfony 7 & 8):** `/mysql-aes-note` — Doctrine + repository SQL paths, LIKE filters, preset fixtures, **DB values** view (encrypted vs decrypted). Secret messages: `/secret-message/db-values` with the same raw/decrypted tabs. Demo Docker: optional MySQL 8 service, `pdo_mysql`, Bootstrap 5 form theme.
+
+### Changed
+
+- **Documentation:** [CONFIGURATION.md](CONFIGURATION.md), [USAGE.md](USAGE.md), [DEMO.md](DEMO.md), [ROADMAP.md](ROADMAP.md), README — MysqlAes, performance notes, demo troubleshooting (Composer advisories, Symfony 7.4).
+- **Demos:** Symfony 7 demo targets **7.4.***; `composer.lock` synced (e.g. twig-inspector-bundle); entrypoint avoids restart loop on failed `composer install`.
+
+No breaking changes for existing Halite/Defuse configs. See [UPGRADING.md](UPGRADING.md#upgrading-to-210).
 
 ---
 

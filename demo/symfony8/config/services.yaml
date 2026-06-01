@@ -9,3 +9,7 @@ services:
       - '../src/DependencyInjection/'
       - '../src/Entity/'
       - '../src/Kernel.php'
+
+  App\Repository\MysqlAesNoteRepository:
+    arguments:
+      $mysqlAesKey: '%env(MYSQL_AES_KEY)%'

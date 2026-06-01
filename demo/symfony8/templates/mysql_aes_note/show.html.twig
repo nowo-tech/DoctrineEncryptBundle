@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}MySQL AES note #{{ note.id }}{% endblock %}
+
+{% block body %}
+<div class="mb-3"><a href="{{ path('mysql_aes_note_index') }}" class="btn btn-outline-secondary">← Back</a></div>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Title</dt><dd class="col-sm-9">{{ note.title }}</dd>
+            <dt class="col-sm-3">Secret (ORM)</dt><dd class="col-sm-9"><pre class="mb-0">{{ note.secretOrm }}</pre></dd>
+        </dl>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <a href="{{ path('mysql_aes_note_edit', { id: note.id }) }}" class="btn btn-primary">Edit</a>
+            <a href="{{ path('mysql_aes_note_db_values') }}" class="btn btn-outline-secondary">View DB values</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

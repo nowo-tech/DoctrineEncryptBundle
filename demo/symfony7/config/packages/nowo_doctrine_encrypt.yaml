@@ -22,3 +22,8 @@ nowo_doctrine_encrypt:
     env_var:
       encryptor_class: Halite
       secret_key_env_var: '%env(APP_ENCRYPT_KEY)%'
+
+    # 4) MySQL AES_ENCRYPT / AES_DECRYPT compatible (passphrase for AES-128-ECB)
+    mysql_aes:
+      encryptor_class: MysqlAes
+      secret_key_env_var: '%env(MYSQL_AES_KEY)%'

@@ -132,6 +132,19 @@ $masked = MaskUtil::mask('12345678', 2, '••••');  // '••••78'
 
 You can inject the service by type-hinting `MaskUtil` (or the alias `nowo_doctrine_encrypt.mask_util`) where needed.
 
+## Searching and performance
+
+By design, values in `#[Encrypted]` columns are opaque at the database layer. You **cannot** run a meaningful `WHERE encrypted_column LIKE '%secret%'` on plaintext without decrypting every candidate row (in SQL or PHP).
+
+| What you need | Practical approach | Performance |
+|---------------|-------------------|-------------|
+| Filter by **non-secret** fields | Plain columns + `LIKE` / indexes | **Good** |
+| Filter by **secret** value on small sets | Load entities (decrypt on load) and filter in PHP | **Moderate**; degrades with table size |
+| Filter by **secret** in MySQL (`MysqlAes` native column) | `CAST(AES_DECRYPT(...) AS CHAR) LIKE …` | **Poor** at scale (full scan + decrypt per row) |
+| Full-text / search product requirements | Separate search index, hash/token column, or plain metadata | Design explicitly; not provided by this bundle |
+
+The symfony8 demo (`/mysql-aes-note`, `/mysql-aes-note/sql`) lets you compare these behaviours side by side. See **[PERFORMANCE.md](PERFORMANCE.md)** for tables comparing Halite, Defuse, MysqlAes, and each `LIKE` variant.
+
 ## Embedded entities
 
 Encrypted properties inside embedded entities are supported: mark the property in the embedded class with `Encrypted` and ensure the embeddable is correctly mapped.

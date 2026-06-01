@@ -1,0 +1,90 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}MySQL AES – DB values{% endblock %}
+
+{% block body %}
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h1 class="h4 mb-0">Database values (encrypted vs decrypted)</h1>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ path('mysql_aes_note_index') }}" class="btn btn-outline-secondary btn-sm">Doctrine list</a>
+            {% if nativeSupported %}
+                <a href="{{ path('mysql_aes_note_sql_index') }}" class="btn btn-outline-secondary btn-sm">SQL list</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small mb-3">
+            Loaded with <strong>raw SQL</strong> on <code>mysql_aes_note</code>.
+            <code>secret_orm</code> = Doctrine + MysqlAes (+ <code>&lt;ENC&gt;</code>);
+            <code>secret_native</code> = pure AES blob (HEX shown).
+        </p>
+
+        <ul class="nav nav-pills mb-4 gap-2">
+            <li class="nav-item">
+                <a class="nav-link{% if mode == 'both' %} active{% endif %}" href="{{ path('mysql_aes_note_db_values', { mode: 'both' }) }}">Both</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if mode == 'raw' %} active{% endif %}" href="{{ path('mysql_aes_note_db_values', { mode: 'raw' }) }}">Encrypted only</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if mode == 'decrypted' %} active{% endif %}" href="{{ path('mysql_aes_note_db_values', { mode: 'decrypted' }) }}">Decrypted only</a>
+            </li>
+        </ul>
+
+        {% if rows|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Id</th>
+                            <th scope="col">Title</th>
+                            {% if mode in ['both', 'raw'] %}
+                                <th scope="col"><code>secret_orm</code> (DB)</th>
+                                <th scope="col"><code>secret_native</code> HEX (DB)</th>
+                            {% endif %}
+                            {% if mode in ['both', 'decrypted'] %}
+                                <th scope="col"><code>secret_orm</code> decrypted</th>
+                                <th scope="col"><code>secret_native</code> decrypted</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                <td>{{ row.id }}</td>
+                                <td>{{ row.title }}</td>
+                                {% if mode in ['both', 'raw'] %}
+                                    <td class="small">
+                                        {% if row.secret_orm_raw %}
+                                            <code class="text-break d-block">{{ row.secret_orm_raw|slice(0, 120) }}{{ row.secret_orm_raw|length > 120 ? '…' : '' }}</code>
+                                        {% else %}
+                                            <span class="text-muted">–</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small">
+                                        {% if row.secret_native_hex %}
+                                            <code class="text-break d-block">{{ row.secret_native_hex|slice(0, 64) }}{{ row.secret_native_hex|length > 64 ? '…' : '' }}</code>
+                                        {% else %}
+                                            <span class="text-muted">–</span>
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+                                {% if mode in ['both', 'decrypted'] %}
+                                    <td class="text-break">{{ row.secret_orm_decrypted ?? '–' }}</td>
+                                    <td class="text-break">{{ row.secret_native_decrypted ?? '–' }}</td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted mb-0">No rows. Run <code>make fixtures</code> or create notes from the Doctrine / SQL forms.</p>
+        {% endif %}
+    </div>
+</div>
+<div class="mt-3">
+    <a href="{{ path('mysql_aes_note_index') }}" class="btn btn-outline-secondary">← Back</a>
+</div>
+{% endblock %}

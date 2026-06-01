@@ -1,0 +1,35 @@
+checks:
+  php:
+    code_rating: true
+    duplication: true
+
+filter:
+  excluded_paths:
+    - "demo/*"
+    - "tests/*"
+    - "vendor/*"
+    - "node_modules/*"
+
+build:
+  environment:
+    php:
+      version: 8.2
+      ini:
+        memory_limit: -1
+        'xdebug.mode': coverage
+
+  cache:
+    directories:
+      - vendor/
+
+  tests:
+    before:
+      - composer validate --strict
+      - composer install --no-interaction --prefer-dist --optimize-autoloader
+    override:
+      - command: composer test-coverage
+        environment:
+          XDEBUG_MODE: coverage
+        coverage:
+          file: coverage.xml
+          format: clover

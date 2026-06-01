@@ -21,12 +21,35 @@ services:
       - APP_ENV=dev
       - APP_DEBUG=1
       - APP_SECRET=${APP_SECRET:-demo-secret}
-      - DATABASE_URL=sqlite:///%kernel.project_dir%/var/data.db
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///%kernel.project_dir%/var/data.db}
+      - MYSQL_AES_KEY=${MYSQL_AES_KEY:-demo-mysql-aes-key}
+    # Mitigate Docker/WSL DNS failures resolving repo.packagist.org (composer curl error 6).
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    depends_on:
+      - db
+    networks:
+      - doctrine-encrypt-demo-network
+
+  db:
+    image: mysql:8.0
+    container_name: doctrine-encrypt-demo-symfony8-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: encrypt_demo
+      MYSQL_USER: encrypt
+      MYSQL_PASSWORD: encrypt
+    volumes:
+      - mysql_data:/var/lib/mysql
+    expose:
+      - "3306"
     networks:
       - doctrine-encrypt-demo-network
 
 volumes:
   composer-cache:
+  mysql_data:
 
 ###> doctrine/doctrine-bundle ###
   database_data:

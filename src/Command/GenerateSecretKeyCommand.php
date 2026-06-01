@@ -6,6 +6,7 @@ namespace Nowo\DoctrineEncryptBundle\Command;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
+use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
 use ParagonIE\Halite\KeyFactory;
 use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -103,7 +104,7 @@ class GenerateSecretKeyCommand extends AbstractCommand
                     $output->writeln(sprintf('<comment>Config "%s": key already exists at %s</comment>', $name, $info['path']));
                 }
             } else {
-                $output->writeln(sprintf('<comment>Config "%s": key generation not supported for encryptor "%s" (only Halite and Defuse).</comment>', $name, $info['encryptor_class']));
+                $output->writeln(sprintf('<comment>Config "%s": key generation not supported for encryptor "%s" (Halite, Defuse, MysqlAes).</comment>', $name, $info['encryptor_class']));
             }
         }
 
@@ -133,7 +134,7 @@ class GenerateSecretKeyCommand extends AbstractCommand
             return self::SUCCESS;
         }
         if (!$this->supportsKeyGeneration($encryptorClass)) {
-            $output->writeln(sprintf('<error>Key generation is only supported for Halite and Defuse. Config "%s" uses "%s".</error>', $configName, $encryptorClass));
+            $output->writeln(sprintf('<error>Key generation is only supported for Halite, Defuse and MysqlAes. Config "%s" uses "%s".</error>', $configName, $encryptorClass));
 
             return self::FAILURE;
         }
@@ -156,8 +157,9 @@ class GenerateSecretKeyCommand extends AbstractCommand
 
     private function supportsKeyGeneration(string $encryptorClass): bool
     {
-        return $encryptorClass === 'Halite' || $encryptorClass === 'Defuse'
-            || $encryptorClass === HaliteEncryptor::class || $encryptorClass === DefuseEncryptor::class;
+        return $encryptorClass === 'Halite' || $encryptorClass === 'Defuse' || $encryptorClass === 'MysqlAes'
+            || $encryptorClass === HaliteEncryptor::class || $encryptorClass === DefuseEncryptor::class
+            || $encryptorClass === MysqlAesEncryptor::class;
     }
 
     /**
@@ -170,9 +172,17 @@ class GenerateSecretKeyCommand extends AbstractCommand
     private function createKey(string $path, string $encryptorClass, OutputInterface $output): void
     {
         $isHalite = $encryptorClass === 'Halite' || $encryptorClass === HaliteEncryptor::class;
+        $isMysqlAes = $encryptorClass === 'MysqlAes' || $encryptorClass === MysqlAesEncryptor::class;
         if ($isHalite) {
             $encryptionKey = KeyFactory::generateEncryptionKey();
             KeyFactory::save($encryptionKey, $path);
+        } elseif ($isMysqlAes) {
+            $passphrase = bin2hex(random_bytes(16));
+            $dir        = dirname($path);
+            if (!is_dir($dir)) {
+                mkdir($dir, 0o755, true);
+            }
+            file_put_contents($path, $passphrase . "\n");
         } else {
             $key = bin2hex(random_bytes(255));
             $dir = dirname($path);
@@ -226,6 +236,10 @@ class GenerateSecretKeyCommand extends AbstractCommand
             } finally {
                 @unlink($tmp);
             }
+        }
+
+        if ($encryptorClass === 'MysqlAes' || $encryptorClass === MysqlAesEncryptor::class) {
+            return bin2hex(random_bytes(16));
         }
 
         return bin2hex(random_bytes(255));

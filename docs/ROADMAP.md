@@ -33,7 +33,7 @@ A major version would only be considered if we introduce breaking changes (e.g. 
 ## Out of scope (for this bundle)
 
 - **Full-disk or DB-level encryption:** This bundle encrypts selected entity fields only.
-- **Search on encrypted fields:** By design, values are encrypted at rest; searching or ordering by encrypted columns is not supported. Use non-encrypted fields or external search indexes for search.
+- **Search on encrypted fields:** By design, values are encrypted at rest; searching or ordering by encrypted columns is not supported. Use non-encrypted fields or external search indexes for search. See [PERFORMANCE.md](PERFORMANCE.md) for a comparison of `LIKE`, `AES_DECRYPT`, and PHP-side filtering costs.
 - **HSM / key vault integration:** Key storage is file-based; integration with vaults (e.g. AWS KMS, HashiCorp Vault) could be a separate recipe or doc, not a core feature for 1.x.
 - **Encryption at rest for Doctrine DBAL:** Only ORM entities and configured properties are covered; raw SQL or other layers are out of scope.
 

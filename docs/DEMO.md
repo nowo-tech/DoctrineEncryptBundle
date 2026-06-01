@@ -14,8 +14,8 @@ The bundle includes two **dockerized** demo projects (Symfony 7 and 8). Each run
 
 | Demo      | Path            | Default port | PHP |
 |-----------|-----------------|--------------|-----|
-| Symfony 7 | `demo/symfony7/` | 8007         | 8.2 |
-| Symfony 8 | `demo/symfony8/` | 8008         | 8.4 |
+| Symfony 7 | `demo/symfony7/` | 8007         | 8.2 | Same features as 8, including **MysqlAes** demo (`/mysql-aes-note`) |
+| Symfony 8 | `demo/symfony8/` | 8008         | 8.4 | Includes **MysqlAes** demo (`/mysql-aes-note`) |
 
 ## Quick start (Docker)
 
@@ -78,3 +78,15 @@ The bundle is installed via Composer **path repository** pointing to `/var/doctr
 - `financial_note` → `#[Encrypted('financial_data')]`
 
 The **"EncryptUtil & Twig"** page demonstrates programmatic encrypt/decrypt via **EncryptUtil**, masking via **MaskUtil**, and the Twig filters **`|decrypt`** and **`|mask`** (default and config-specific usage). Run `make encrypt-status` (or `php bin/console doctrine:encrypt:status`) in the demo directory to see entities and encrypted properties. Full reference: [Configuration](CONFIGURATION.md#example-multiple-encryptors), [Usage](USAGE.md) (EncryptUtil, MaskUtil, Twig filters).
+
+## Troubleshooting: `composer update` and security advisories
+
+Composer **2.7+** can **block** packages with open security advisories. The Symfony 7 demo targets **`7.4.*`** (not `7.0.*`) so updates align with the patched minor line.
+
+Demos set `config.audit.block-insecure: false` and `policy.advisories.block: false` so local `composer update` works; run `composer audit` to review advisories. Prefer **`make install`** / **`make update-bundle`** when you only need dependencies from the lock file.
+
+If `composer update` still fails after pulling, run inside the container:
+
+```bash
+composer update -W --no-interaction
+```

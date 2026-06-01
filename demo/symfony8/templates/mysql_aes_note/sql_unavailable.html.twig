@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}MySQL required{% endblock %}
+
+{% block body %}
+<div class="alert alert-warning">
+    <h2 class="h5">Native AES_ENCRYPT / AES_DECRYPT</h2>
+    <p>This demo needs <strong>MySQL or MariaDB</strong>. Copy the MySQL <code>DATABASE_URL</code> from <code>.env.example</code>, set <code>MYSQL_AES_KEY</code>, then run <code>make setup</code> in the demo.</p>
+</div>
+<a href="{{ path('mysql_aes_note_index') }}" class="btn btn-outline-secondary">← Back</a>
+{% endblock %}

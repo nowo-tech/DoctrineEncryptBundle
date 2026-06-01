@@ -32,6 +32,13 @@
 
 ---
 
+## v2.1.0 (2026-06-01)
+
+- **Scope:** (1) New **MysqlAes** encryptor (MySQL AES_ENCRYPT/AES_DECRYPT compatible). (2) Docs: MYSQL_AES.md, PERFORMANCE.md; CONFIGURATION/USAGE/DEMO/README updates. (3) Demos: MySQL AES CRUD, LIKE filters, fixtures, DB raw vs decrypted views; secret-message db-values; Docker MySQL optional. (4) generate-secret-key for MysqlAes; unit tests MysqlAesEncryptorTest.
+- **Checklist:** CHANGELOG and UPGRADING updated; run `make qa`; remove stray demo files; commit; tag `v2.1.0`; push branch and tag.
+
+---
+
 ## v2.0.10 (2026-02-21)
 
 - **Scope:** (1) DoctrineEncryptExtension extends `DependencyInjection\Extension\Extension` instead of `HttpKernel\DependencyInjection\Extension` (fixes Symfony 7.1+ internal/deprecation). (2) COMMANDS.md: batchSize default 5 and link to CONFIGURATION.

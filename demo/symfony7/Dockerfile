@@ -3,7 +3,7 @@ FROM dunglas/frankenphp:1-php8.2-alpine
 
 RUN apk add --no-cache git unzip bash
 
-RUN install-php-extensions zip intl sodium pdo_sqlite
+RUN install-php-extensions zip intl sodium pdo_sqlite pdo_mysql
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

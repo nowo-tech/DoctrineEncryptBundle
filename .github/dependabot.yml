@@ -17,6 +17,13 @@ updates:
     labels:
       - "dependencies"
       - "php"
+    groups:
+      symfony:
+        patterns:
+          - "symfony/*"
+      phpstan:
+        patterns:
+          - "phpstan/*"
     commit-message:
       prefix: "chore(deps):"
 

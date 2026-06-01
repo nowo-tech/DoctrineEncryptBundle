@@ -10,7 +10,12 @@ chmod -R 777 /app/var 2>/dev/null || true
 
 if [ ! -f /app/vendor/autoload_runtime.php ]; then
 	echo "📦 vendor not found, running composer install..."
-	composer install --no-interaction --working-dir=/app
+	if ! composer install --no-interaction --working-dir=/app; then
+		echo "❌ composer install failed (composer.json / composer.lock out of sync?)."
+		echo "   From host: make install   or   docker compose run --rm --entrypoint sh php -c 'composer update --no-interaction'"
+		echo "   Waiting so the container stays up for debugging (no restart loop)..."
+		exec tail -f /dev/null
+	fi
 	echo "✅ Composer install done."
 fi
 
