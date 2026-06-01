@@ -18,14 +18,14 @@ class MysqlAesNativeType extends AbstractType
         $builder
             ->add('title', TextType::class, [
                 'label' => 'Title',
-                'help' => 'Stored in plain text.',
-                'attr' => ['class' => 'form-control'],
+                'help'  => 'Stored in plain text.',
+                'attr'  => ['class' => 'form-control'],
             ])
             ->add('secret', TextareaType::class, [
-                'label' => 'Secret',
-                'help' => 'Inserted with <code>AES_ENCRYPT</code> into <code>secret_native</code> (BLOB).',
+                'label'     => 'Secret',
+                'help'      => 'Inserted with <code>AES_ENCRYPT</code> into <code>secret_native</code> (BLOB).',
                 'help_html' => true,
-                'attr' => ['rows' => 4, 'class' => 'form-control'],
+                'attr'      => ['rows' => 4, 'class' => 'form-control'],
             ]);
     }
 

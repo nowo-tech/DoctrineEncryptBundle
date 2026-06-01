@@ -171,7 +171,7 @@ class GenerateSecretKeyCommand extends AbstractCommand
      */
     private function createKey(string $path, string $encryptorClass, OutputInterface $output): void
     {
-        $isHalite = $encryptorClass === 'Halite' || $encryptorClass === HaliteEncryptor::class;
+        $isHalite   = $encryptorClass === 'Halite' || $encryptorClass === HaliteEncryptor::class;
         $isMysqlAes = $encryptorClass === 'MysqlAes' || $encryptorClass === MysqlAesEncryptor::class;
         if ($isHalite) {
             $encryptionKey = KeyFactory::generateEncryptionKey();

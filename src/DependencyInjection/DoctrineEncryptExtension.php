@@ -28,8 +28,8 @@ class DoctrineEncryptExtension extends Extension
 {
     /** Short names mapped to encryptor FQCN (Halite, Defuse). */
     public const SUPPORTED_ENCRYPTOR_CLASSES = [
-        'Defuse' => DefuseEncryptor::class,
-        'Halite' => HaliteEncryptor::class,
+        'Defuse'   => DefuseEncryptor::class,
+        'Halite'   => HaliteEncryptor::class,
         'MysqlAes' => MysqlAesEncryptor::class,
     ];
 

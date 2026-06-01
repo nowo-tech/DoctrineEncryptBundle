@@ -35,7 +35,7 @@ class Owner
         return $this->secret;
     }
 
-    public function setSecret($secret)
+    public function setSecret($secret): void
     {
         $this->secret = $secret;
     }
@@ -51,7 +51,7 @@ class Owner
     /**
      * @param mixed $notSecret
      */
-    public function setNotSecret($notSecret)
+    public function setNotSecret($notSecret): void
     {
         $this->notSecret = $notSecret;
     }
@@ -67,7 +67,7 @@ class Owner
     /**
      * @param mixed $cascaded
      */
-    public function setCascaded($cascaded)
+    public function setCascaded($cascaded): void
     {
         $this->cascaded = $cascaded;
     }

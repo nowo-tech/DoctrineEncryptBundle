@@ -16,6 +16,8 @@ use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use RuntimeException;
 
+use function is_resource;
+
 /**
  * Examples of MySQL AES_ENCRYPT / AES_DECRYPT in raw SQL (native path).
  */
@@ -68,7 +70,7 @@ class MysqlAesNoteRepository extends ServiceEntityRepository
     /**
      * List native AES rows with optional LIKE filters (MySQL).
      *
-     * @param 'decrypted'|'ciphertext' $secretMode decrypted = LIKE on CAST(AES_DECRYPT(...)); ciphertext = LIKE on HEX(blob)
+     * @param 'ciphertext'|'decrypted' $secretMode decrypted = LIKE on CAST(AES_DECRYPT(...)); ciphertext = LIKE on HEX(blob)
      *
      * @return list<array{id: int, title: string, secret_plain: ?string}>
      */
@@ -111,7 +113,7 @@ class MysqlAesNoteRepository extends ServiceEntityRepository
     /**
      * Doctrine list: title via DQL LIKE; secret via PHP (plaintext) or DQL LIKE on ciphertext column.
      *
-     * @param 'plaintext'|'ciphertext' $secretMode
+     * @param 'ciphertext'|'plaintext' $secretMode
      *
      * @return list<MysqlAesNote>
      */
@@ -264,9 +266,9 @@ class MysqlAesNoteRepository extends ServiceEntityRepository
                 'id'                      => (int) $row['id'],
                 'title'                   => (string) $row['title'],
                 'secret_orm_raw'          => $ormRaw,
-                'secret_orm_decrypted'      => $ormRaw !== null ? $encryptUtil->decrypt($ormRaw, 'mysql_aes') : null,
-                'secret_native_hex'         => $nativeBlob !== null && $nativeBlob !== '' ? bin2hex($nativeBlob) : null,
-                'secret_native_decrypted'   => $this->decryptNativeBlob($nativeBlob, $mysqlAes),
+                'secret_orm_decrypted'    => $ormRaw !== null ? $encryptUtil->decrypt($ormRaw, 'mysql_aes') : null,
+                'secret_native_hex'       => $nativeBlob !== null && $nativeBlob !== '' ? bin2hex($nativeBlob) : null,
+                'secret_native_decrypted' => $this->decryptNativeBlob($nativeBlob, $mysqlAes),
             ];
         }
 
@@ -308,10 +310,7 @@ class MysqlAesNoteRepository extends ServiceEntityRepository
     private function assertNativeMysql(): void
     {
         if (!$this->supportsNativeMysqlAes()) {
-            throw new RuntimeException(
-                'Native AES_ENCRYPT/AES_DECRYPT requires MySQL or MariaDB. '
-                . 'Set DATABASE_URL to a MySQL DSN (see demo .env.example).',
-            );
+            throw new RuntimeException('Native AES_ENCRYPT/AES_DECRYPT requires MySQL or MariaDB. Set DATABASE_URL to a MySQL DSN (see demo .env.example).');
         }
     }
 }
