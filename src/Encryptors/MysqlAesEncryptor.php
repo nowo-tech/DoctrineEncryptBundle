@@ -12,10 +12,12 @@ use function is_dir;
 use function is_readable;
 use function openssl_decrypt;
 use function openssl_encrypt;
+use function sprintf;
 use function str_pad;
-use function strlen;
 use function substr;
 use function trim;
+
+use const OPENSSL_RAW_DATA;
 
 /**
  * Encryptor compatible with MySQL {@see https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html AES_ENCRYPT()} / AES_DECRYPT()}.

@@ -7,6 +7,8 @@ namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Encryptors;
 use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
 use PHPUnit\Framework\TestCase;
 
+use function strlen;
+
 class MysqlAesEncryptorTest extends TestCase
 {
     private const PASSPHRASE = 'demo-mysql-aes-key';
@@ -29,7 +31,7 @@ class MysqlAesEncryptorTest extends TestCase
 
     public function testReadsPassphraseFromFile(): void
     {
-        $dir  = sys_get_temp_dir() . '/mysql-aes-' . uniqid('', true);
+        $dir = sys_get_temp_dir() . '/mysql-aes-' . uniqid('', true);
         mkdir($dir);
         $file = $dir . '/key.txt';
         file_put_contents($file, self::PASSPHRASE . "\n");

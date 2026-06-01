@@ -8,6 +8,8 @@ use App\Repository\MysqlAesNoteRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 
+use function is_resource;
+
 /**
  * Demo entity for MysqlAes encryptor (ORM path) plus native AES_ENCRYPT column (repository path).
  */
@@ -30,7 +32,7 @@ class MysqlAesNote
 
     /** Filled only via repository SQL (AES_ENCRYPT); not mapped for ORM writes. */
     #[ORM\Column(type: 'blob', nullable: true)]
-    private $secretNative = null;
+    private $secretNative;
 
     public function getId(): ?int
     {

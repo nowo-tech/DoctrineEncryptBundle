@@ -14,6 +14,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+use function in_array;
+
 #[Route('/secret-message')]
 class SecretMessageController extends AbstractController
 {
@@ -41,18 +43,18 @@ class SecretMessageController extends AbstractController
     public function dbValues(Request $request, Connection $conn, EncryptUtil $encryptUtil): Response
     {
         $mode = $request->query->getString('mode', 'both');
-        if (!\in_array($mode, ['raw', 'decrypted', 'both'], true)) {
+        if (!in_array($mode, ['raw', 'decrypted', 'both'], true)) {
             $mode = 'both';
         }
 
         $rows = [];
         foreach ($conn->fetchAllAssociative('SELECT id, title, message FROM secret_message ORDER BY id DESC') as $row) {
-            $raw = isset($row['message']) && $row['message'] !== '' ? (string) $row['message'] : null;
+            $raw    = isset($row['message']) && $row['message'] !== '' ? (string) $row['message'] : null;
             $rows[] = [
-                'id'                 => (int) $row['id'],
-                'title'              => $row['title'],
-                'message_raw'        => $raw,
-                'message_decrypted'  => $raw !== null ? $encryptUtil->decrypt($raw, 'personal_data') : null,
+                'id'                => (int) $row['id'],
+                'title'             => $row['title'],
+                'message_raw'       => $raw,
+                'message_decrypted' => $raw !== null ? $encryptUtil->decrypt($raw, 'personal_data') : null,
             ];
         }
 

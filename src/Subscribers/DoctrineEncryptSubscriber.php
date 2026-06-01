@@ -155,7 +155,7 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
      * So for example after form submit the preUpdate encrypted the entity
      * We have to decrypt them before showing them again.
      */
-    public function postUpdate(PostUpdateEventArgs $args)
+    public function postUpdate(PostUpdateEventArgs $args): void
     {
         $entity = $args->getObject();
         $this->processFields($entity, false);
@@ -165,7 +165,7 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
      * Listen a preUpdate lifecycle event.
      * Encrypt entities property's values on preUpdate, so they will be stored encrypted.
      */
-    public function preUpdate(PreUpdateEventArgs $args)
+    public function preUpdate(PreUpdateEventArgs $args): void
     {
         $entity = $args->getObject();
         $this->processFields($entity);
@@ -177,7 +177,7 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
      *
      * @param LifecycleEventArgs $args
      */
-    public function postLoad(PostLoadEventArgs $args)
+    public function postLoad(PostLoadEventArgs $args): void
     {
         $entity = $args->getObject();
         $this->processFields($entity, false);
@@ -187,7 +187,7 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
      * Listen to onflush event
      * Encrypt entities that are inserted into the database.
      */
-    public function preFlush(PreFlushEventArgs $preFlushEventArgs)
+    public function preFlush(PreFlushEventArgs $preFlushEventArgs): void
     {
         $unitOfWOrk = $preFlushEventArgs->getObjectManager()->getUnitOfWork();
         foreach ($unitOfWOrk->getIdentityMap() as $entityName => $entityArray) {
@@ -204,7 +204,7 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
      * Listen to onflush event
      * Encrypt entities that are inserted into the database.
      */
-    public function onFlush(OnFlushEventArgs $onFlushEventArgs)
+    public function onFlush(OnFlushEventArgs $onFlushEventArgs): void
     {
         $unitOfWork = $onFlushEventArgs->getObjectManager()->getUnitOfWork();
         foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
@@ -221,7 +221,7 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
      * Listen to postFlush event
      * Decrypt entities after having been inserted into the database.
      */
-    public function postFlush(PostFlushEventArgs $postFlushEventArgs)
+    public function postFlush(PostFlushEventArgs $postFlushEventArgs): void
     {
         $unitOfWork = $postFlushEventArgs->getObjectManager()->getUnitOfWork();
         foreach ($unitOfWork->getIdentityMap() as $entityMap) {

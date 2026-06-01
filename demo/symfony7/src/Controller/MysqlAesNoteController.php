@@ -16,6 +16,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+use function in_array;
+
 #[Route('/mysql-aes-note')]
 class MysqlAesNoteController extends AbstractController
 {
@@ -25,21 +27,21 @@ class MysqlAesNoteController extends AbstractController
         $titleFilter  = $request->query->getString('title');
         $secretFilter = $request->query->getString('secret');
         $secretMode   = $request->query->getString('secret_mode', 'plaintext');
-        if (!\in_array($secretMode, ['plaintext', 'ciphertext'], true)) {
+        if (!in_array($secretMode, ['plaintext', 'ciphertext'], true)) {
             $secretMode = 'plaintext';
         }
 
-        $titleLike     = MysqlAesNoteRepository::buildLikePattern($titleFilter !== '' ? $titleFilter : null);
-        $secretNeedle  = $secretFilter !== '' ? $secretFilter : null;
-        $notes         = $repository->findDoctrineListFiltered($titleLike, $secretNeedle, $secretMode);
+        $titleLike    = MysqlAesNoteRepository::buildLikePattern($titleFilter !== '' ? $titleFilter : null);
+        $secretNeedle = $secretFilter !== '' ? $secretFilter : null;
+        $notes        = $repository->findDoctrineListFiltered($titleLike, $secretNeedle, $secretMode);
 
         return $this->render('mysql_aes_note/index.html.twig', [
             'notes'           => $notes,
             'nativeSupported' => $repository->supportsNativeMysqlAes(),
             'filter'          => [
-                'title'        => $titleFilter,
-                'secret'       => $secretFilter,
-                'secret_mode'  => $secretMode,
+                'title'       => $titleFilter,
+                'secret'      => $secretFilter,
+                'secret_mode' => $secretMode,
             ],
             'queryDescription' => MysqlAesNoteRepository::describeDoctrineLikeFilter(
                 $titleLike,
@@ -91,7 +93,7 @@ class MysqlAesNoteController extends AbstractController
         $titleFilter  = $request->query->getString('title');
         $secretFilter = $request->query->getString('secret');
         $secretMode   = $request->query->getString('secret_mode', 'decrypted');
-        if (!\in_array($secretMode, ['decrypted', 'ciphertext'], true)) {
+        if (!in_array($secretMode, ['decrypted', 'ciphertext'], true)) {
             $secretMode = 'decrypted';
         }
 
@@ -99,7 +101,7 @@ class MysqlAesNoteController extends AbstractController
         $secretLike = MysqlAesNoteRepository::buildLikePattern($secretFilter !== '' ? $secretFilter : null);
 
         return $this->render('mysql_aes_note/sql_index.html.twig', [
-            'rows' => $repository->findDecryptedWithAesDecryptFiltered($titleLike, $secretLike, $secretMode),
+            'rows'   => $repository->findDecryptedWithAesDecryptFiltered($titleLike, $secretLike, $secretMode),
             'filter' => [
                 'title'       => $titleFilter,
                 'secret'      => $secretFilter,
@@ -131,7 +133,7 @@ class MysqlAesNoteController extends AbstractController
         EncryptorRegistry $encryptorRegistry,
     ): Response {
         $mode = $request->query->getString('mode', 'both');
-        if (!\in_array($mode, ['raw', 'decrypted', 'both'], true)) {
+        if (!in_array($mode, ['raw', 'decrypted', 'both'], true)) {
             $mode = 'both';
         }
 
@@ -200,5 +202,4 @@ class MysqlAesNoteController extends AbstractController
 
         return $this->redirectToRoute('mysql_aes_note_index');
     }
-
 }
