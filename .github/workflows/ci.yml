@@ -57,8 +57,21 @@ jobs:
             ${{ runner.os }}-php-${{ matrix.php }}-composer-
 
       - name: Install dependencies with Symfony ${{ matrix.symfony }}
+        env:
+          SYMFONY: ${{ matrix.symfony }}
         run: |
-          composer require symfony/config:^${{ matrix.symfony }} symfony/dependency-injection:^${{ matrix.symfony }} symfony/http-kernel:^${{ matrix.symfony }} symfony/property-access:^${{ matrix.symfony }} symfony/yaml:^${{ matrix.symfony }} symfony/var-exporter:^7.4 --no-interaction --no-update
+          case "$SYMFONY" in
+            8.*) VAR_EXPORTER="^${SYMFONY}" ;;
+            *) VAR_EXPORTER="^7.4" ;;
+          esac
+          composer require \
+            symfony/config:^${SYMFONY} \
+            symfony/dependency-injection:^${SYMFONY} \
+            symfony/http-kernel:^${SYMFONY} \
+            symfony/property-access:^${SYMFONY} \
+            symfony/yaml:^${SYMFONY} \
+            symfony/var-exporter:${VAR_EXPORTER} \
+            --no-interaction --no-update
           composer update --with-all-dependencies --no-interaction --prefer-dist --no-progress
 
       - name: Run tests
