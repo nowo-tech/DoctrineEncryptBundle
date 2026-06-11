@@ -4,6 +4,8 @@ Thank you for considering contributing to Doctrine Encrypt Bundle.
 
 ## Development setup
 
+Requires **PHP 8.2+** and **ext-sodium** (see [INSTALLATION.md](INSTALLATION.md#requirements)).
+
 1. Clone the repository and install dependencies:
    ```bash
    composer install

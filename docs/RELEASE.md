@@ -32,6 +32,13 @@
 
 ---
 
+## v2.2.0 (2026-06-01)
+
+- **Scope:** Align with Nowo bundle specs (**REQ-SF-001/002**): PHP **8.2+**; `symfony/*` **^7.0 \|\| ^8.0** (drop `^6.0` from `composer.json`); CI matrix Symfony **7.4**, **8.0**, **8.1** on PHP 8.2–8.5; docs (README, INSTALLATION, ROADMAP, UPGRADING); Rector `php82`.
+- **Checklist:** CHANGELOG and UPGRADING updated; run `make qa`; commit; tag `v2.2.0`; push branch and tag.
+
+---
+
 ## v2.1.0 (2026-06-01)
 
 - **Scope:** (1) New **MysqlAes** encryptor (MySQL AES_ENCRYPT/AES_DECRYPT compatible). (2) Docs: MYSQL_AES.md, PERFORMANCE.md; CONFIGURATION/USAGE/DEMO/README updates. (3) Demos: MySQL AES CRUD, LIKE filters, fixtures, DB raw vs decrypted views; secret-message db-values; Docker MySQL optional. (4) generate-secret-key for MysqlAes; unit tests MysqlAesEncryptorTest.
