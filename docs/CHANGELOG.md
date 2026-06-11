@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.1] - 2026-06-11
+
+### Fixed
+
+- **composer.lock:** `platform.php` and `content-hash` synced with `composer.json` (`>=8.2`); fixes `composer validate --strict` in CI.
+- **CI:** Symfony **8.0** / **8.1** matrix cells use matching `symfony/var-exporter` (`^8.0` / `^8.1`) instead of `^7.4`, which blocked dependency resolution.
+
+No application changes required. See [UPGRADING.md](UPGRADING.md#upgrading-to-221).
+
+---
+
 ## [2.2.0] - 2026-06-01
 
 ### Fixed

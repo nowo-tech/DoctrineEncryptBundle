@@ -25,10 +25,20 @@
 
 5. **Packagist** (if the package is registered) will pick up the new tag; users can then `composer require nowo-tech/doctrine-encrypt-bundle`.
 
+**Important:** Never move or force-push a tag that Packagist already published. Stable versions are immutable; publish fixes as a **new patch tag** (e.g. `v2.2.1`) and restore the old tag to its original commit if it was moved by mistake.
+
 ## After releasing
 
 - Keep `## [Unreleased]` at the top of [CHANGELOG.md](CHANGELOG.md) for the next version; add new changes there.
 - Optionally bump a dev version in `composer.json` for development.
+
+---
+
+## v2.2.1 (2026-06-11)
+
+- **Scope:** Fix `composer.lock` platform PHP 8.2 sync; CI `symfony/var-exporter` for Symfony 8.x matrix.
+- **Packagist:** `v2.2.0` must stay on commit `6cde672` (immutable). Tag `v2.2.1` on the release-notes commit; restore `v2.2.0` with `git tag -f v2.2.0 6cde672 && git push origin v2.2.0 --force` if it was moved.
+- **Checklist:** CHANGELOG and UPGRADING updated; `make test`; `composer validate --strict`; commit; tag `v2.2.1`; push branch and tag.
 
 ---
 

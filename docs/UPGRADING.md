@@ -29,6 +29,22 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.2.1
+
+No breaking changes. Patch release only (`composer.lock` sync + CI matrix fix). Recommended if you installed **2.2.0** and hit CI/`composer validate` issues, or want the Symfony **8.0** / **8.1** CI fix from upstream.
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
+Or pin explicitly:
+
+```bash
+composer require nowo-tech/doctrine-encrypt-bundle:^2.2.1
+```
+
+---
+
 ## Upgrading to 2.2.0
 
 **Breaking changes for legacy environments:**
