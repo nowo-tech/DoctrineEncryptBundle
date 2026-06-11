@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Functional tests:** enable Doctrine ORM **native lazy objects** on PHP 8.4+ so tests pass with Symfony 8 / `symfony/var-exporter` 8.x (LazyGhost helpers removed upstream).
+
 ---
 
 ## [2.2.1] - 2026-06-11

@@ -16,6 +16,7 @@ use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use PHPUnit\Framework\Constraint\LogicalNot;
 use PHPUnit\Framework\Constraint\StringContains;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\VarExporter\ProxyHelper;
 
 use function count;
 use function is_bool;
@@ -41,11 +42,30 @@ abstract class AbstractFunctionalTestCase extends TestCase
 
     abstract protected function getEncryptor(): EncryptorInterface;
 
+    /**
+     * Symfony 8 removed LazyGhost helpers from var-exporter; on PHP 8.4+ use native lazy objects.
+     */
+    private function configureOrmLazyObjects(\Doctrine\ORM\Configuration $config): void
+    {
+        if (method_exists($config, 'enableNativeLazyObjects') && PHP_VERSION_ID >= 80400) {
+            $config->enableNativeLazyObjects(true);
+
+            return;
+        }
+
+        if (!method_exists(ProxyHelper::class, 'generateLazyGhost')) {
+            $config->setProxyDir(sys_get_temp_dir() . '/doctrine_orm_proxies');
+            $config->setProxyNamespace('Nowo\DoctrineEncryptBundle\Tests\Proxies');
+            $config->setAutoGenerateProxyClasses(true);
+        }
+    }
+
     protected function setUp(): void
     {
         $paths = [__DIR__ . '/fixtures/Entity'];
         if (class_exists(ORMSetup::class)) {
             $config = ORMSetup::createAttributeMetadataConfiguration($paths, true);
+            $this->configureOrmLazyObjects($config);
         } else {
             $config = new \Doctrine\ORM\Configuration();
             $config->setMetadataDriverImpl(new AttributeDriver($paths));
