@@ -999,7 +999,11 @@
             "dist": {
                 "type": "path",
                 "url": "/var/doctrine-encrypt-bundle",
+<<<<<<< HEAD
                 "reference": "1d164ccb76ac59543b473e5f758f68f80d7e4d7a"
+=======
+                "reference": "9e3e440e68349f9e05057df8105159f066cf64be"
+>>>>>>> ffd10d2e3c0ae1a2b91b76eb28944bb731a48e11
             },
             "require": {
                 "doctrine/orm": "^2.15 || ^3.0",
