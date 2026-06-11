@@ -1,8 +1,8 @@
 # Doctrine Encrypt Bundle
 
-[![CI](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml/badge.svg)](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml) [![Packagist Version](https://img.shields.io/packagist/v/nowo-tech/doctrine-encrypt-bundle.svg?style=flat)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![Packagist Downloads](https://img.shields.io/packagist/dt/nowo-tech/doctrine-encrypt-bundle.svg)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php)](https://php.net) [![Symfony](https://img.shields.io/badge/Symfony-7%20%7C%208-000000?logo=symfony)](https://symfony.com) [![GitHub stars](https://img.shields.io/github/stars/nowo-tech/doctrine-encrypt-bundle.svg?style=social&label=Star)](https://github.com/nowo-tech/DoctrineEncryptBundle) [![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen)](#tests-and-coverage)
+[![CI](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml/badge.svg)](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml) [![Packagist Version](https://img.shields.io/packagist/v/nowo-tech/doctrine-encrypt-bundle.svg?style=flat)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![Packagist Downloads](https://img.shields.io/packagist/dt/nowo-tech/doctrine-encrypt-bundle.svg)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php)](https://php.net) [![Symfony](https://img.shields.io/badge/Symfony-7.4%20%7C%208.0%20%7C%208.1%2B-000000?logo=symfony)](https://symfony.com)
 
-**Symfony bundle to encrypt Doctrine entity fields at rest** using [Halite](https://github.com/paragonie/halite) or [Defuse](https://github.com/defuse/php-encryption)—audited libraries, no custom crypto. For **Symfony 7 and 8** · PHP 8.1+. Suits **GDPR** and compliance (e.g. Art. 32); supports key rotation and [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for anonymization and erasure.
+**Symfony bundle to encrypt Doctrine entity fields at rest** using [Halite](https://github.com/paragonie/halite) or [Defuse](https://github.com/defuse/php-encryption)—audited libraries, no custom crypto. For **Symfony 7.4+ and 8** · PHP 8.2+. Suits **GDPR** and compliance (e.g. Art. 32); supports key rotation and [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for anonymization and erasure.
 
 > ⭐ **Found this useful?** [Install from Packagist](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) · Give it a **star** on [GitHub](https://github.com/nowo-tech/DoctrineEncryptBundle) so more developers can find it.
 
@@ -36,7 +36,7 @@ Looking for **Doctrine encryption**, **encrypt entity fields**, **Halite Symfony
 - ✅ Console commands: status, generate secret key, encrypt/decrypt database, **rotate keys** (backup, decrypt, change keys, re-encrypt with confirmations)
 - ✅ **Key rotation** — one command or manual steps; combinable with [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for GDPR-compliant anonymization and erasure
 - ✅ **Symfony Flex** recipe (register bundle + config; see [docs/INSTALLATION.md](docs/INSTALLATION.md))
-- ✅ Compatible with **Symfony 7 and 8** and **Doctrine ORM 2.x and 3.x**
+- ✅ Compatible with **Symfony 7.4+ and 8** and **Doctrine ORM 2.x and 3.x**
 - ✅ Compatible with **FrankenPHP** (HTTP runtime and optional **worker** mode; demos default to **`APP_ENV=dev`** with **Caddyfile.dev**, i.e. no PHP worker — see [docs/DEMO-FRANKENPHP.md](docs/DEMO-FRANKENPHP.md) and [Installation → FrankenPHP](docs/INSTALLATION.md#frankenphp-runtime-and-worker-mode))
 
 ## Installation
@@ -165,13 +165,13 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 
 ## Requirements
 
-- PHP >= 8.1
-- **Symfony 7 or 8** (^7.0 \|\| ^8.0). Current releases of this package require Symfony 7 or 8 (see `composer.json`).
+- PHP >= 8.2
+- **Symfony 7.4+ or 8** (^7.0 \|\| ^8.0; tested on **7.4**, **8.0**, **8.1**). See `composer.json`.
 - Doctrine ORM ^2.15 \|\| ^3.0
 - paragonie/halite (included); for Defuse: `defuse/php-encryption ^2.1`
 - ext-sodium recommended for Halite (or sodium_compat)
 
-See [docs/INSTALLATION.md](docs/INSTALLATION.md#requirements) and [docs/UPGRADING.md](docs/UPGRADING.md) for compatibility notes.
+See [docs/INSTALLATION.md](docs/INSTALLATION.md#requirements) and [docs/UPGRADING.md](docs/UPGRADING.md#upgrading-to-220) for compatibility notes.
 
 ## Demo
 

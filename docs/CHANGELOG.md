@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2026-06-01
+
+### Fixed
+
+- **GenerateSecretKeyCommandTest:** assertions updated for MysqlAes in supported-encryptor messages (2.1.0 gap).
+
+### Changed
+
+- **Requirements (Nowo bundle specs):** minimum **PHP 8.2+**; `symfony/*` constraints **^7.0 \|\| ^8.0** (Symfony 6 removed from `composer.json`, aligned with 2.0 release notes). CI matrix tests Symfony **7.4**, **8.0**, and **8.1** on PHP 8.2–8.5.
+- **Documentation:** README badges and requirements, [INSTALLATION.md](INSTALLATION.md), [ROADMAP.md](ROADMAP.md) — PHP 8.2+ and Symfony 7.4 \| 8.0 \| 8.1+.
+
+### Removed
+
+- **Symfony 6** from declared `symfony/*` Composer constraints (was still present in `composer.json` after 2.0).
+
+**Breaking:** PHP **8.2+** is required; Symfony 6 is no longer installable with current constraints. See [UPGRADING.md](UPGRADING.md#upgrading-to-220).
+
+---
+
 ## [2.1.0] - 2026-06-01
 
 ### Added

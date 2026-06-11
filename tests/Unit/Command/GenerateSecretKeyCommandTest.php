@@ -185,7 +185,7 @@ class GenerateSecretKeyCommandTest extends TestCase
         $tester->execute(['config' => 'custom']);
 
         $this->assertSame(1, $tester->getStatusCode());
-        $this->assertStringContainsString('Key generation is only supported for Halite and Defuse', $tester->getDisplay());
+        $this->assertStringContainsString('Key generation is only supported for Halite, Defuse and MysqlAes', $tester->getDisplay());
         $this->assertStringContainsString('CustomEncryptor', $tester->getDisplay());
     }
 
@@ -223,7 +223,7 @@ class GenerateSecretKeyCommandTest extends TestCase
 
         $this->assertSame(0, $tester->getStatusCode());
         $this->assertStringContainsString('not supported', $tester->getDisplay());
-        $this->assertStringContainsString('Halite and Defuse', $tester->getDisplay());
+        $this->assertStringContainsString('Halite, Defuse, MysqlAes', $tester->getDisplay());
     }
 
     public function testExecuteWithoutArgumentWhenConfigWithoutPathOutputsOnlyKey(): void

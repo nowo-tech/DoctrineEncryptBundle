@@ -118,3 +118,7 @@ clean:
 	rm -f coverage.xml
 	rm -f coverage-php.txt
 	rm -f .php-cs-fixer.cache
+
+# REQ-MAKE-008: update-deps (REQ-MAKE-008)
+BUNDLE_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+include $(BUNDLE_ROOT)/../.scripts/Makefile.update-deps.mk

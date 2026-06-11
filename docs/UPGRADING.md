@@ -29,6 +29,27 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.2.0
+
+**Breaking changes for legacy environments:**
+
+- **PHP 8.2+** is now required (`require.php` was `>=8.1`). Upgrade PHP before updating the bundle.
+- **Symfony 6.x** is no longer declared in `composer.json` (`symfony/*` are **^7.0 \|\| ^8.0** only). If you still run Symfony 6 or PHP 8.1, pin the previous line:
+
+  ```bash
+  composer require nowo-tech/doctrine-encrypt-bundle:">=2.0,<2.2"
+  ```
+
+  Or upgrade the application to **PHP 8.2+** and Symfony **7.4+** or **8.x**, then:
+
+  ```bash
+  composer require nowo-tech/doctrine-encrypt-bundle:^2.2
+  ```
+
+No configuration or encryptor changes are required when you already run PHP 8.2+ and Symfony 7.4+ / 8.x.
+
+---
+
 ## Upgrading to 2.1.0
 
 No breaking changes for existing applications using Halite or Defuse.
