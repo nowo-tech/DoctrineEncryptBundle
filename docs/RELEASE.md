@@ -34,6 +34,13 @@
 
 ---
 
+## v2.2.2 (2026-06-11)
+
+- **Scope:** Functional tests — native lazy objects on PHP 8.4+ for Symfony 8 CI matrix (LazyGhost unavailable in `symfony/var-exporter` 8.x).
+- **Checklist:** CHANGELOG and UPGRADING updated; `make test`; commit release notes; tag `v2.2.2`; push branch and tag. **Do not move** existing `v2.2.0` / `v2.2.1` tags.
+
+---
+
 ## v2.2.1 (2026-06-11)
 
 - **Scope:** Fix `composer.lock` platform PHP 8.2 sync; CI `symfony/var-exporter` for Symfony 8.x matrix.
