@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [2.2.2] - 2026-06-11
+
 ### Fixed
 
-- **Functional tests:** enable Doctrine ORM **native lazy objects** on PHP 8.4+ so tests pass with Symfony 8 / `symfony/var-exporter` 8.x (LazyGhost helpers removed upstream).
+- **Functional tests (CI):** enable Doctrine ORM **native lazy objects** on PHP **8.4+** when running the test suite with Symfony **8.x**. Symfony 8 `var-exporter` no longer ships LazyGhost helpers; fixes 14 functional test errors on the PHP 8.4 × Symfony 8.0 / 8.1 matrix cells.
+
+No application or configuration changes. See [UPGRADING.md](UPGRADING.md#upgrading-to-222).
 
 ---
 
