@@ -23,6 +23,7 @@ use function is_bool;
 use function is_string;
 
 use const E_ALL;
+use const PHP_VERSION_ID;
 
 /**
  * @property \Doctrine\DBAL\Logging\DebugStack|SqlQueryCollector $sqlLoggerStack
