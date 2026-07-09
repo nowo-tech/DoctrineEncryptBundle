@@ -29,6 +29,32 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.2.3
+
+No breaking changes. Patch release (Spec Kit maintainer tooling, Twig `|decrypt` auto-escape fix, MysqlAes PHPDoc deprecation, composer.lock sync).
+
+If your Twig templates relied on the `|decrypt` filter **not** being escaped (previous incorrect `isSafe: ['html']` marking), apply `|raw` only when the decrypted content is trusted HTML:
+
+```twig
+{# Before (implicit unescaped output — incorrect) #}
+{{ value|decrypt }}
+
+{# After — default: escaped (recommended) #}
+{{ value|decrypt }}
+
+{# Only if decrypted HTML is trusted #}
+{{ value|decrypt|raw }}
+```
+
+Update as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+---
+
 ## Upgrading to 2.2.2
 
 No breaking changes. Patch release only (functional test / CI fix for PHP 8.4 + Symfony 8). **No changes required** in your application.

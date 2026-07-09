@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.3] - 2026-07-09
+
+### Added
+
+- **GitHub Spec Kit:** `.specify/` tooling, Cursor Agent skills (`.cursor/skills/speckit-*`), and baseline spec in `specs/001-baseline/` (100% `src/` inventory). See [SPEC-KIT.md](SPEC-KIT.md) and [SPEC-DRIVEN-DEVELOPMENT.md](SPEC-DRIVEN-DEVELOPMENT.md).
+- **CodeRabbit:** review configuration (`.coderabbit.yaml`) and GitHub Actions workflow for automated PR review.
+
+### Changed
+
+- **Documentation:** [SPEC-KIT.md](SPEC-KIT.md) (install, structure, Cursor usage); README link under Documentation.
+- **MysqlAes:** PHPDoc `@deprecated since 2.1.0` — not recommended for new production deployments (AES-128-ECB); prefer Halite or Defuse. No runtime change.
+- **Twig `|decrypt` filter:** removed `isSafe: ['html']` so decrypted output is auto-escaped by Twig (security fix). Use `|raw` only when the decrypted value is trusted HTML.
+- **composer.lock:** dependency sync for the bundle root and demo apps (`symfony7`, `symfony8`).
+
+No configuration changes required. See [UPGRADING.md](UPGRADING.md#upgrading-to-223).
+
+---
+
 ## [2.2.2] - 2026-06-11
 
 ### Fixed
