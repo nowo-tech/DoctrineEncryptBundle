@@ -25,6 +25,8 @@ use const OPENSSL_RAW_DATA;
  * Uses AES-128-ECB with the same key padding MySQL applies when {@code block_encryption_mode} is {@code aes-128-ecb}
  * (default). Values encrypted in PHP can be decrypted with {@code AES_DECRYPT(column, :key)} and vice versa when the
  * column stores the raw binary ciphertext (BLOB / VARBINARY recommended).
+ *
+ * @deprecated since 2.1.0 Not recommended for new production deployments (AES-128-ECB). Prefer Halite or Defuse.
  */
 class MysqlAesEncryptor implements EncryptorInterface
 {

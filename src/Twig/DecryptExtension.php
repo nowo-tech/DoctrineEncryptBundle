@@ -48,7 +48,7 @@ class DecryptExtension /* extends AbstractExtension */
      * @param mixed $value The value to decrypt
      * @param string|null $config Encryptor config name (e.g. 'financial_data'). Null = default config
      */
-    #[AsTwigFilter('decrypt', isSafe: ['html'])]
+    #[AsTwigFilter('decrypt')]
     public function decrypt(mixed $value, ?string $config = null): mixed
     {
         if ($value === null) {

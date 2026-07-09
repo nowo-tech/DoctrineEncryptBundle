@@ -1,0 +1,145 @@
+# CodeRabbit integration for pull requests and pushes to main.
+#
+# 1. GitHub App (recommended): install https://github.com/apps/coderabbitai on nowo-tech/DoctrineEncryptBundle.
+#    Reviews pull requests automatically (no workflow required).
+# 2. CLI job (optional): set repository secret CODERABBIT_API_KEY (Agentic API key from CodeRabbit dashboard).
+#
+# Triggers:
+# - pull_request → CLI review of the PR diff
+# - push to main/master → CLI review of the pushed commits (no PR required)
+# - workflow_run (after CI on a PR) → posts @coderabbitai review for the GitHub App
+
+name: CodeRabbit
+
+on:
+  pull_request:
+    branches: [main, master]
+    types: [opened, synchronize, reopened]
+
+  push:
+    branches: [main, master]
+
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: coderabbit-${{ github.event.pull_request.number || github.event.workflow_run.id || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  cli-review:
+    name: CodeRabbit CLI
+    if: github.event_name == 'pull_request' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Install CodeRabbit CLI
+        run: curl -fsSL https://cli.coderabbit.ai/install.sh | sh
+
+      - name: Run CodeRabbit CLI review
+        env:
+          CODERABBIT_API_KEY: ${{ secrets.CODERABBIT_API_KEY }}
+        run: |
+          if [ -z "$CODERABBIT_API_KEY" ]; then
+            echo "::warning::CODERABBIT_API_KEY is not set. Skipping CLI review."
+            echo "Add an Agentic API key secret, or rely on the CodeRabbit GitHub App for PR reviews."
+            exit 0
+          fi
+
+          coderabbit auth login --api-key "$CODERABBIT_API_KEY"
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.ref }}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            BEFORE="${{ github.event.before }}"
+            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              echo "Initial push to branch — reviewing against HEAD~1."
+              BASE="HEAD~1"
+            else
+              BASE="$BEFORE"
+            fi
+          else
+            BASE="main"
+          fi
+
+          echo "Reviewing changes against base: $BASE"
+          coderabbit review --plain --base "$BASE"
+
+  request-review-after-ci:
+    name: Request CodeRabbit review after CI
+    if: >
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Request CodeRabbit review on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const pulls = run.pull_requests ?? [];
+
+            if (pulls.length === 0) {
+              core.info('No pull request linked to this CI workflow run.');
+              return;
+            }
+
+            const prNumber = pulls[0].number;
+            const { owner, repo } = context.repo;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number: prNumber,
+              per_page: 100,
+            });
+
+            const alreadyRequested = comments.some((comment) =>
+              comment.body?.includes('@coderabbitai review') &&
+              comment.user?.login === 'github-actions[bot]'
+            );
+
+            if (alreadyRequested) {
+              core.info(`CodeRabbit review already requested on PR #${prNumber}.`);
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: prNumber,
+              body: '@coderabbitai review',
+            });
+
+            core.info(`Requested CodeRabbit review on PR #${prNumber} after CI success.`);
+
+  workflow-run-skipped:
+    name: CodeRabbit (no PR to review)
+    if: >
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.event != 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Explain skipped review
+        run: |
+          echo "CI completed on a push to main — there is no pull request for CodeRabbit to review."
+          echo "Open a PR to trigger PR reviews, or rely on the cli-review job on push (requires CODERABBIT_API_KEY)."
+
+# Maintainer: Héctor Franco Aceituno (@HecFranco)
+# Organization: nowo-tech (https://github.com/nowo-tech)

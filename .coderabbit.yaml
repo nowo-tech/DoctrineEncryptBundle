@@ -1,0 +1,103 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit configuration for nowo-tech/DoctrineEncryptBundle.
+# Requires the CodeRabbit GitHub App installed on nowo-tech/DoctrineEncryptBundle.
+# Manual review: comment `@coderabbitai review` on a pull request.
+
+language: en-US
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  commit_status: true
+  poem: false
+  collapse_walkthrough: true
+  sequence_diagrams: true
+  changed_files_summary: true
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 10
+    drafts: false
+    base_branches:
+      - main
+      - master
+    ignore_title_keywords:
+      - WIP
+      - "[skip review]"
+
+  path_filters:
+    - "!**/vendor/**"
+    - "!**/coverage/**"
+    - "!**/*.lock"
+    - "!phpstan-baseline.neon"
+    - "!.cursor/**"
+    - "src/**"
+    - "tests/**"
+    - "docs/**"
+    - "demo/**"
+    - ".github/**"
+    - "*.md"
+    - "*.yaml"
+    - "*.yml"
+    - "Makefile"
+
+  path_instructions:
+    - path: "src/**/*.php"
+      instructions: |
+        nowo-tech/doctrine-encrypt-bundle — Encrypt Doctrine entity fields at rest with Halite, Defuse, or MySQL-compatible MysqlAes. Symfony 7|8 bundle for field-level encryption, GDPR-friendly, multiple keys, key rotation.
+        Follow PSR-12 and `.php-cs-fixer.dist.php`. Prefer PHP 8 attributes over annotations.
+        Respect PHP and Symfony ranges in `composer.json` when present. Preserve backward compatibility unless the PR explicitly breaks it.
+        Use strict comparison (`===`) where appropriate. Keep changes minimal and consistent with existing patterns.
+        Align with `composer cs-check`, `composer phpstan`, and `composer test` when those scripts exist.
+
+    - path: "tests/**/*.php"
+      instructions: |
+        PHPUnit tests for this package. Add or update tests for new behaviour.
+        Match existing test structure (Unit vs Integration). Avoid trivial assertions.
+        Ensure changes remain compatible with the CI matrix when one is defined.
+
+    - path: "docs/**/*.md"
+      instructions: |
+        User-facing documentation in English under `docs/`. Do not invent features, versions, or commands.
+        For notable releases, keep CHANGELOG and UPGRADING aligned. Preserve document structure and tone.
+
+    - path: "demo/**/*.php"
+      instructions: |
+        Demo applications illustrate bundle usage — not production code.
+        Keep demos aligned with supported PHP/Symfony versions in composer.json.
+
+    - path: ".github/workflows/**"
+      instructions: |
+        GitHub Actions workflows for this repository. Match existing workflow style (checkout@v6, matrix exclusions).
+        Do not echo secrets. Pin third-party actions to major versions already used in this repo.
+
+  tools:
+    phpstan:
+      enabled: true
+    phpcs:
+      enabled: false
+    phpmd:
+      enabled: false
+    yamllint:
+      enabled: true
+    hadolint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    github-checks:
+      enabled: true
+      timeout_ms: 900000
+    actionlint:
+      enabled: true
+    zizmor:
+      enabled: true
+
+knowledge_base:
+  learnings:
+    scope: auto
+  pull_requests:
+    scope: auto
