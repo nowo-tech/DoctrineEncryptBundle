@@ -34,6 +34,13 @@
 
 ---
 
+## v2.2.3 (2026-07-09)
+
+- **Scope:** GitHub Spec Kit (`.specify/`, baseline `specs/001-baseline/`, Cursor skills, SPEC-KIT.md); CodeRabbit CI; Twig `|decrypt` auto-escape fix; MysqlAes PHPDoc `@deprecated`; composer.lock sync (root + demos).
+- **Checklist:** CHANGELOG and UPGRADING updated; `make test`; commit release notes; tag `v2.2.3`; push branch and tag.
+
+---
+
 ## v2.2.2 (2026-06-11)
 
 - **Scope:** Functional tests — native lazy objects on PHP 8.4+ for Symfony 8 CI matrix (LazyGhost unavailable in `symfony/var-exporter` 8.x).
