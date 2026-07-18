@@ -1,0 +1,9 @@
+#!/bin/sh
+# Strip Cursor agent Co-authored-by trailers so they never land in history.
+# Enable with: git config core.hooksPath .githooks
+COMMIT_MSG_FILE=$1
+[ -f "$COMMIT_MSG_FILE" ] || exit 0
+# Portable: remove Cursor co-author lines (GNU/BSD sed)
+tmp=$(mktemp) || exit 0
+sed '/^Co-authored-by: Cursor <cursoragent@cursor.com>$/d' "$COMMIT_MSG_FILE" > "$tmp" && mv "$tmp" "$COMMIT_MSG_FILE"
+exit 0

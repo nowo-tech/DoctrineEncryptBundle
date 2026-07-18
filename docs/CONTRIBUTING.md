@@ -44,6 +44,17 @@ The project uses [PHP-CS-Fixer](https://github.com/FriendsOfPHP/PHP-CS-Fixer) wi
 - Branch from `main` (or the default branch), make your changes, and open a PR.
 - Keep the scope focused; split unrelated changes into separate PRs when possible.
 - Update the documentation under `docs/` if you change configuration, commands, or behavior.
+- Do **not** add `Co-authored-by: Cursor` (or similar AI attribution) to commits or PRs.
+
+### Local git hooks (maintainers)
+
+To strip Cursor co-author trailers automatically:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Also disable agent attribution in Cursor: **Settings → Agent → Attribution** (IDE), and CLI `~/.cursor/cli-config.json` (`attributeCommitsToAgent` / `attributePRsToAgent`: `false`).
 
 ## Reporting issues
 

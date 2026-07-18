@@ -1,0 +1,15 @@
+---
+description: Never attribute git commits or PRs to Cursor agent
+alwaysApply: true
+---
+
+# Git attribution
+
+Never add `Co-authored-by: Cursor` (or any `cursoragent@cursor.com`) to commit messages or PR bodies.
+
+When creating commits or pull requests:
+- Do not include Cursor / agent as co-author
+- Do not add attribution trailers for the AI assistant
+- Author remains the human maintainer only
+
+If a commit message already contains such a trailer, strip it before committing.
