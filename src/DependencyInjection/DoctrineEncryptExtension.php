@@ -71,11 +71,7 @@ class DoctrineEncryptExtension extends Extension
         $profiles       = $config['profiles'];
         $defaultProfile = $config['default_profile'] ?? array_key_first($profiles);
         if (!isset($profiles[$defaultProfile])) {
-            throw new InvalidArgumentException(sprintf(
-                'nowo_doctrine_encrypt.default_profile "%s" must be a key in nowo_doctrine_encrypt.profiles. Available: %s.',
-                $defaultProfile,
-                implode(', ', array_keys($profiles))
-            ));
+            throw new InvalidArgumentException(sprintf('nowo_doctrine_encrypt.default_profile "%s" must be a key in nowo_doctrine_encrypt.profiles. Available: %s.', $defaultProfile, implode(', ', array_keys($profiles))));
         }
 
         $encryptorRefs = [];

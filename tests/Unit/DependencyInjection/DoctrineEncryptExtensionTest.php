@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\DependencyInjection;
 
+use InvalidArgumentException;
 use Nowo\DoctrineEncryptBundle\Command\DoctrineDecryptDatabaseCommand;
 use Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptDatabaseCommand;
 use Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptStatusCommand;
@@ -273,7 +274,7 @@ class DoctrineEncryptExtensionTest extends TestCase
             ],
         ];
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('nowo_doctrine_encrypt.default_profile "nonexistent" must be a key in nowo_doctrine_encrypt.profiles');
 
         $this->extension->load([$config], $container);
