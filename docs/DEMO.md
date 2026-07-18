@@ -58,7 +58,7 @@ For production or long‑running workers, see the recommendations in [Installati
 - **public/index.php** – Symfony front controller.
 - **config/** – Bundles (DoctrineEncryptBundle), Doctrine, `nowo_doctrine_encrypt.yaml`.
 - **src/Entity/SecretMessage.php** – Example entity with `#[Encrypted]` property.
-- **src/Entity/SensitiveRecord.php** – Entity with two configs: `personal_data` and `financial_data`.
+- **src/Entity/SensitiveRecord.php** – Entity with two profiles: `personal_data` and `financial_data`.
 - **src/Controller/DemoController.php** – Home route.
 - **src/Controller/EncryptUtilDemoController.php** – Page that uses **EncryptUtil**, **MaskUtil**, and the Twig filters **`|decrypt`** and **`|mask`**.
 - **Templates** – CRUD for Secret messages and Sensitive records, plus the EncryptUtil & Twig demo page.
@@ -67,12 +67,12 @@ The bundle is installed via Composer **path repository** pointing to `/var/doctr
 
 ## Multiple encryptors and EncryptUtil (both demos)
 
-**Symfony 7** and **Symfony 8** demos both use **multiple encryptor configs**. In `config/packages/nowo_doctrine_encrypt.yaml` you’ll find:
+**Symfony 7** and **Symfony 8** demos both use **multiple encryptor profiles**. In `config/packages/nowo_doctrine_encrypt.yaml` you’ll find:
 
-- **configs:** e.g. `personal_data` (Halite), `financial_data` (Defuse), and optionally `env_var` (key from `%env(APP_ENCRYPT_KEY)%`), each with its own key or key file.
-- **default_config:** `personal_data` (used by `#[Encrypted]` without a config name).
+- **profiles:** e.g. `personal_data` (Halite), `financial_data` (Defuse), and optionally `env_var` (key from `%env(APP_ENCRYPT_KEY)%`), each with its own key or key file.
+- **default_profile:** `personal_data` (used by `#[Encrypted]` without a profile name).
 
-**SecretMessage** uses the default config. **SensitiveRecord** uses both:
+**SecretMessage** uses the default profile. **SensitiveRecord** uses both:
 
 - `personal_note` → `#[Encrypted('personal_data')]`
 - `financial_note` → `#[Encrypted('financial_data')]`

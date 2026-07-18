@@ -33,7 +33,7 @@ An `<ENC>` marker is appended to stored values so the bundle can tell encrypted 
 
 ## Multiple encryptors
 
-When you define [multiple configs](CONFIGURATION.md#multiple-encryptors-configs) (e.g. `personal_data`, `financial_data`), specify which config to use per property with the attribute’s config parameter:
+When you define [multiple profiles](CONFIGURATION.md#example-multiple-encryptors) (e.g. `personal_data`, `financial_data`), specify which profile to use per property with the attribute’s alias parameter:
 
 ```php
 #[ORM\Column(type: 'string')]
@@ -45,7 +45,7 @@ private ?string $email = null;
 private ?string $iban = null;
 ```
 
-Omit the parameter or use `#[Encrypted]` / `#[Encrypted('default')]` to use the default config.
+Omit the parameter or use `#[Encrypted]` / `#[Encrypted('default')]` to use the default profile.
 
 ## EncryptUtil (programmatic encrypt/decrypt)
 

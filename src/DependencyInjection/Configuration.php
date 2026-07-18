@@ -10,7 +10,9 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 use function call_user_func;
 
 /**
- * Defines and validates the bundle configuration tree (default_config, configs per encryptor).
+ * Defines and validates the bundle configuration tree (default_profile, profiles per encryptor).
+ *
+ * Legacy YAML keys "default_config" / "configs" are accepted via beforeNormalization.
  *
  * @see docs/CONFIGURATION.md
  * @see http://symfony.com/doc/current/cookbook/bundles/extension.html#cookbook-bundles-extension-config-class
@@ -19,8 +21,10 @@ class Configuration implements ConfigurationInterface
 {
     public const ALIAS = 'nowo_doctrine_encrypt';
 
+    public const DEFAULT_PROFILE_NAME = 'default';
+
     /**
-     * Builds the configuration tree (default_config, configs with encryptor_class, secret_directory_path, etc.).
+     * Builds the configuration tree (default_profile, profiles with encryptor_class, secret_directory_path, etc.).
      */
     public function getConfigTreeBuilder(): TreeBuilder
     {
@@ -35,19 +39,44 @@ class Configuration implements ConfigurationInterface
             /* @codeCoverageIgnoreEnd */
         }
 
-        // Single grammar: default_config + configs. When #[Encrypted] has no alias (or "default"), the encryptor for default_config is used.
+        // Single grammar: default_profile + profiles. When #[Encrypted] has no alias (or "default"), the encryptor for default_profile is used.
         $rootNode
+            ->beforeNormalization()
+                ->always()
+                ->then(static function (?array $config): array {
+                    $config ??= [];
+
+                    // BC: default_config → default_profile
+                    if (!isset($config['default_profile']) && isset($config['default_config'])) {
+                        $config['default_profile'] = $config['default_config'];
+                        unset($config['default_config']);
+                    }
+
+                    // BC: configs → profiles
+                    if (!isset($config['profiles']) && isset($config['configs'])) {
+                        $config['profiles'] = $config['configs'];
+                        unset($config['configs']);
+                    }
+
+                    if (!isset($config['default_profile'])) {
+                        $profileNames              = array_keys($config['profiles'] ?? []);
+                        $config['default_profile'] = $profileNames[0] ?? self::DEFAULT_PROFILE_NAME;
+                    }
+
+                    return $config;
+                })
+            ->end()
             ->children()
-                ->scalarNode('default_config')
-                    ->defaultValue('default')
-                    ->info('Config alias to use when #[Encrypted] has no alias or uses "default".')
+                ->scalarNode('default_profile')
+                    ->defaultValue(self::DEFAULT_PROFILE_NAME)
+                    ->info('Profile name to use when #[Encrypted] has no alias or uses "default".')
                 ->end()
                 ->integerNode('batch_size')
                     ->defaultValue(5)
                     ->min(1)
                     ->info('Default batch size for doctrine:decrypt:database and doctrine:encrypt:database (raw SQL). Overridable per run via the batchSize argument.')
                 ->end()
-                ->arrayNode('configs')
+                ->arrayNode('profiles')
                     ->useAttributeAsKey('name')
                     ->arrayPrototype()
                         ->children()
@@ -76,7 +105,7 @@ class Configuration implements ConfigurationInterface
                             })
                         ->end()
                     ->end()
-                    ->info('Map of config alias => { encryptor_class, secret_directory_path?, secret_key_filename?, secret_key_env_var? }.')
+                    ->info('Map of profile name => { encryptor_class, secret_directory_path?, secret_key_filename?, secret_key_env_var? }.')
                 ->end()
             ->end();
 

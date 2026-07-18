@@ -6,8 +6,8 @@ The bundle provides a **`MysqlAes`** encryptor that uses **AES-128-ECB** with th
 
 ```yaml
 nowo_doctrine_encrypt:
-    default_config: default
-    configs:
+    default_profile: default
+    profiles:
         mysql_aes:
             encryptor_class: MysqlAes
             secret_key_env_var: '%env(MYSQL_AES_KEY)%'
@@ -251,7 +251,7 @@ The passphrase in SQL must match the config used by PHP:
 
 ```yaml
 nowo_doctrine_encrypt:
-    configs:
+    profiles:
         mysql_aes:
             encryptor_class: MysqlAes
             secret_key_env_var: '%env(MYSQL_AES_KEY)%'

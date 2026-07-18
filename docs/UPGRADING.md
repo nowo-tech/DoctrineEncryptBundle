@@ -29,6 +29,46 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.3.0
+
+Configuration keys were renamed to match AuditKit-style naming:
+
+| Old (still accepted) | New |
+|----------------------|-----|
+| `default_config` | `default_profile` |
+| `configs` | `profiles` |
+
+Container parameters: prefer `nowo_doctrine_encrypt.default_profile` and `nowo_doctrine_encrypt.profiles`. Legacy `nowo_doctrine_encrypt.default_config` and `nowo_doctrine_encrypt.configs` are still set to the same values during transition.
+
+**Validation:** `default_profile` must be a key in `profiles`. An unknown default now throws `InvalidArgumentException` (previously fell back to the first profile).
+
+**Action:** Update `config/packages/nowo_doctrine_encrypt.yaml` when convenient. Legacy YAML keys still work via `beforeNormalization`. The `#[Encrypted('alias')]` attribute is unchanged (alias still maps to a profile name).
+
+```yaml
+# Before
+nowo_doctrine_encrypt:
+    default_config: personal_data
+    configs:
+        personal_data:
+            encryptor_class: Halite
+            secret_directory_path: '%kernel.project_dir%'
+
+# After
+nowo_doctrine_encrypt:
+    default_profile: personal_data
+    profiles:
+        personal_data:
+            encryptor_class: Halite
+            secret_directory_path: '%kernel.project_dir%'
+```
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+---
+
 ## Upgrading to 2.2.3
 
 No breaking changes. Patch release (Spec Kit maintainer tooling, Twig `|decrypt` auto-escape fix, MysqlAes PHPDoc deprecation, composer.lock sync).

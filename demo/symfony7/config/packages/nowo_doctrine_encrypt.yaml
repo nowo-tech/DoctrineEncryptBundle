@@ -4,9 +4,9 @@
 # 3. env_var: key from environment; %env(APP_ENCRYPT_KEY)% is resolved by Symfony and the bundle receives the value
 # Halite and Defuse (requires: composer require defuse/php-encryption ^2.1)
 nowo_doctrine_encrypt:
-  default_config: personal_data
+  default_profile: personal_data
   # batch_size: 5   # optional; default batch for decrypt/encrypt database commands (raw SQL)
-  configs:
+  profiles:
     # 1) No secret_key_filename: default path .Halite.personal_data.key
     personal_data:
       encryptor_class: Halite

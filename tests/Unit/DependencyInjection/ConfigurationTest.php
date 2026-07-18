@@ -14,9 +14,9 @@ class ConfigurationTest extends TestCase
     {
         $config = $this->process([]);
 
-        $this->assertSame('default', $config['default_config']);
+        $this->assertSame('default', $config['default_profile']);
         $this->assertSame(5, $config['batch_size']);
-        $this->assertSame([], $config['configs']);
+        $this->assertSame([], $config['profiles']);
     }
 
     public function testBatchSizeDefaultAndCustom(): void
@@ -31,31 +31,31 @@ class ConfigurationTest extends TestCase
     public function testSingleConfigWithCustomEncryptor(): void
     {
         $config = $this->process([
-            'configs' => [
+            'profiles' => [
                 'default' => ['encryptor_class' => 'Defuse'],
             ],
         ]);
 
-        $this->assertSame('Defuse', $config['configs']['default']['encryptor_class']);
-        $this->assertSame('%kernel.project_dir%', $config['configs']['default']['secret_directory_path']);
+        $this->assertSame('Defuse', $config['profiles']['default']['encryptor_class']);
+        $this->assertSame('%kernel.project_dir%', $config['profiles']['default']['secret_directory_path']);
     }
 
     public function testSingleConfigWithCustomSecretDirectoryPath(): void
     {
         $config = $this->process([
-            'configs' => [
+            'profiles' => [
                 'default' => ['secret_directory_path' => '/var/secrets'],
             ],
         ]);
 
-        $this->assertSame('/var/secrets', $config['configs']['default']['secret_directory_path']);
+        $this->assertSame('/var/secrets', $config['profiles']['default']['secret_directory_path']);
     }
 
-    public function testConfigsAndDefaultConfig(): void
+    public function testProfilesAndDefaultProfile(): void
     {
         $config = $this->process([
-            'default_config' => 'financial_data',
-            'configs'        => [
+            'default_profile' => 'financial_data',
+            'profiles'        => [
                 'personal_data' => [
                     'encryptor_class'       => 'Halite',
                     'secret_directory_path' => '%kernel.project_dir%',
@@ -67,11 +67,11 @@ class ConfigurationTest extends TestCase
             ],
         ]);
 
-        $this->assertSame('financial_data', $config['default_config']);
-        $this->assertArrayHasKey('personal_data', $config['configs']);
-        $this->assertSame('Halite', $config['configs']['personal_data']['encryptor_class']);
-        $this->assertArrayHasKey('financial_data', $config['configs']);
-        $this->assertSame('Defuse', $config['configs']['financial_data']['encryptor_class']);
+        $this->assertSame('financial_data', $config['default_profile']);
+        $this->assertArrayHasKey('personal_data', $config['profiles']);
+        $this->assertSame('Halite', $config['profiles']['personal_data']['encryptor_class']);
+        $this->assertArrayHasKey('financial_data', $config['profiles']);
+        $this->assertSame('Defuse', $config['profiles']['financial_data']['encryptor_class']);
     }
 
     public function testGetConfigTreeBuilderReturnsTreeWithExpectedStructure(): void
@@ -87,12 +87,12 @@ class ConfigurationTest extends TestCase
     public function testSecretKeyFilenameDefaultsToNullWhenNotProvided(): void
     {
         $config = $this->process([
-            'configs' => [
+            'profiles' => [
                 'default' => ['encryptor_class' => 'Halite'],
             ],
         ]);
-        $this->assertArrayHasKey('secret_key_filename', $config['configs']['default']);
-        $this->assertNull($config['configs']['default']['secret_key_filename']);
+        $this->assertArrayHasKey('secret_key_filename', $config['profiles']['default']);
+        $this->assertNull($config['profiles']['default']['secret_key_filename']);
     }
 
     public function testConfigurationAliasConstant(): void
@@ -103,19 +103,19 @@ class ConfigurationTest extends TestCase
     public function testProcessedConfigHasDefaultEncryptorClassAndSecretPath(): void
     {
         $config = $this->process([
-            'configs' => [
+            'profiles' => [
                 'default' => [],
             ],
         ]);
 
-        $this->assertSame('Halite', $config['configs']['default']['encryptor_class']);
-        $this->assertSame('%kernel.project_dir%', $config['configs']['default']['secret_directory_path']);
+        $this->assertSame('Halite', $config['profiles']['default']['encryptor_class']);
+        $this->assertSame('%kernel.project_dir%', $config['profiles']['default']['secret_directory_path']);
     }
 
     public function testSecretKeyFilenameOptional(): void
     {
         $config = $this->process([
-            'configs' => [
+            'profiles' => [
                 'default' => [
                     'encryptor_class'       => 'Halite',
                     'secret_directory_path' => '/var/keys',
@@ -124,13 +124,13 @@ class ConfigurationTest extends TestCase
             ],
         ]);
 
-        $this->assertSame('.my_app.key', $config['configs']['default']['secret_key_filename']);
+        $this->assertSame('.my_app.key', $config['profiles']['default']['secret_key_filename']);
     }
 
     public function testSecretKeyEnvVar(): void
     {
         $config = $this->process([
-            'configs' => [
+            'profiles' => [
                 'default' => [
                     'encryptor_class'    => 'Halite',
                     'secret_key_env_var' => 'APP_ENCRYPT_KEY',
@@ -138,8 +138,8 @@ class ConfigurationTest extends TestCase
             ],
         ]);
 
-        $this->assertSame('APP_ENCRYPT_KEY', $config['configs']['default']['secret_key_env_var']);
-        $this->assertNull($config['configs']['default']['secret_directory_path']);
+        $this->assertSame('APP_ENCRYPT_KEY', $config['profiles']['default']['secret_key_env_var']);
+        $this->assertNull($config['profiles']['default']['secret_directory_path']);
     }
 
     public function testCannotSetBothSecretKeyEnvVarAndSecretDirectoryPath(): void
@@ -148,7 +148,7 @@ class ConfigurationTest extends TestCase
         $this->expectExceptionMessage('Cannot set both secret_key_env_var and secret_directory_path');
 
         $this->process([
-            'configs' => [
+            'profiles' => [
                 'default' => [
                     'encryptor_class'       => 'Halite',
                     'secret_directory_path' => '/var/keys',
@@ -156,6 +156,29 @@ class ConfigurationTest extends TestCase
                 ],
             ],
         ]);
+    }
+
+    public function testAcceptsLegacyDefaultConfigAndConfigsKeys(): void
+    {
+        $config = $this->process([
+            'default_config' => 'financial_data',
+            'configs'        => [
+                'personal_data' => [
+                    'encryptor_class'       => 'Halite',
+                    'secret_directory_path' => '%kernel.project_dir%',
+                ],
+                'financial_data' => [
+                    'encryptor_class'       => 'Defuse',
+                    'secret_directory_path' => '/var/secrets',
+                ],
+            ],
+        ]);
+
+        $this->assertSame('financial_data', $config['default_profile']);
+        $this->assertArrayHasKey('personal_data', $config['profiles']);
+        $this->assertArrayHasKey('financial_data', $config['profiles']);
+        $this->assertArrayNotHasKey('default_config', $config);
+        $this->assertArrayNotHasKey('configs', $config);
     }
 
     private function process(array $config): array

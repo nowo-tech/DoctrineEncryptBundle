@@ -70,8 +70,8 @@ Use different encryptors and keys per kind of data (e.g. personal vs financial):
 
 ```yaml
 nowo_doctrine_encrypt:
-  default_config: personal_data  # used when attribute has no config or uses "default"
-  configs:
+  default_profile: personal_data  # used when attribute has no profile or uses "default"
+  profiles:
     personal_data:
       encryptor_class: Halite
       secret_directory_path: '%kernel.project_dir%'
@@ -99,8 +99,8 @@ Use one entry under `configs` (e.g. `default`):
 
 ```yaml
 nowo_doctrine_encrypt:
-  default_config: default
-  configs:
+  default_profile: default
+  profiles:
     default:
       encryptor_class: Halite  # or Defuse
       secret_directory_path: '%kernel.project_dir%'
@@ -110,7 +110,7 @@ Key file: `.Halite.default.key` (or `.Defuse.default.key`). Full options: [docs/
 
 ## Usage
 
-Mark entity properties with the `Encrypted` attribute. Use no argument (or `"default"`) for the default config, or the config name when using multiple configs:
+Mark entity properties with the `Encrypted` attribute. Use no argument (or `"default"`) for the default config, or the config name when using multiple profiles:
 
 ```php
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
@@ -119,12 +119,12 @@ use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 class User
 {
   #[ORM\Column(type: 'string')]
-  #[Encrypted]  // or #[Encrypted('default')] — uses default_config
+  #[Encrypted]  // or #[Encrypted('default')] — uses default_profile
   private ?string $email = null;
 }
 ```
 
-With **multiple configs**, pass the config alias per property:
+With **multiple profiles**, pass the config alias per property:
 
 ```php
 #[ORM\Column(type: 'string')]

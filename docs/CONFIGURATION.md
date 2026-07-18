@@ -1,16 +1,16 @@
 # Configuration
 
-The bundle is configured under the root key `nowo_doctrine_encrypt`. The only supported structure is **`default_config`** plus **`configs`** (a map of config name ⇒ options). There is no root-level `encryptor_class` or `secret_directory_path`; use a single entry under `configs` (e.g. `default`) for one encryptor. When `#[Encrypted]` has no alias (or uses `"default"`), the encryptor for `default_config` is used.
+The bundle is configured under the root key `nowo_doctrine_encrypt`. The only supported structure is **`default_profile`** plus **`profiles`** (a map of profile name ⇒ options). There is no root-level `encryptor_class` or `secret_directory_path`; use a single entry under `profiles` (e.g. `default`) for one encryptor. When `#[Encrypted]` has no alias (or uses `"default"`), the encryptor for `default_profile` is used.
 
 ## Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `default_config` | `string` | `default` | Which config to use when the attribute has no alias or uses `"default"`. |
+| `default_profile` | `string` | `default` | Which profile to use when the attribute has no alias or uses `"default"`. |
 | `batch_size` | `int` | `5` | Default batch size for `doctrine:decrypt:database` and `doctrine:encrypt:database` (raw SQL). Overridable per run via the `batchSize` argument. Minimum: 1. |
-| `configs` | `array` | `[]` (normalized to one `default` config) | Map of alias => options. Each alias has `encryptor_class` and either `secret_directory_path` or `secret_key_env_var`. Optional: `secret_key_filename`. |
+| `profiles` | `array` | `[]` (normalized to one `default` profile) | Map of alias => options. Each alias has `encryptor_class` and either `secret_directory_path` or `secret_key_env_var`. Optional: `secret_key_filename`. |
 
-Per-config options (under each entry in `configs`):
+Per-profile options (under each entry in `profiles`):
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
@@ -19,17 +19,17 @@ Per-config options (under each entry in `configs`):
 | `secret_key_filename` | `string` | *(pattern)* | Optional custom key filename (e.g. `.my_app.key`). Only used when `secret_directory_path` is set; default pattern is `.{encryptor_class}.{alias}.key`. |
 | `secret_key_env_var` | `string` | `null` | Use `%env(APP_ENCRYPT_KEY)%`. Symfony resolves it at config load and the bundle receives the key value. When set, **must not** set `secret_directory_path` or `secret_key_filename`. |
 
-If `configs` is empty, the bundle behaves as if you had defined a single config named `default` with Halite and `%kernel.project_dir%`.
+If `profiles` is empty, the bundle behaves as if you had defined a single profile named `default` with Halite and `%kernel.project_dir%`.
 
 ## Example: single encryptor (default)
 
-Omit the config file or define only the default config:
+Omit the config file or define only the default profile:
 
 ```yaml
 # config/packages/nowo_doctrine_encrypt.yaml
 nowo_doctrine_encrypt:
-    default_config: default
-    configs:
+    default_profile: default
+    profiles:
         default:
             encryptor_class: Halite   # or Defuse
             secret_directory_path: '%kernel.project_dir%'
@@ -42,8 +42,8 @@ Then use `#[Encrypted]` or `#[Encrypted('default')]` on properties; they will us
 ```yaml
 # config/packages/nowo_doctrine_encrypt.yaml
 nowo_doctrine_encrypt:
-    default_config: personal_data
-    configs:
+    default_profile: personal_data
+    profiles:
         personal_data:
             encryptor_class: Halite
             secret_directory_path: '%kernel.project_dir%'
@@ -52,10 +52,10 @@ nowo_doctrine_encrypt:
             secret_directory_path: '%kernel.project_dir%/var/secrets'
 ```
 
-- Properties with `#[Encrypted]` or `#[Encrypted('default')]` use the encryptor for **personal_data** (default_config).
-- Properties with `#[Encrypted('personal_data')]` or `#[Encrypted('financial_data')]` use the corresponding config.
+- Properties with `#[Encrypted]` or `#[Encrypted('default')]` use the encryptor for **personal_data** (default_profile).
+- Properties with `#[Encrypted('personal_data')]` or `#[Encrypted('financial_data')]` use the corresponding profile.
 
-Each config has its own key file: `.{encryptor_class}.{alias}.key` (e.g. `.Halite.personal_data.key`, `.Defuse.financial_data.key`). Add them to `.gitignore`. See [Usage](USAGE.md#multiple-encryptors).
+Each profile has its own key file: `.{encryptor_class}.{alias}.key` (e.g. `.Halite.personal_data.key`, `.Defuse.financial_data.key`). Add them to `.gitignore`. See [Usage](USAGE.md#multiple-encryptors).
 
 ## Encryptors
 
@@ -83,14 +83,14 @@ Searching or filtering encrypted fields is **not index-friendly** on plaintext. 
 
 ## Secret key: file or env
 
-For each config you either use a **key file** or a **env var**:
+For each profile you either use a **key file** or a **env var**:
 
 - **Key file:** Set `secret_directory_path` (and optionally `secret_key_filename`). The key file path is `{secret_directory_path}/{secret_key_filename}` or, if `secret_key_filename` is omitted, `{secret_directory_path}/.{encryptor_class}.{alias}.key` (e.g. `.Halite.default.key`, `.Defuse.financial_data.key`).
-- **Env var:** Set `secret_key_env_var` to `%env(APP_ENCRYPT_KEY)%`. Symfony resolves it when loading config and the bundle receives the key value. Do **not** set `secret_directory_path` or `secret_key_filename`. The value must be the same format as the key file content (for Halite: hex-encoded key; for Defuse or MysqlAes: the password/passphrase string). Run `doctrine:encrypt:generate-secret-key` for configs without path to get the key value, then set it in your `.env` or environment.
+- **Env var:** Set `secret_key_env_var` to `%env(APP_ENCRYPT_KEY)%`. Symfony resolves it when loading config and the bundle receives the key value. Do **not** set `secret_directory_path` or `secret_key_filename`. The value must be the same format as the key file content (for Halite: hex-encoded key; for Defuse or MysqlAes: the password/passphrase string). Run `doctrine:encrypt:generate-secret-key` for profiles without path to get the key value, then set it in your `.env` or environment.
 
 ## Secret key files (when using path)
 
-Key file per config: `.{encryptor_class}.{alias}.key` (or your `secret_key_filename`) inside that config’s `secret_directory_path`.
+Key file per profile: `.{encryptor_class}.{alias}.key` (or your `secret_key_filename`) inside that profile’s `secret_directory_path`.
 
 **Important:** Add key files to `.gitignore` so they are never committed:
 

@@ -12,8 +12,8 @@ use function is_array;
  * The `Encrypted` class is a PHP attribute that can be applied to properties and is used as a
  * placeholder for encryption functionality.
  *
- * When no alias is given (e.g. #[Encrypted] or #[Encrypted('default')]), the encryptor for default_config is used.
- * When an alias is given (e.g. #[Encrypted('personal_data')]), that config from configs is used.
+ * When no alias is given (e.g. #[Encrypted] or #[Encrypted('default')]), the encryptor for default_profile is used.
+ * When an alias is given (e.g. #[Encrypted('personal_data')]), that profile from profiles is used.
  *
  * @Annotation
  *
@@ -22,7 +22,7 @@ use function is_array;
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class Encrypted implements Annotation
 {
-    /** Config alias from nowo_doctrine_encrypt.configs. Use "default" when no alias: then default_config is used. */
+    /** Profile alias from nowo_doctrine_encrypt.profiles. Use "default" when no alias: then default_profile is used. */
     public string $config = 'default';
 
     /**

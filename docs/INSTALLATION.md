@@ -55,14 +55,14 @@ return [
 
 ```yaml
 nowo_doctrine_encrypt:
-    default_config: default
-    configs:
+    default_profile: default
+    profiles:
         default:
             encryptor_class: Halite   # or Defuse
             secret_directory_path: '%kernel.project_dir%'
 ```
 
-If the file is omitted, the bundle uses a single default config (Halite, `%kernel.project_dir%`). See [Configuration](CONFIGURATION.md) for multiple configs.
+If the file is omitted, the bundle uses a single default profile (Halite, `%kernel.project_dir%`). See [Configuration](CONFIGURATION.md) for multiple profiles.
 
 ## Using Defuse
 
@@ -76,8 +76,8 @@ Then set in config under the relevant config entry:
 
 ```yaml
 nowo_doctrine_encrypt:
-    default_config: default
-    configs:
+    default_profile: default
+    profiles:
         default:
             encryptor_class: Defuse
             secret_directory_path: '%kernel.project_dir%'

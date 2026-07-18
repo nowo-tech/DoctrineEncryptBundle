@@ -48,7 +48,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $container = $this->createContainer();
 
         $config = [
-            'configs' => [
+            'profiles' => [
                 'default' => ['encryptor_class' => 'Defuse'],
             ],
         ];
@@ -67,10 +67,10 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->assertStringEndsWith('.Halite.default.key', $path);
     }
 
-    public function testLoadWithEmptyConfigsArrayRegistersDefaultConfig(): void
+    public function testLoadWithEmptyProfilesArrayRegistersDefaultProfile(): void
     {
         $container = $this->createContainer();
-        $this->extension->load([['configs' => []]], $container);
+        $this->extension->load([['profiles' => []]], $container);
 
         $this->assertTrue($container->hasDefinition('nowo_doctrine_encrypt.encryptor.default'));
         $this->assertStringEndsWith('.Halite.default.key', $container->getParameter('nowo_doctrine_encrypt.secret_key_path'));
@@ -83,7 +83,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $container = $this->createContainer();
 
         $config = [
-            'configs' => [
+            'profiles' => [
                 'default' => [
                     'secret_directory_path' => '/var/keys',
                     'encryptor_class'       => 'Defuse',
@@ -144,7 +144,7 @@ class DoctrineEncryptExtensionTest extends TestCase
     {
         $container = $this->createContainer();
         $config    = [
-            'configs' => [
+            'profiles' => [
                 'default' => ['encryptor_class' => self::class],
             ],
         ];
@@ -155,12 +155,12 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->assertSame(self::class, $container->getParameter('nowo_doctrine_encrypt.encryptor_class_name'));
     }
 
-    public function testLoadWithConfigsRegistersMultipleEncryptors(): void
+    public function testLoadWithProfilesRegistersMultipleEncryptors(): void
     {
         $container = $this->createContainer();
         $config    = [
-            'default_config' => 'personal_data',
-            'configs'        => [
+            'default_profile' => 'personal_data',
+            'profiles'        => [
                 'personal_data' => [
                     'encryptor_class'       => 'Halite',
                     'secret_directory_path' => '%kernel.project_dir%',
@@ -186,7 +186,7 @@ class DoctrineEncryptExtensionTest extends TestCase
     {
         $container = $this->createContainer();
         $config    = [
-            'configs' => [
+            'profiles' => [
                 'default' => [
                     'encryptor_class'       => 'Defuse',
                     'secret_directory_path' => '/var/keys',
@@ -206,7 +206,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $container   = $this->createContainer();
         $resolvedKey = 'resolved-key-from-env';
         $config      = [
-            'configs' => [
+            'profiles' => [
                 'default' => [
                     'encryptor_class'    => 'Halite',
                     'secret_key_env_var' => $resolvedKey,
@@ -229,7 +229,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $container        = $this->createContainer();
         $resolvedKeyValue = str_repeat('a', 512);
         $config           = [
-            'configs' => [
+            'profiles' => [
                 'default' => [
                     'encryptor_class'    => 'Halite',
                     'secret_key_env_var' => $resolvedKeyValue,
@@ -247,7 +247,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $container   = $this->createContainer();
         $resolvedKey = 'resolved-key-APP_ENCRYPT_KEY_2';
         $config      = [
-            'configs' => [
+            'profiles' => [
                 'default' => [
                     'encryptor_class'    => 'Halite',
                     'secret_key_env_var' => $resolvedKey,
@@ -260,30 +260,30 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->assertSame($resolvedKey, $def->getArgument(1));
     }
 
-    public function testLoadWithConfigsInvalidDefaultConfigFallsBackToFirst(): void
+    public function testLoadWithProfilesInvalidDefaultProfileThrows(): void
     {
         $container = $this->createContainer();
         $config    = [
-            'default_config' => 'nonexistent',
-            'configs'        => [
+            'default_profile' => 'nonexistent',
+            'profiles'        => [
                 'personal_data' => [
                     'encryptor_class'       => 'Halite',
                     'secret_directory_path' => '%kernel.project_dir%',
                 ],
             ],
         ];
-        $this->extension->load([$config], $container);
 
-        $registryDef = $container->getDefinition('nowo_doctrine_encrypt.encryptor_registry');
-        $args        = $registryDef->getArguments();
-        $this->assertSame('personal_data', $args[1]);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('nowo_doctrine_encrypt.default_profile "nonexistent" must be a key in nowo_doctrine_encrypt.profiles');
+
+        $this->extension->load([$config], $container);
     }
 
     public function testResolveEncryptorClassReturnsCustomClassWhenNotSupported(): void
     {
         $container = $this->createContainer();
         $config    = [
-            'configs' => [
+            'profiles' => [
                 'default' => ['encryptor_class' => 'Custom\\MyEncryptor'],
             ],
         ];

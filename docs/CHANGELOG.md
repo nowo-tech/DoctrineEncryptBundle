@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- (Nothing yet.)
+
+### Changed
+
+- (Nothing yet.)
+
+### Fixed
+
+- (Nothing yet.)
+
+---
+
+## [2.3.0] - 2026-07-18
+
+### Changed
+
+- **Config naming (AuditKit-style):** `default_config` / `configs` renamed to `default_profile` / `profiles`. Legacy YAML keys (`default_config`, `configs`) and container parameters (`nowo_doctrine_encrypt.default_config`, `nowo_doctrine_encrypt.configs`) remain accepted during transition. Docs, Flex recipe, and demos use the new keys.
+- **Validation:** `default_profile` must be a key in `profiles`. An unknown default now throws `InvalidArgumentException` (previously fell back to the first profile).
+
+The `#[Encrypted('alias')]` attribute is unchanged. See [UPGRADING.md](UPGRADING.md#upgrading-to-230).
+
 ---
 
 ## [2.2.3] - 2026-07-09

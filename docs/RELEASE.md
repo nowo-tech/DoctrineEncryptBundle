@@ -34,6 +34,13 @@
 
 ---
 
+## v2.3.0 (2026-07-18)
+
+- **Scope:** Rename config keys `default_config` / `configs` → `default_profile` / `profiles` (AuditKit-style); legacy YAML keys and container parameters still accepted; `default_profile` must exist in `profiles` (throws if unknown). Docs, Flex recipe, demos and DI/tests updated.
+- **Checklist:** CHANGELOG and UPGRADING updated; `make qa` (or `make test`); commit; tag `v2.3.0`; push branch and tag.
+
+---
+
 ## v2.2.3 (2026-07-09)
 
 - **Scope:** GitHub Spec Kit (`.specify/`, baseline `specs/001-baseline/`, Cursor skills, SPEC-KIT.md); CodeRabbit CI; Twig `|decrypt` auto-escape fix; MysqlAes PHPDoc `@deprecated`; composer.lock sync (root + demos).
