@@ -19,7 +19,7 @@ No breaking changes are planned for the 2.x line; new options will be additive w
 
 - **Key rotation:** Done. The bundle provides `doctrine:encrypt:rotate-keys` (optional backup, decrypt, change keys, re-encrypt with confirmations) and [KEY_ROTATION.md](KEY_ROTATION.md) for a manual step-by-step procedure.
 - **Code coverage:** Keep or raise coverage (e.g. ≥90%) and ensure coverage runs in CI (e.g. PCOV in Docker/CI).
-- **Demos:** Keep demos (Symfony 7/8) working and referenced from the docs.
+- **Demos:** Keep the Symfony 8 demo working and referenced from the docs.
 
 ## Possible future (ideas, not committed)
 

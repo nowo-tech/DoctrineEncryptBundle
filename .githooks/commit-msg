@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+# Strip Cursor agent co-author trailers from commit messages (REQ-GIT-001).
+set -eu
+
+MSG_FILE="${1:?commit message file required}"
+tmp="$(mktemp)"
+
+sed -e '/^Co-authored-by: Cursor <cursoragent@cursor.com>$/d' \
+    -e '/^Co-authored-by:.*cursoragent@cursor\.com/d' \
+    -e 's/ Co-authored-by: Cursor <cursoragent@cursor.com>//g' \
+    -e 's/ Co-authored-by:.*cursoragent@cursor\.com//g' \
+    "$MSG_FILE" > "$tmp"
+
+mv "$tmp" "$MSG_FILE"
+exit 0

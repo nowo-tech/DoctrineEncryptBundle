@@ -14,10 +14,6 @@ use function is_array;
  *
  * When no alias is given (e.g. #[Encrypted] or #[Encrypted('default')]), the encryptor for default_profile is used.
  * When an alias is given (e.g. #[Encrypted('personal_data')]), that profile from profiles is used.
- *
- * @Annotation
- *
- * @Target("PROPERTY")
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 class Encrypted implements Annotation

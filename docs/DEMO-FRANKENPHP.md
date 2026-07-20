@@ -25,7 +25,7 @@ The demos use:
 - **Two Caddyfiles**: `Caddyfile` (production, with worker) and `Caddyfile.dev` (development, no worker).
 - An **entrypoint** script that, when `APP_ENV=dev`, copies `Caddyfile.dev` over the default Caddyfile and then starts FrankenPHP.
 
-There are demos for **Symfony 7** and **Symfony 8** (e.g. **demo/symfony7**, **demo/symfony8**). Each has its own Dockerfile, docker-compose.yml and Makefile. From the bundle root you run e.g. `make -C demo/symfony8 up` (see the demo's README for the URL and port).
+There is a demo for **Symfony 8** at **demo/symfony8**. It has its own Dockerfile, docker-compose.yml and Makefile. From the bundle root you run e.g. `make -C demo/symfony8 up` (see the demo's README for the URL and port).
 
 The main difference between development and production is:
 
@@ -37,7 +37,7 @@ The main difference between development and production is:
 | HTTP cache headers | `no-store`, `no-cache` (in Caddyfile.dev) | Omitted or cache-friendly |
 | `APP_ENV` / `APP_DEBUG` | `dev` / `1` | `prod` / `0` |
 
-**Ports:** Each demo uses `PORT` from its `.env`. To run multiple demos at once, set a different `PORT` per demo (e.g. 8007 for symfony7, 8008 for symfony8).
+**Ports:** The demo uses `PORT` from its `.env` (default **8008** for symfony8).
 
 ---
 
@@ -92,7 +92,7 @@ Each demo's **docker-compose.yml** sets `APP_ENV=dev` and `APP_DEBUG=1`, and mou
 
 ### 5. Start the demo (development)
 
-From the bundle root: `make -C demo/symfony8 up` (or `make -C demo/symfony7 up`). Or from the demo directory: `make up`.
+From the bundle root: `make -C demo/symfony8 up`. Or from the demo directory: `make up`.
 
 ---
 

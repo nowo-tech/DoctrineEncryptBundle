@@ -203,7 +203,7 @@ services:
             $mysqlAesKey: '%env(MYSQL_AES_KEY)%'
 ```
 
-The demo implements the same pattern in `MysqlAesNoteRepository::insertWithAesEncrypt()` (symfony7/symfony8, route `/mysql-aes-note/sql/new`).
+The demo implements the same pattern in `MysqlAesNoteRepository::insertWithAesEncrypt()` (`demo/symfony8`, route `/mysql-aes-note/sql/new`).
 
 ### 4. UPDATE an existing row
 
@@ -272,7 +272,7 @@ SELECT id, title,
 FROM my_table;
 ```
 
-The demo apps (`demo/symfony7` and `demo/symfony8`) include `MysqlAesNoteRepository` with these patterns. **Native SQL requires MySQL or MariaDB**; SQLite does not provide `AES_ENCRYPT`.
+The demo app (`demo/symfony8`) includes `MysqlAesNoteRepository` with these patterns. **Native SQL requires MySQL or MariaDB**; SQLite does not provide `AES_ENCRYPT`.
 
 ### LIKE filters (demo lists)
 
@@ -312,4 +312,4 @@ For full comparison (Halite vs Defuse vs MysqlAes, batch commands, and productio
 - Use a strong, unique passphrase; store it in env or a secrets manager, not in git.
 - `AES_ENCRYPT` is not authenticated encryption (unlike Halite/Defuse in this bundle). Use Halite/Defuse for new application-level encryption unless you must interoperate with legacy MySQL functions.
 
-See also [CONFIGURATION.md](CONFIGURATION.md) and the demo routes under `/mysql-aes-note` (ports **8007** / **8008**).
+See also [CONFIGURATION.md](CONFIGURATION.md) and the demo routes under `/mysql-aes-note` (port **8008**).

@@ -34,6 +34,13 @@
 
 ---
 
+## v2.3.1 (2026-07-20)
+
+- **Scope:** Remove `demo/symfony7` (docs/Makefile); REQ-GIT-001 CI + scripts + hooks + GITHUB_CI.md; Code of Conduct; PHPUnit coverage excludes; drop obsolete `@Annotation`/`@Target` on `Encrypted`; README profile wording.
+- **Checklist:** CHANGELOG and UPGRADING updated; `make test`; `make check-no-cursor-coauthor`; commit; tag `v2.3.1`; push branch and tag. Re-run `make check-no-cursor-coauthor` before push.
+
+---
+
 ## v2.3.0 (2026-07-18)
 
 - **Scope:** Rename config keys `default_config` / `configs` → `default_profile` / `profiles` (AuditKit-style); legacy YAML keys and container parameters still accepted; `default_profile` must exist in `profiles` (throws if unknown). Docs, Flex recipe, demos and DI/tests updated.
@@ -143,3 +150,5 @@
 
 - **Scope:** Drop Symfony 6 support and remove demo/symfony6; require Symfony ^7.0 || ^8.0.
 - **Checklist:** CHANGELOG and UPGRADING updated; tag `v2.0.0` created and pushed.
+
+After creating the release commit and tag, run `make check-no-cursor-coauthor` again **before** `git push` (REQ-GIT-001). The release commit itself is not covered by an earlier `release-check` run.

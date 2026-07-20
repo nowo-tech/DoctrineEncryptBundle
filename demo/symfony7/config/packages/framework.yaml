@@ -1,8 +1,0 @@
-framework:
-  secret: '%env(APP_SECRET)%'
-  http_method_override: false
-  session:
-    enabled: true
-  csrf_protection: true
-  php_errors:
-    log: true

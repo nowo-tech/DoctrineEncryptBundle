@@ -23,3 +23,6 @@
 *.tgz
 *.rar
 *.7z
+
+# Cursor local sandbox (machine-specific; REQ-IDE-005)
+.cursor/sandbox.json

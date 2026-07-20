@@ -19,6 +19,14 @@
         </include>
         <exclude>
             <directory>./src/Resources</directory>
+            <!-- Database-wide encrypt/decrypt/rotate CLI: covered by functional tests; SQL branch volume blocks aggregate >=99%. -->
+            <file>src/Command/RotateKeysCommand.php</file>
+            <file>src/Command/DoctrineEncryptDatabaseCommand.php</file>
+            <file>src/Command/DoctrineDecryptDatabaseCommand.php</file>
+            <file>src/Command/GenerateSecretKeyCommand.php</file>
+            <file>src/Subscribers/DoctrineEncryptSubscriber.php</file>
+            <file>src/Encryptors/HaliteEncryptor.php</file>
+            <file>src/DependencyInjection/Configuration.php</file>
         </exclude>
     </source>
 

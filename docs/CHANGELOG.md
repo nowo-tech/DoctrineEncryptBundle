@@ -7,17 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [2.3.1] - 2026-07-20
+
+### Removed
+
+- **Demo Symfony 7:** removed `demo/symfony7`. Use `demo/symfony8` (port **8008**) as the reference demo app. Docs (`DEMO.md`, `DEMO-FRANKENPHP.md`, README, etc.) updated accordingly.
+
 ### Added
 
-- (Nothing yet.)
+- **REQ-GIT-001:** CI job `git-hygiene`, `.scripts/check-no-cursor-coauthor.sh`, `.scripts/strip-cursor-coauthor-from-history.sh`, `.githooks/commit-msg`, Cursor rule `01-git-commits.mdc`, and [GITHUB_CI.md](GITHUB_CI.md). Makefile targets: `setup-hooks`, `check-no-cursor-coauthor`, `strip-cursor-coauthor-from-history` (wired into `release-check`).
+- **Code of Conduct:** [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) (Contributor Covenant); linked from README and [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Changed
 
-- (Nothing yet.)
+- **Documentation:** README wording aligned with `default_profile` / `profiles` (2.3.0 rename).
+- **PHPUnit coverage:** exclude high-branch CLI/subscriber/Halite/Configuration paths covered by functional tests (aggregate coverage focus).
+- **`#[Encrypted]`:** removed obsolete doctrine/annotations `@Annotation` / `@Target` PHPDoc (attribute-only).
 
-### Fixed
-
-- (Nothing yet.)
+No application configuration changes required. See [UPGRADING.md](UPGRADING.md#upgrading-to-231).
 
 ---
 

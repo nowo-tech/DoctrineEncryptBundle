@@ -9,6 +9,20 @@ on:
     branches: [main, master]
 
 jobs:
+  git-hygiene:
+    name: Git history (no Cursor co-author)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check for Cursor co-author trailers (REQ-GIT-001)
+        run: |
+          chmod +x .scripts/check-no-cursor-coauthor.sh
+          ./.scripts/check-no-cursor-coauthor.sh HEAD
+
   test:
     name: PHP ${{ matrix.php }} - Symfony ${{ matrix.symfony }}
     runs-on: ubuntu-latest

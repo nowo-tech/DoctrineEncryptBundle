@@ -6,7 +6,6 @@ Por defecto **`docker-compose`** usa **`APP_ENV=dev`** y **`Caddyfile.dev`** (si
 
 | Demo        | Puerto por defecto | PHP   |
 |------------|--------------------|-------|
-| symfony7   | 8007               | 8.2   |
 | symfony8   | 8008               | 8.4   |
 
 ## Requisitos
@@ -16,7 +15,7 @@ Por defecto **`docker-compose`** usa **`APP_ENV=dev`** y **`Caddyfile.dev`** (si
 
 ## Uso rápido
 
-Desde la carpeta de cada demo (por ejemplo `demo/symfony8`):
+Desde la carpeta de la demo (`demo/symfony8`):
 
 ```bash
 make up        # Levanta el contenedor (FrankenPHP + Caddy)

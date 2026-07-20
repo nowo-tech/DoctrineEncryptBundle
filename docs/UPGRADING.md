@@ -29,6 +29,28 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.3.1
+
+No breaking changes for applications using the bundle via Composer.
+
+### Demo apps (maintainers / contributors only)
+
+- The **`demo/symfony7`** project was removed. Use **`demo/symfony8`** (default port **8008**).
+- If you still need a Symfony 7 sample, clone an older tag (e.g. `v2.3.0`) or keep a local copy.
+
+### Maintainer tooling
+
+- Optional: `make setup-hooks` and `make check-no-cursor-coauthor` (REQ-GIT-001). See [GITHUB_CI.md](GITHUB_CI.md).
+
+Update as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+---
+
 ## Upgrading to 2.3.0
 
 Configuration keys were renamed to match AuditKit-style naming:

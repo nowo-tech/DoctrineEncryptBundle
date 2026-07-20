@@ -94,7 +94,7 @@ With a **specific config** (when using multiple encryptors):
 {{ encryptedValue|decrypt('financial_data') }}
 ```
 
-If the value does not end with the encryption marker, the filter returns it unchanged. For a full example see the demo page “EncryptUtil & Twig” in `demo/symfony7` or `demo/symfony8` for a full example.
+If the value does not end with the encryption marker, the filter returns it unchanged. For a full example see the demo page “EncryptUtil & Twig” in `demo/symfony8`.
 
 ## Twig filter `|mask`
 

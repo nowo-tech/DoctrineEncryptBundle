@@ -26,7 +26,7 @@ Looking for **Doctrine encryption**, **encrypt entity fields**, **Halite Symfony
 ## Features
 
 - ✅ Encrypt and decrypt entity properties with a single attribute
-- ✅ **Multiple encryptor configs** — e.g. `personal_data` (Halite) and `financial_data` (Defuse) in the same app, each with its own key
+- ✅ **Multiple encryptor profiles** — e.g. `personal_data` (Halite) and `financial_data` (Defuse) in the same app, each with its own key
 - ✅ **Halite**, **Defuse**, and **MysqlAes** (MySQL `AES_ENCRYPT` / `AES_DECRYPT` compatible) — audited or interoperable crypto; see [MYSQL_AES.md](docs/MYSQL_AES.md)
 - ✅ Transparent: encrypt on persist/update, decrypt on load
 - ✅ **EncryptUtil** — programmatic `encrypt()` / `decrypt()` with optional config name (default or e.g. `financial_data`)
@@ -62,9 +62,9 @@ return [
 
 ## Configuration
 
-Create `config/packages/nowo_doctrine_encrypt.yaml`. You can use **one encryptor** (legacy) or **multiple named configs** (recommended).
+Create `config/packages/nowo_doctrine_encrypt.yaml`. You can use **one encryptor** (legacy) or **multiple named profiles** (recommended).
 
-### Multiple configs (recommended)
+### Multiple profiles (recommended)
 
 Use different encryptors and keys per kind of data (e.g. personal vs financial):
 
@@ -82,7 +82,7 @@ nowo_doctrine_encrypt:
 
 **Defuse:** `composer require defuse/php-encryption ^2.1`
 
-Key files: one per config, e.g. `.Halite.personal_data.key`, `.Defuse.financial_data.key` in the config’s `secret_directory_path`. Add to `.gitignore`:
+Key files: one per profile, e.g. `.Halite.personal_data.key`, `.Defuse.financial_data.key` in the profile’s `secret_directory_path`. Add to `.gitignore`:
 
 ```gitignore
 .Halite.key
@@ -91,11 +91,11 @@ Key files: one per config, e.g. `.Halite.personal_data.key`, `.Defuse.financial_
 .Defuse.*.key
 ```
 
-Generate keys: `php bin/console doctrine:encrypt:generate-secret-key` (creates missing Halite/Defuse keys for all configs, or pass a config alias). See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) and [docs/COMMANDS.md](docs/COMMANDS.md).
+Generate keys: `php bin/console doctrine:encrypt:generate-secret-key` (creates missing Halite/Defuse keys for all profiles, or pass a profile alias). See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) and [docs/COMMANDS.md](docs/COMMANDS.md).
 
-### Single encryptor (one config)
+### Single encryptor (one profile)
 
-Use one entry under `configs` (e.g. `default`):
+Use one entry under `profiles` (e.g. `default`):
 
 ```yaml
 nowo_doctrine_encrypt:
@@ -140,10 +140,12 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 
 ## Documentation
 
+- [GitHub Actions CI requirements](docs/GITHUB_CI.md)
 - [Installation](docs/INSTALLATION.md)
 - [Configuration](docs/CONFIGURATION.md)
 - [Usage](docs/USAGE.md)
 - [Contributing](docs/CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Changelog](docs/CHANGELOG.md)
 - [Upgrading](docs/UPGRADING.md)
 - [Release](docs/RELEASE.md)
@@ -176,7 +178,7 @@ See [docs/INSTALLATION.md](docs/INSTALLATION.md#requirements) and [docs/UPGRADIN
 
 ## Demo
 
-Demos for Symfony 7 and 8 are in `demo/symfony7`, `demo/symfony8`. Each runs with **FrankenPHP** and **Caddy** (HTTP on port 80 in the container). **`docker-compose`** defaults to **`APP_ENV=dev`**, so the entrypoint uses **Caddyfile.dev** (no PHP worker; changes visible on refresh). **Worker mode** is for a production-style setup — [docs/DEMO-FRANKENPHP.md](docs/DEMO-FRANKENPHP.md). Default host ports: **8007** (symfony7), **8008** (symfony8) via `PORT`. Quick start: [docs/DEMO.md](docs/DEMO.md).
+The Symfony 8 demo is in `demo/symfony8`. It runs with **FrankenPHP** and **Caddy** (HTTP on port 80 in the container). **`docker-compose`** defaults to **`APP_ENV=dev`**, so the entrypoint uses **Caddyfile.dev** (no PHP worker; changes visible on refresh). **Worker mode** is for a production-style setup — [docs/DEMO-FRANKENPHP.md](docs/DEMO-FRANKENPHP.md). Default host port: **8008** via `PORT`. Quick start: [docs/DEMO.md](docs/DEMO.md).
 
 ## Development
 

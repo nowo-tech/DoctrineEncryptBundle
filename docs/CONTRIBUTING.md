@@ -2,6 +2,10 @@
 
 Thank you for considering contributing to Doctrine Encrypt Bundle.
 
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](../CODE_OF_CONDUCT.md). By participating, you are expected to uphold it. Please report unacceptable behavior to **hectorfranco@nowo.tech**.
+
 ## Development setup
 
 Requires **PHP 8.2+** and **ext-sodium** (see [INSTALLATION.md](INSTALLATION.md#requirements)).
@@ -48,13 +52,18 @@ The project uses [PHP-CS-Fixer](https://github.com/FriendsOfPHP/PHP-CS-Fixer) wi
 
 ### Local git hooks (maintainers)
 
-To strip Cursor co-author trailers automatically:
+Do **not** add `Co-authored-by: Cursor` or `cursoragent@cursor.com` trailers to commit messages.
 
 ```bash
-git config core.hooksPath .githooks
+make setup-hooks
+make check-no-cursor-coauthor
 ```
 
+`make setup-hooks` installs `.githooks` (`commit-msg` / `prepare-commit-msg`) via `core.hooksPath`. Run it once per clone before your first commit.
+
 Also disable agent attribution in Cursor: **Settings → Agent → Attribution** (IDE), and CLI `~/.cursor/cli-config.json` (`attributeCommitsToAgent` / `attributePRsToAgent`: `false`).
+
+If CI fails because trailers are already on the remote, see [GITHUB_CI.md](GITHUB_CI.md) (REQ-GIT-001) and run `make strip-cursor-coauthor-from-history` before `git push --force-with-lease`.
 
 ## Reporting issues
 

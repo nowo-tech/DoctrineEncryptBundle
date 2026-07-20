@@ -1,6 +1,6 @@
 # Demo Projects
 
-The bundle includes two **dockerized** demo projects (**Symfony 7.4** and **8.1**). Each runs on **FrankenPHP** with a custom **Caddyfile** and has its own **Makefile**.
+The bundle includes a **dockerized** demo project (**Symfony 8**). It runs on **FrankenPHP** with a custom **Caddyfile** and has its own **Makefile**.
 
 ## Screenshots
 
@@ -12,9 +12,8 @@ The bundle includes two **dockerized** demo projects (**Symfony 7.4** and **8.1*
 
 ![Secret messages CRUD](assets/demo-crud.png)
 
-| Demo      | Path            | Default port | PHP |
-|-----------|-----------------|--------------|-----|
-| Symfony 7 | `demo/symfony7/` | 8007         | 8.2 | Same features as 8, including **MysqlAes** demo (`/mysql-aes-note`) |
+| Demo      | Path            | Default port | PHP | Notes |
+|-----------|-----------------|--------------|-----|-------|
 | Symfony 8 | `demo/symfony8/` | 8008         | 8.4 | Includes **MysqlAes** demo (`/mysql-aes-note`) |
 
 ## Quick start (Docker)
@@ -45,7 +44,7 @@ Change port: `PORT=9008 make up`.
 
 ## FrankenPHP (runtime and worker mode)
 
-Both demos run with **FrankenPHP in worker mode** (boot once, handle requests in memory). The bundle is compatible with this setup: no request/session state, encryptors are stateless after loading the key, and the subscriber’s cache is cleared on `postFlush`. **No extra configuration or code** is required in the demos for FrankenPHP.
+The demo runs with **FrankenPHP in worker mode** (boot once, handle requests in memory). The bundle is compatible with this setup: no request/session state, encryptors are stateless after loading the key, and the subscriber’s cache is cleared on `postFlush`. **No extra configuration or code** is required in the demo for FrankenPHP.
 
 For production or long‑running workers, see the recommendations in [Installation → FrankenPHP](INSTALLATION.md#frankenphp-runtime-and-worker-mode) (e.g. limiting requests per worker when possible).
 
@@ -65,9 +64,9 @@ For production or long‑running workers, see the recommendations in [Installati
 
 The bundle is installed via Composer **path repository** pointing to `/var/doctrine-encrypt-bundle` (mounted from the repo root). See **demo/README.md** for more detail.
 
-## Multiple encryptors and EncryptUtil (both demos)
+## Multiple encryptors and EncryptUtil
 
-**Symfony 7** and **Symfony 8** demos both use **multiple encryptor profiles**. In `config/packages/nowo_doctrine_encrypt.yaml` you’ll find:
+The Symfony 8 demo uses **multiple encryptor profiles**. In `config/packages/nowo_doctrine_encrypt.yaml` you’ll find:
 
 - **profiles:** e.g. `personal_data` (Halite), `financial_data` (Defuse), and optionally `env_var` (key from `%env(APP_ENCRYPT_KEY)%`), each with its own key or key file.
 - **default_profile:** `personal_data` (used by `#[Encrypted]` without a profile name).
@@ -81,9 +80,9 @@ The **"EncryptUtil & Twig"** page demonstrates programmatic encrypt/decrypt via 
 
 ## Troubleshooting: `composer update` and security advisories
 
-Composer **2.7+** can **block** packages with open security advisories. The Symfony 7 demo targets **`7.4.*`** (not `7.0.*`) so updates align with the patched minor line.
+Composer **2.7+** can **block** packages with open security advisories.
 
-Demos set `config.audit.block-insecure: false` and `policy.advisories.block: false` so local `composer update` works; run `composer audit` to review advisories. Prefer **`make install`** / **`make update-bundle`** when you only need dependencies from the lock file.
+The demo sets `config.audit.block-insecure: false` and `policy.advisories.block: false` so local `composer update` works; run `composer audit` to review advisories. Prefer **`make install`** / **`make update-bundle`** when you only need dependencies from the lock file.
 
 If `composer update` still fails after pulling, run inside the container:
 
