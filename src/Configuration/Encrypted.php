@@ -16,7 +16,7 @@ use function is_array;
  * When an alias is given (e.g. #[Encrypted('personal_data')]), that profile from profiles is used.
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
-class Encrypted implements Annotation
+final class Encrypted implements Annotation
 {
     /** Profile alias from nowo_doctrine_encrypt.profiles. Use "default" when no alias: then default_profile is used. */
     public string $config = 'default';

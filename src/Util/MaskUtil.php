@@ -14,7 +14,7 @@ use function strlen;
  * Example: MaskUtil::mask('12345678', 4) => '****5678'
  */
 #[AsAlias(id: self::UTIL_NAME, public: true)]
-class MaskUtil
+final class MaskUtil
 {
     public const UTIL_NAME = 'nowo_doctrine_encrypt.mask_util';
 

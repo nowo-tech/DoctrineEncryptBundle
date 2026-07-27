@@ -13,12 +13,12 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  *
  * Registers the DI extension that loads configuration and encryptor services.
  */
-class NowoDoctrineEncryptBundle extends Bundle
+final class NowoDoctrineEncryptBundle extends Bundle
 {
     /**
      * Returns the container extension that configures the bundle.
      */
-    public function getContainerExtension(): ?ExtensionInterface
+    public function getContainerExtension(): ExtensionInterface
     {
         return new DoctrineEncryptExtension();
     }

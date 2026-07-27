@@ -15,7 +15,7 @@ use Twig\Attribute\AsTwigFilter;
  *
  * Usage: {{ value|mask }} or {{ value|mask(4, '****') }}
  */
-class MaskExtension
+final class MaskExtension
 {
     /**
      * Masks a plain value: replacement (e.g. ****) + last N characters visible.

@@ -28,7 +28,7 @@ use function sprintf;
  * Each step asks for confirmation unless --no-interaction is used. Use --backup to back up the database and key files before rotating.
  */
 #[AsCommand(name: 'doctrine:encrypt:rotate-keys', description: 'Rotate encryption keys: backup (DB + keys), decrypt DB, change keys, re-encrypt', aliases: ['doctrine:encrypt:rotate-keys'], hidden: false)]
-class RotateKeysCommand extends AbstractCommand
+final class RotateKeysCommand extends AbstractCommand
 {
     private const BACKUP_DIR_PREFIX  = 'encrypt_rotation_backup_';
     private const BACKUP_KEYS_SUBDIR = 'keys';

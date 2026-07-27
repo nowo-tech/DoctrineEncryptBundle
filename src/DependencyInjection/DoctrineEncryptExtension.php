@@ -27,7 +27,7 @@ use function sprintf;
  *
  * @see http://symfony.com/doc/current/cookbook/bundles/extension.html
  */
-class DoctrineEncryptExtension extends Extension
+final class DoctrineEncryptExtension extends Extension
 {
     /** Short names mapped to encryptor FQCN (Halite, Defuse). */
     public const SUPPORTED_ENCRYPTOR_CLASSES = [

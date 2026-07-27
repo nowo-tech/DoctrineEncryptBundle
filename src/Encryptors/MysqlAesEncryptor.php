@@ -28,7 +28,7 @@ use const OPENSSL_RAW_DATA;
  *
  * @deprecated since 2.1.0 Not recommended for new production deployments (AES-128-ECB). Prefer Halite or Defuse.
  */
-class MysqlAesEncryptor implements EncryptorInterface
+final class MysqlAesEncryptor implements EncryptorInterface
 {
     private const CIPHER = 'AES-128-ECB';
 

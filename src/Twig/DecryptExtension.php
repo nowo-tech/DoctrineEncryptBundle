@@ -26,7 +26,7 @@ use function strlen;
  *
  * To decrypt then mask: {{ value|decrypt('personal_data')|mask(4) }} (mask from MaskExtension).
  */
-class DecryptExtension /* extends AbstractExtension */
+final class DecryptExtension /* extends AbstractExtension */
 {
     public function __construct(
         private readonly EncryptorRegistry $registry

@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **REQ-DOCS-016:** `demo/README.md` translated to English.
 - **Documentation:** README demo section uses `FRANKENPHP_MODE`; coverage section reports 100.00%.
+- **REQ-DOCS-002:** README `## Documentation` uses canonical base-link order; `GITHUB_CI.md` under Additional documentation.
+- **REQ-SF-005:** `SYMFONY_DEPRECATIONS_HELPER=max[direct]=0` in `phpunit.xml.dist`.
+- **REQ-PHP-001:** concrete services marked `final` (subscriber intentionally non-final for command/test collaboration).
 
 ---
 

@@ -14,7 +14,7 @@ use Symfony\Component\Filesystem\Filesystem;
  * The secret key can be read from a file or from string content (e.g. env var).
  * If the key file does not exist, a new key is generated and saved.
  */
-class DefuseEncryptor implements EncryptorInterface
+final class DefuseEncryptor implements EncryptorInterface
 {
     private readonly Filesystem $fs;
     private ?string $encryptionKey = null;

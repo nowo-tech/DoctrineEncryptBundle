@@ -17,7 +17,7 @@ use function call_user_func;
  * @see docs/CONFIGURATION.md
  * @see http://symfony.com/doc/current/cookbook/bundles/extension.html#cookbook-bundles-extension-config-class
  */
-class Configuration implements ConfigurationInterface
+final class Configuration implements ConfigurationInterface
 {
     public const ALIAS = 'nowo_doctrine_encrypt';
 

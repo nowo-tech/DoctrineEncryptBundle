@@ -20,7 +20,7 @@ use function sprintf;
  * Console command that lists entities, their encrypted properties with config, and the configured encryptor configs.
  */
 #[AsCommand(name: 'doctrine:encrypt:status', description: 'Get status of doctrine encrypt bundle and the database', aliases: ['doctrine:encrypt:status'], hidden: false)]
-class DoctrineEncryptStatusCommand extends AbstractCommand
+final class DoctrineEncryptStatusCommand extends AbstractCommand
 {
     /**
      * @param array<string, array{path: string|null, encryptor_class: string}> $keyPaths

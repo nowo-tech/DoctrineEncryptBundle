@@ -144,7 +144,6 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 
 ## Documentation
 
-- [GitHub Actions CI requirements](docs/GITHUB_CI.md)
 - [Installation](docs/INSTALLATION.md)
 - [Configuration](docs/CONFIGURATION.md)
 - [Usage](docs/USAGE.md)
@@ -161,6 +160,7 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 
 ### Additional documentation
 
+- [GitHub Actions CI requirements](docs/GITHUB_CI.md)
 - [Demo with FrankenPHP (development and production)](docs/DEMO-FRANKENPHP.md)
 - [Example](docs/EXAMPLE.md)
 - [Commands](docs/COMMANDS.md)

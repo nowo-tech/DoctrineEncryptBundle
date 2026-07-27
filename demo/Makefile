@@ -59,7 +59,9 @@ release-check: update-bundle-all test-coverage-all release-verify
 # Release verify: for each demo, up → sleep → healthcheck (HTTP 200) → down
 release-verify:
 	@for demo in symfony8; do \
-		port=$$(case $$demo in symfony8) echo 8008;; *) echo 8000;; esac); \
+		port=$$(grep "^PORT=" $$demo/.env 2>/dev/null | cut -d= -f2 | tr -d '\r'); \
+		[ -z "$$port" ] && port=$$(grep "^PORT=" $$demo/.env.example 2>/dev/null | cut -d= -f2 | tr -d '\r'); \
+		[ -z "$$port" ] && port=8008; \
 		echo "🔍 Release verify: $$demo (port $$port)..."; \
 		$(MAKE) up-$$demo; \
 		echo "⏳ Waiting for $$demo to be ready..."; sleep 15; \

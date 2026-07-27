@@ -30,7 +30,7 @@ use const PHP_EOL;
  * Can process a single config (e.g. personal_data) or all configs when no argument is given.
  */
 #[AsCommand(name: 'doctrine:encrypt:database', description: 'Encrypt whole database on tables which are not encrypted yet', aliases: ['doctrine:encrypt:database'], hidden: false)]
-class DoctrineEncryptDatabaseCommand extends AbstractCommand
+final class DoctrineEncryptDatabaseCommand extends AbstractCommand
 {
     private const ENCRYPTION_MARKER = DoctrineEncryptSubscriber::ENCRYPTION_MARKER;
 

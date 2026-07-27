@@ -31,7 +31,7 @@ use function sprintf;
  * - With config argument: only creates/overwrites the key for that config (asks confirmation if key already exists).
  */
 #[AsCommand(name: 'doctrine:encrypt:generate-secret-key', description: 'Generate encryption keys for Halite/Defuse configs (all configs or a given alias)', aliases: ['doctrine:encrypt:generate-secret-key'], hidden: false)]
-class GenerateSecretKeyCommand extends AbstractCommand
+final class GenerateSecretKeyCommand extends AbstractCommand
 {
     /**
      * @param array<string, array{path: string|null, encryptor_class: string}> $keyPaths config alias => path (null when using secret_key_env_var with %env(APP_ENCRYPT_KEY)%), encryptor_class

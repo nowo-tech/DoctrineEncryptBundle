@@ -24,7 +24,7 @@ use function strlen;
  * Type-hint this class to get the util service (alias: nowo_doctrine_encrypt.encrypt_util).
  */
 #[AsAlias(id: self::UTIL_NAME, public: true)]
-class EncryptUtil
+final class EncryptUtil
 {
     public const UTIL_NAME = 'nowo_doctrine_encrypt.encrypt_util';
 

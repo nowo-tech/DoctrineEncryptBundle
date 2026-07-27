@@ -22,7 +22,7 @@ use function sprintf;
  *
  * @author Michael de Groot <specamps@gmail.com>
  */
-class HaliteEncryptor implements EncryptorInterface
+final class HaliteEncryptor implements EncryptorInterface
 {
     private ?EncryptionKey $encryptionKey = null;
     private readonly ?string $keyContent;

@@ -35,6 +35,9 @@ use function strlen;
  *
  * Listens to postUpdate, preUpdate, postLoad, onFlush, preFlush, postFlush.
  * Only processes properties marked with the Encrypted attribute; supports multiple encryptor configs via registry.
+ *
+ * Intentionally non-final: console commands and unit tests collaborate with this listener via doubles
+ * (REQ-PHP-001 exception — designed collaboration/extension point for the command layer).
  */
 #[AsDoctrineListener(event: Events::postUpdate, priority: 500, connection: 'default')]
 #[AsDoctrineListener(event: Events::preUpdate, priority: 500, connection: 'default')]
