@@ -11,11 +11,9 @@ use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
  */
 class ChildWithEncryptedOnly extends BaseWithNoProperties
 {
-    #[Encrypted]
-    public string $secret;
-
-    public function __construct(string $secret)
-    {
-        $this->secret = $secret;
+    public function __construct(
+        #[Encrypted]
+        public string $secret
+    ) {
     }
 }

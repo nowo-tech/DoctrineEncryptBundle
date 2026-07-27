@@ -243,7 +243,7 @@ class AbstractCommandTest extends TestCase
 
         $properties = $command->exposeGetEncryptionableProperties($metadata);
         $this->assertCount(2, $properties);
-        $names = array_map(static fn ($p) => $p->getName(), $properties);
+        $names = array_map(static fn (ReflectionProperty $p): string => $p->getName(), $properties);
         $this->assertContains('name', $names);
         $this->assertContains('address', $names);
 

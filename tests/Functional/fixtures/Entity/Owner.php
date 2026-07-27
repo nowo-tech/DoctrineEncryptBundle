@@ -25,49 +25,37 @@ class Owner
     #[ORM\OneToOne(targetEntity: CascadeTarget::class, cascade: ['persist'])]
     private ?CascadeTarget $cascaded = null;
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getSecret()
+    public function getSecret(): ?string
     {
         return $this->secret;
     }
 
-    public function setSecret($secret): void
+    public function setSecret(?string $secret): void
     {
         $this->secret = $secret;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getNotSecret()
+    public function getNotSecret(): ?string
     {
         return $this->notSecret;
     }
 
-    /**
-     * @param mixed $notSecret
-     */
-    public function setNotSecret($notSecret): void
+    public function setNotSecret(?string $notSecret): void
     {
         $this->notSecret = $notSecret;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getCascaded()
+    public function getCascaded(): ?CascadeTarget
     {
         return $this->cascaded;
     }
 
-    /**
-     * @param mixed $cascaded
-     */
-    public function setCascaded($cascaded): void
+    public function setCascaded(?CascadeTarget $cascaded): void
     {
         $this->cascaded = $cascaded;
     }

@@ -16,19 +16,12 @@ use function sprintf;
 #[AsAlias(id: self::class, public: true)]
 final class EncryptorRegistry
 {
-    /** @var array<string, EncryptorInterface> */
-    private array $encryptors = [];
-
-    private string $defaultName;
-
     /**
      * @param array<string, EncryptorInterface> $encryptors map of config alias => encryptor
      * @param string $defaultName config name to use when attribute has no config or uses "default"
      */
-    public function __construct(array $encryptors, string $defaultName = 'default')
+    public function __construct(private array $encryptors, private readonly string $defaultName = 'default')
     {
-        $this->encryptors  = $encryptors;
-        $this->defaultName = $defaultName;
     }
 
     /**

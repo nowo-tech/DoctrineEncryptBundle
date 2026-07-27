@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Encryptors;
 
+use Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException;
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -72,7 +73,7 @@ class DefuseEncryptorTest extends TestCase
         $defuse  = new DefuseEncryptor($keyfile);
         $defuse->encrypt(self::DATA); // ensure key exists
 
-        $this->expectException(\Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException::class);
+        $this->expectException(WrongKeyOrModifiedCiphertextException::class);
         $defuse->decrypt('not-valid-ciphertext');
         @unlink($keyfile);
     }
@@ -104,7 +105,7 @@ class DefuseEncryptorTest extends TestCase
 
     public function testGetKeyThrowsWhenKeyFileEmptyAndNoKeyContent(): void
     {
-        $defuse = new DefuseEncryptor('', null);
+        $defuse = new DefuseEncryptor('');
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('The encryption key environment variable is not set');
         $this->expectExceptionMessage('doctrine:encrypt:generate-secret-key');

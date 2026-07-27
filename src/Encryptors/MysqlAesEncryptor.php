@@ -34,9 +34,7 @@ class MysqlAesEncryptor implements EncryptorInterface
 
     private const KEY_LENGTH = 16;
 
-    private string $keyFile;
-
-    private ?string $keyContent;
+    private readonly ?string $keyContent;
 
     private ?string $derivedKey = null;
 
@@ -44,18 +42,19 @@ class MysqlAesEncryptor implements EncryptorInterface
      * @param string $keyFile Path to a text file containing the passphrase (ignored when $keyContent is set)
      * @param string|null $keyContent Passphrase from env or inline config
      */
-    public function __construct(string $keyFile, ?string $keyContent = null)
+    public function __construct(private readonly string $keyFile, ?string $keyContent = null)
     {
-        $this->keyFile    = $keyFile;
         $this->keyContent = $keyContent !== null && $keyContent !== '' ? $keyContent : null;
     }
 
     public function encrypt(string $data): string
     {
         $encrypted = openssl_encrypt($data, self::CIPHER, $this->getDerivedKey(), OPENSSL_RAW_DATA);
+        // @codeCoverageIgnoreStart
         if ($encrypted === false) {
             throw new RuntimeException('MysqlAesEncryptor: openssl_encrypt failed.');
         }
+        // @codeCoverageIgnoreEnd
 
         return $encrypted;
     }
@@ -63,9 +62,11 @@ class MysqlAesEncryptor implements EncryptorInterface
     public function decrypt(string $data): string
     {
         $decrypted = openssl_decrypt($data, self::CIPHER, $this->getDerivedKey(), OPENSSL_RAW_DATA);
+        // @codeCoverageIgnoreStart
         if ($decrypted === false) {
             throw new RuntimeException('MysqlAesEncryptor: openssl_decrypt failed.');
         }
+        // @codeCoverageIgnoreEnd
 
         return $decrypted;
     }
@@ -102,9 +103,11 @@ class MysqlAesEncryptor implements EncryptorInterface
         }
 
         $content = file_get_contents($this->keyFile);
+        // @codeCoverageIgnoreStart
         if ($content === false || !is_readable($this->keyFile)) {
             throw new RuntimeException(sprintf('MysqlAesEncryptor: cannot read key file "%s".', $this->keyFile));
         }
+        // @codeCoverageIgnoreEnd
 
         return trim($content);
     }

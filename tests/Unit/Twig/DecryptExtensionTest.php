@@ -94,7 +94,7 @@ class DecryptExtensionTest extends TestCase
         $registry = new EncryptorRegistry(['default' => $encryptor], 'default');
         $ext      = new DecryptExtension($registry);
 
-        $this->assertSame('decrypted', $ext->decrypt('x' . EncryptUtil::ENCRYPTION_MARKER, null));
+        $this->assertSame('decrypted', $ext->decrypt('x' . EncryptUtil::ENCRYPTION_MARKER));
     }
 
     public function testDecryptReturnsIntegerZeroAsIsWhenNoMarker(): void

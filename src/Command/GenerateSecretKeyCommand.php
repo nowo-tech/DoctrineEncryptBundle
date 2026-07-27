@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Command;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
+use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
+use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use ParagonIE\Halite\KeyFactory;
 use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -18,6 +21,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\HttpKernel\KernelInterface;
 
 use function dirname;
+use function in_array;
 use function sprintf;
 
 /**
@@ -26,21 +30,16 @@ use function sprintf;
  * - Without argument: checks all configs; creates a key in each secret_directory_path when missing.
  * - With config argument: only creates/overwrites the key for that config (asks confirmation if key already exists).
  */
-#[AsCommand(
-    name: 'doctrine:encrypt:generate-secret-key',
-    description: 'Generate encryption keys for Halite/Defuse configs (all configs or a given alias)',
-    hidden: false,
-    aliases: ['doctrine:encrypt:generate-secret-key'],
-)]
+#[AsCommand(name: 'doctrine:encrypt:generate-secret-key', description: 'Generate encryption keys for Halite/Defuse configs (all configs or a given alias)', aliases: ['doctrine:encrypt:generate-secret-key'], hidden: false)]
 class GenerateSecretKeyCommand extends AbstractCommand
 {
     /**
      * @param array<string, array{path: string|null, encryptor_class: string}> $keyPaths config alias => path (null when using secret_key_env_var with %env(APP_ENCRYPT_KEY)%), encryptor_class
      */
     public function __construct(
-        \Doctrine\ORM\EntityManagerInterface $entityManager,
-        \Nowo\DoctrineEncryptBundle\Mapping\AttributeReader $attributeReader,
-        \Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber $subscriber,
+        EntityManagerInterface $entityManager,
+        AttributeReader $attributeReader,
+        DoctrineEncryptSubscriber $subscriber,
         private readonly KernelInterface $kernel,
         private readonly array $keyPaths
     ) {
@@ -97,7 +96,7 @@ class GenerateSecretKeyCommand extends AbstractCommand
             }
             if ($this->supportsKeyGeneration($info['encryptor_class'])) {
                 if (!file_exists($info['path'])) {
-                    $this->createKey($info['path'], $info['encryptor_class'], $output);
+                    $this->createKey($info['path'], $info['encryptor_class']);
                     $output->writeln(sprintf('  <info>%s</info>', $info['path']));
                     ++$created;
                 } else {
@@ -149,7 +148,7 @@ class GenerateSecretKeyCommand extends AbstractCommand
             }
         }
 
-        $this->createKey($path, $encryptorClass, $output);
+        $this->createKey($path, $encryptorClass);
         $output->writeln(sprintf('<info>Key for config "%s" saved to: %s</info>', $configName, $path));
 
         return self::SUCCESS;
@@ -157,9 +156,7 @@ class GenerateSecretKeyCommand extends AbstractCommand
 
     private function supportsKeyGeneration(string $encryptorClass): bool
     {
-        return $encryptorClass === 'Halite' || $encryptorClass === 'Defuse' || $encryptorClass === 'MysqlAes'
-            || $encryptorClass === HaliteEncryptor::class || $encryptorClass === DefuseEncryptor::class
-            || $encryptorClass === MysqlAesEncryptor::class;
+        return in_array($encryptorClass, ['Halite', 'Defuse', 'MysqlAes', HaliteEncryptor::class, DefuseEncryptor::class, MysqlAesEncryptor::class], true);
     }
 
     /**
@@ -167,9 +164,8 @@ class GenerateSecretKeyCommand extends AbstractCommand
      *
      * @param string $path Key file path
      * @param string $encryptorClass Halite or Defuse (or FQCN)
-     * @param OutputInterface $output Console output
      */
-    private function createKey(string $path, string $encryptorClass, OutputInterface $output): void
+    private function createKey(string $path, string $encryptorClass): void
     {
         $isHalite   = $encryptorClass === 'Halite' || $encryptorClass === HaliteEncryptor::class;
         $isMysqlAes = $encryptorClass === 'MysqlAes' || $encryptorClass === MysqlAesEncryptor::class;
@@ -230,9 +226,8 @@ class GenerateSecretKeyCommand extends AbstractCommand
             }
             try {
                 KeyFactory::save($encryptionKey, $tmp);
-                $value = trim(file_get_contents($tmp));
 
-                return $value;
+                return trim(file_get_contents($tmp));
             } finally {
                 @unlink($tmp);
             }

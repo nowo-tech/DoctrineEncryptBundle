@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Command;
 
 use Doctrine\DBAL\ParameterType;
+use Doctrine\ORM\EntityManagerInterface;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -27,29 +31,21 @@ use const PHP_EOL;
  *
  * Can process a single config (e.g. personal_data) or all configs when no argument is given.
  */
-#[AsCommand(
-    name: 'doctrine:decrypt:database',
-    description: 'Decrypt whole database on tables which are encrypted',
-    hidden: false,
-    aliases: ['doctrine:decrypt:database'],
-)]
+#[AsCommand(name: 'doctrine:decrypt:database', description: 'Decrypt whole database on tables which are encrypted', aliases: ['doctrine:decrypt:database'], hidden: false)]
 class DoctrineDecryptDatabaseCommand extends AbstractCommand
 {
     private const ENCRYPTION_MARKER = DoctrineEncryptSubscriber::ENCRYPTION_MARKER;
 
     public function __construct(
-        \Doctrine\ORM\EntityManagerInterface $entityManager,
-        \Nowo\DoctrineEncryptBundle\Mapping\AttributeReader $attributeReader,
+        EntityManagerInterface $entityManager,
+        AttributeReader $attributeReader,
         DoctrineEncryptSubscriber $subscriber,
-        ?\Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface $defaultEncryptor,
-        ?\Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry $encryptorRegistry,
-        int $defaultBatchSize = 5
+        ?EncryptorInterface $defaultEncryptor,
+        ?EncryptorRegistry $encryptorRegistry,
+        private readonly int $defaultBatchSize = 5
     ) {
         parent::__construct($entityManager, $attributeReader, $subscriber, $defaultEncryptor, $encryptorRegistry);
-        $this->defaultBatchSize = $defaultBatchSize;
     }
-
-    private int $defaultBatchSize = 5;
 
     protected function configure(): void
     {
@@ -67,29 +63,27 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $question  = $this->getHelper('question');
-        $batchSize = (int) $input->getArgument('batchSize');
+        $question = $this->getHelper('question');
+        $input->getArgument('batchSize');
         $configArg = $input->getArgument('config');
 
         $registry          = $this->encryptorRegistry;
         $defaultConfigName = $registry?->getDefaultName();
 
         if ($configArg !== null && $configArg !== '') {
-            if ($registry === null || !$registry->has($configArg)) {
-                $available = $registry ? implode(', ', $registry->getConfigNames()) : 'default';
+            if (!$registry instanceof EncryptorRegistry || !$registry->has($configArg)) {
+                $available = $registry instanceof EncryptorRegistry ? implode(', ', $registry->getConfigNames()) : 'default';
                 $output->writeln('<error>Unknown config "' . $configArg . '". Available: ' . $available . '</error>');
 
                 return self::FAILURE;
             }
             $configsToProcess = [$configArg];
+        } elseif (!$registry instanceof EncryptorRegistry) {
+            $configsToProcess = $defaultConfigName !== null ? [$defaultConfigName] : [];
         } else {
-            if ($registry === null) {
-                $configsToProcess = $defaultConfigName !== null ? [$defaultConfigName] : [];
-            } else {
-                $configsToProcess = array_values(array_filter($registry->getConfigNames(), static fn (string $n) => $n !== 'default'));
-                if ($configsToProcess === []) {
-                    $configsToProcess = [$registry->getDefaultName()];
-                }
+            $configsToProcess = array_values(array_filter($registry->getConfigNames(), static fn (string $n): bool => $n !== 'default'));
+            if ($configsToProcess === []) {
+                $configsToProcess = [$registry->getDefaultName()];
             }
         }
 
@@ -108,11 +102,11 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
             }
         }
 
-        $encryptor = $registry ? $registry->get($configsToProcess[0]) : $this->subscriber->getEncryptor();
-        if ($encryptor === null && $this->defaultEncryptor !== null) {
+        $encryptor = $registry instanceof EncryptorRegistry ? $registry->get($configsToProcess[0]) : $this->subscriber->getEncryptor();
+        if (!$encryptor instanceof EncryptorInterface && $this->defaultEncryptor instanceof EncryptorInterface) {
             $encryptor = $this->defaultEncryptor;
         }
-        if ($encryptor === null) {
+        if (!$encryptor instanceof EncryptorInterface) {
             $output->writeln('<error>No encryptor configured.</error>');
 
             return self::FAILURE;
@@ -139,8 +133,8 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
         $valueCounter = 0;
 
         foreach ($configsToProcess as $configName) {
-            $encryptorForConfig = $registry ? $registry->get($configName) : $this->defaultEncryptor;
-            if ($encryptorForConfig === null) {
+            $encryptorForConfig = $registry instanceof EncryptorRegistry ? $registry->get($configName) : $this->defaultEncryptor;
+            if (!$encryptorForConfig instanceof EncryptorInterface) {
                 continue;
             }
 
@@ -158,8 +152,8 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
                 $encColumns = array_column($tableInfo['columns'], 'column');
 
                 $quotedTable   = $platform->quoteIdentifier($table);
-                $quotedIdCols  = array_map(static fn (string $c) => $platform->quoteIdentifier($c), $idColumns);
-                $quotedEncCols = array_map(static fn (string $c) => $platform->quoteIdentifier($c), $encColumns);
+                $quotedIdCols  = array_map($platform->quoteIdentifier(...), $idColumns);
+                $quotedEncCols = array_map($platform->quoteIdentifier(...), $encColumns);
 
                 // Select only ID columns + encrypted columns for this config (each config is independent)
                 $selectCols = array_merge($quotedIdCols, $quotedEncCols);
@@ -195,7 +189,7 @@ class DoctrineDecryptDatabaseCommand extends AbstractCommand
                         $ciphertext = substr((string) $value, 0, -strlen(self::ENCRYPTION_MARKER));
                         try {
                             $plain = $encryptorForConfig->decrypt($ciphertext);
-                        } catch (Throwable $e) {
+                        } catch (Throwable) {
                             $plain = $ciphertext;
                         }
                         $updates[] = $platform->quoteIdentifier($col) . ' = ?';

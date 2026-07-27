@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Tests\Functional;
 
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Logging\DebugStack;
+use Doctrine\DBAL\Logging\Middleware;
+use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\Driver\AttributeDriver;
@@ -26,7 +29,7 @@ use const E_ALL;
 use const PHP_VERSION_ID;
 
 /**
- * @property \Doctrine\DBAL\Logging\DebugStack|SqlQueryCollector $sqlLoggerStack
+ * @property DebugStack|SqlQueryCollector $sqlLoggerStack
  */
 abstract class AbstractFunctionalTestCase extends TestCase
 {
@@ -38,7 +41,7 @@ abstract class AbstractFunctionalTestCase extends TestCase
     protected $dbFile;
     /** @var EntityManager */
     protected $entityManager;
-    /** @var \Doctrine\DBAL\Logging\DebugStack|SqlQueryCollector */
+    /** @var DebugStack|SqlQueryCollector */
     protected $sqlLoggerStack;
 
     abstract protected function getEncryptor(): EncryptorInterface;
@@ -46,7 +49,7 @@ abstract class AbstractFunctionalTestCase extends TestCase
     /**
      * Symfony 8 removed LazyGhost helpers from var-exporter; on PHP 8.4+ use native lazy objects.
      */
-    private function configureOrmLazyObjects(\Doctrine\ORM\Configuration $config): void
+    private function configureOrmLazyObjects(Configuration $config): void
     {
         if (method_exists($config, 'enableNativeLazyObjects') && PHP_VERSION_ID >= 80400) {
             $config->enableNativeLazyObjects(true);
@@ -68,7 +71,7 @@ abstract class AbstractFunctionalTestCase extends TestCase
             $config = ORMSetup::createAttributeMetadataConfiguration($paths, true);
             $this->configureOrmLazyObjects($config);
         } else {
-            $config = new \Doctrine\ORM\Configuration();
+            $config = new Configuration();
             $config->setMetadataDriverImpl(new AttributeDriver($paths));
             $config->setProxyDir(sys_get_temp_dir() . '/doctrine_orm_proxies');
             $config->setProxyNamespace('Doctrine\Tests\Proxies');
@@ -81,17 +84,17 @@ abstract class AbstractFunctionalTestCase extends TestCase
             'path'   => $this->dbFile,
         ];
 
-        $useDbal4 = !class_exists(\Doctrine\DBAL\Logging\DebugStack::class);
+        $useDbal4 = !class_exists(DebugStack::class);
 
         if (!$useDbal4 && method_exists(EntityManager::class, 'create')) {
             $this->entityManager  = EntityManager::create($conn, $config);
-            $this->sqlLoggerStack = new \Doctrine\DBAL\Logging\DebugStack();
+            $this->sqlLoggerStack = new DebugStack();
             $this->entityManager->getConnection()->getConfiguration()->setSQLLogger($this->sqlLoggerStack);
         } else {
             $sqlCollector = new SqlQueryCollector();
             $dbalConfig   = new \Doctrine\DBAL\Configuration();
-            if (class_exists(\Doctrine\DBAL\Logging\Middleware::class)) {
-                $dbalConfig->setMiddlewares([new \Doctrine\DBAL\Logging\Middleware($sqlCollector)]);
+            if (class_exists(Middleware::class)) {
+                $dbalConfig->setMiddlewares([new Middleware($sqlCollector)]);
             }
             $connection           = DriverManager::getConnection($conn, $dbalConfig);
             $this->entityManager  = new EntityManager($connection, $config);
@@ -129,18 +132,14 @@ abstract class AbstractFunctionalTestCase extends TestCase
 
     protected function getLatestInsertQuery(): ?array
     {
-        $insertQueries = array_values(array_filter($this->sqlLoggerStack->queries, static function ($queryData) {
-            return stripos($queryData['sql'], 'INSERT ') === 0;
-        }));
+        $insertQueries = array_values(array_filter($this->sqlLoggerStack->queries, static fn (array $queryData) => stripos($queryData['sql'], 'INSERT ') === 0));
 
         return current(array_reverse($insertQueries)) ?: null;
     }
 
     protected function getLatestUpdateQuery(): ?array
     {
-        $insertQueries = array_values(array_filter($this->sqlLoggerStack->queries, static function ($queryData) {
-            return stripos($queryData['sql'], 'UPDATE ') === 0;
-        }));
+        $insertQueries = array_values(array_filter($this->sqlLoggerStack->queries, static fn (array $queryData) => stripos($queryData['sql'], 'UPDATE ') === 0));
 
         return current(array_reverse($insertQueries)) ?: null;
     }
@@ -157,9 +156,8 @@ abstract class AbstractFunctionalTestCase extends TestCase
      * Asserts that a string starts with a given prefix.
      *
      * @param string $string
-     * @param string $message
      */
-    public function assertStringDoesNotContain($needle, $string, $ignoreCase = false, $message = ''): void
+    public function assertStringDoesNotContain($needle, $string, $ignoreCase = false, string $message = ''): void
     {
         if (!is_string($needle)) {
             throw new InvalidArgumentException('Argument 1 must be a string');
@@ -178,6 +176,6 @@ abstract class AbstractFunctionalTestCase extends TestCase
             $ignoreCase,
         ));
 
-        static::assertThat($string, $constraint, $message);
+        self::assertThat($string, $constraint, $message);
     }
 }

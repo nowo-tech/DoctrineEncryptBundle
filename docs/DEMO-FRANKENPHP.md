@@ -8,7 +8,7 @@ This document describes how the bundle's demo applications run under **FrankenPH
 - [What the demos include](#what-the-demos-include)
 - [Development configuration](#development-configuration)
 - [Production configuration](#production-configuration)
-- [Switching between development and production](#switching-between-development-and-production)
+- [Switching classic vs worker (`FRANKENPHP_MODE`)](#switching-classic-vs-worker-frankenphp_mode)
 - [Reproducing in another bundle](#reproducing-in-another-bundle)
 - [Troubleshooting](#troubleshooting)
 
@@ -23,7 +23,7 @@ The demos use:
 - **FrankenPHP** (Caddy + PHP) in a single container.
 - **Docker Compose** with the app and the parent bundle mounted as volumes (`../..` → `/var/doctrine-encrypt-bundle`).
 - **Two Caddyfiles**: `Caddyfile` (production, with worker) and `Caddyfile.dev` (development, no worker).
-- An **entrypoint** script that, when `APP_ENV=dev`, copies `Caddyfile.dev` over the default Caddyfile and then starts FrankenPHP.
+- An **entrypoint** that selects classic vs worker Caddyfile from **`FRANKENPHP_MODE`** (`classic` \| `worker`, default **`worker`** in `.env.example`)
 
 There is a demo for **Symfony 8** at **demo/symfony8**. It has its own Dockerfile, docker-compose.yml and Makefile. From the bundle root you run e.g. `make -C demo/symfony8 up` (see the demo's README for the URL and port).
 
@@ -102,10 +102,11 @@ Use the default Caddyfile (with worker). Set `APP_ENV=prod` and `APP_DEBUG=0`. D
 
 ---
 
-## Switching between development and production
+## Switching classic vs worker (`FRANKENPHP_MODE`)
 
-- **Development:** `APP_ENV=dev`, `APP_DEBUG=1`. Entrypoint copies Caddyfile.dev (no worker, no-cache headers). Mount php-dev.ini and dev twig cache off.
-- **Production:** `APP_ENV=prod`, `APP_DEBUG=0`. Entrypoint leaves default Caddyfile (with worker). Do not mount php-dev.ini.
+- **Classic:** `FRANKENPHP_MODE=classic` — entrypoint copies `Caddyfile.dev`
+- **Worker (default):** `FRANKENPHP_MODE=worker` — worker Caddyfile
+Recreate the container after changing `.env` (`docker compose up -d`).
 
 After changing env or Caddyfile, restart: `docker-compose restart` or `make -C demo/symfony8 restart`.
 

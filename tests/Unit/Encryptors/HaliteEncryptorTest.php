@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Encryptors;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
+use ParagonIE\Halite\Alerts\InvalidMessage;
 use ParagonIE\Halite\KeyFactory;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -102,7 +103,7 @@ class HaliteEncryptorTest extends TestCase
         $halite  = new HaliteEncryptor($keyfile);
         $halite->encrypt(self::DATA); // ensure key exists
 
-        $this->expectException(\ParagonIE\Halite\Alerts\InvalidMessage::class);
+        $this->expectException(InvalidMessage::class);
         $halite->decrypt('not-valid-ciphertext');
     }
 
@@ -201,7 +202,7 @@ class HaliteEncryptorTest extends TestCase
 
     public function testGetKeyThrowsWhenKeyFileEmptyAndNoKeyContent(): void
     {
-        $halite = new HaliteEncryptor('', null);
+        $halite = new HaliteEncryptor('');
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('The encryption key environment variable is not set');
         $this->expectExceptionMessage('doctrine:encrypt:generate-secret-key');

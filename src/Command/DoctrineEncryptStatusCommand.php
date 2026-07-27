@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Command;
 
+use Doctrine\ORM\EntityManagerInterface;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
+use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -15,34 +19,24 @@ use function sprintf;
 /**
  * Console command that lists entities, their encrypted properties with config, and the configured encryptor configs.
  */
-#[AsCommand(
-    name: 'doctrine:encrypt:status',
-    description: 'Get status of doctrine encrypt bundle and the database',
-    hidden: false,
-    aliases: ['doctrine:encrypt:status'],
-)]
+#[AsCommand(name: 'doctrine:encrypt:status', description: 'Get status of doctrine encrypt bundle and the database', aliases: ['doctrine:encrypt:status'], hidden: false)]
 class DoctrineEncryptStatusCommand extends AbstractCommand
 {
-    /**
-     * Config name => [path, encryptor_class]; used to show encryptor class in configured configs.
-     *
-     * @var array<string, array{path: string|null, encryptor_class: string}>
-     */
-    private array $keyPaths;
-
     /**
      * @param array<string, array{path: string|null, encryptor_class: string}> $keyPaths
      */
     public function __construct(
-        \Doctrine\ORM\EntityManagerInterface $entityManager,
-        \Nowo\DoctrineEncryptBundle\Mapping\AttributeReader $attributeReader,
-        \Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber $subscriber,
-        ?\Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface $defaultEncryptor = null,
+        EntityManagerInterface $entityManager,
+        AttributeReader $attributeReader,
+        DoctrineEncryptSubscriber $subscriber,
+        ?EncryptorInterface $defaultEncryptor = null,
         ?EncryptorRegistry $encryptorRegistry = null,
-        array $keyPaths = []
+        /**
+         * Config name => [path, encryptor_class]; used to show encryptor class in configured configs.
+         */
+        private readonly array $keyPaths = []
     ) {
         parent::__construct($entityManager, $attributeReader, $subscriber, $defaultEncryptor, $encryptorRegistry);
-        $this->keyPaths = $keyPaths;
     }
 
     /**
@@ -99,7 +93,7 @@ class DoctrineEncryptStatusCommand extends AbstractCommand
         $output->writeln('');
         $output->writeln('<info>Configured encryptor configs:</info>');
 
-        if ($this->encryptorRegistry === null) {
+        if (!$this->encryptorRegistry instanceof EncryptorRegistry) {
             $output->writeln('  (registry not available)');
 
             return;

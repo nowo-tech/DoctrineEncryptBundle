@@ -95,9 +95,7 @@ class Configuration implements ConfigurationInterface
                             ->thenInvalid('Cannot set both secret_key_env_var and secret_directory_path.')
                         ->end()
                         ->beforeNormalization()
-                            ->ifTrue(static function (array $v): bool {
-                                return empty($v['secret_key_env_var']) && ($v['secret_directory_path'] ?? null) === null;
-                            })
+                            ->ifTrue(static fn (array $v): bool => empty($v['secret_key_env_var']) && ($v['secret_directory_path'] ?? null) === null)
                             ->then(static function (array $v): array {
                                 $v['secret_directory_path'] = '%kernel.project_dir%';
 

@@ -6,6 +6,9 @@ namespace Nowo\DoctrineEncryptBundle\Tests\Unit\DependencyInjection;
 
 use Nowo\DoctrineEncryptBundle\DependencyInjection\Configuration;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Config\Definition\Builder\NodeDefinition;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 
 class ConfigurationTest extends TestCase
@@ -79,9 +82,9 @@ class ConfigurationTest extends TestCase
         $configuration = new Configuration();
         $treeBuilder   = $configuration->getConfigTreeBuilder();
 
-        $this->assertInstanceOf(\Symfony\Component\Config\Definition\Builder\TreeBuilder::class, $treeBuilder);
+        $this->assertInstanceOf(TreeBuilder::class, $treeBuilder);
         $this->assertNotNull($treeBuilder->getRootNode());
-        $this->assertInstanceOf(\Symfony\Component\Config\Definition\Builder\NodeDefinition::class, $treeBuilder->getRootNode());
+        $this->assertInstanceOf(NodeDefinition::class, $treeBuilder->getRootNode());
     }
 
     public function testSecretKeyFilenameDefaultsToNullWhenNotProvided(): void
@@ -144,7 +147,7 @@ class ConfigurationTest extends TestCase
 
     public function testCannotSetBothSecretKeyEnvVarAndSecretDirectoryPath(): void
     {
-        $this->expectException(\Symfony\Component\Config\Definition\Exception\InvalidConfigurationException::class);
+        $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage('Cannot set both secret_key_env_var and secret_directory_path');
 
         $this->process([

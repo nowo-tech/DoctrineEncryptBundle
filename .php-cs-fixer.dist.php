@@ -104,7 +104,10 @@ return (new Config())
         'explicit_string_variable' => true,
 
         // FQCN → use + short name
-        'fully_qualified_strict_types' => true,
+        'fully_qualified_strict_types' => [
+            // Convert \Foo\Bar to use Foo\Bar; + Bar (instanceof, new, types, ::class, etc.).
+            'import_symbols' => true,
+        ],
         'global_namespace_import' => [
             'import_classes' => true,
             'import_constants' => true,

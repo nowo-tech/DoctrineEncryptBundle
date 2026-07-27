@@ -27,15 +27,12 @@ use PHPUnit\Framework\TestCase;
 
 class DoctrineEncryptSubscriberTest extends TestCase
 {
-    /**
-     * @var DoctrineEncryptSubscriber
-     */
-    private $subscriber;
+    private DoctrineEncryptSubscriber $subscriber;
 
     /**
      * @var EncryptorInterface|MockObject
      */
-    private $encryptor;
+    private MockObject $encryptor;
 
     protected function setUp(): void
     {
@@ -43,16 +40,12 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->encryptor
             ->expects($this->any())
             ->method('encrypt')
-            ->willReturnCallback(static function (string $arg) {
-                return 'encrypted-' . $arg;
-            })
+            ->willReturnCallback(static fn (string $arg) => 'encrypted-' . $arg)
         ;
         $this->encryptor
             ->expects($this->any())
             ->method('decrypt')
-            ->willReturnCallback(static function (string $arg) {
-                return preg_replace('/^encrypted-/', '', $arg);
-            })
+            ->willReturnCallback(static fn (string $arg) => preg_replace('/^encrypted-/', '', $arg))
         ;
 
         $this->subscriber = new DoctrineEncryptSubscriber($this->encryptor);
@@ -71,7 +64,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
 
     public function testConstructorWithNullRegistryReturnsNullEncryptor(): void
     {
-        $subscriber = new DoctrineEncryptSubscriber(null);
+        $subscriber = new DoctrineEncryptSubscriber();
         $this->assertNull($subscriber->getEncryptor());
     }
 
@@ -81,7 +74,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $overrideEncryptor = $this->createMock(EncryptorInterface::class);
         $overrideEncryptor->expects($this->exactly(2))
             ->method('encrypt')
-            ->willReturnCallback(static fn (string $s) => 'OVR-' . $s);
+            ->willReturnCallback(static fn (string $s): string => 'OVR-' . $s);
 
         $this->subscriber->setEncryptor($overrideEncryptor);
 
@@ -139,7 +132,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
     {
         $user       = new User('David', 'Switzerland');
         $subscriber = new DoctrineEncryptSubscriber($this->createMock(EncryptorInterface::class));
-        $subscriber->setEncryptor(null);
+        $subscriber->setEncryptor();
         $subscriber->processFields($user, true);
 
         $this->assertSame('David', $user->name);
@@ -452,7 +445,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
     public function testProcessFieldsReturnsEntityWhenEncryptorIsNull(): void
     {
         $subscriber = new DoctrineEncryptSubscriber($this->createMock(EncryptorInterface::class));
-        $subscriber->setEncryptor(null);
+        $subscriber->setEncryptor();
         $user = new User('David', 'Switzerland');
 
         $result = $subscriber->processFields($user, true);
@@ -472,14 +465,14 @@ class DoctrineEncryptSubscriberTest extends TestCase
 
     public function testConstructorWithNullRegistryGetEncryptorReturnsNull(): void
     {
-        $subscriber = new DoctrineEncryptSubscriber(null);
+        $subscriber = new DoctrineEncryptSubscriber();
 
         $this->assertNull($subscriber->getEncryptor());
     }
 
     public function testProcessFieldsReturnsEntityWhenRegistryIsNull(): void
     {
-        $subscriber = new DoctrineEncryptSubscriber(null);
+        $subscriber = new DoctrineEncryptSubscriber();
         $user       = new User('David', 'Switzerland');
 
         $result = $subscriber->processFields($user, true);
@@ -521,7 +514,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
 
     public function testProcessFieldsHandleEmbeddedWhenEmbeddedIsNull(): void
     {
-        $withUser = new WithOptionalUser('Thing', null);
+        $withUser = new WithOptionalUser('Thing');
 
         $this->subscriber->processFields($withUser, true);
 

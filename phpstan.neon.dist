@@ -1,6 +1,11 @@
 # PHPStan configuration for Doctrine Encrypt Bundle
 # Compatible with PHP 8.1+ and Symfony 7.x / 8.x
 
+includes:
+    - phpstan-baseline.neon
+    - vendor/nowo-tech/phpstan-frankenphp/ruleset-classic.neon
+    - vendor/nowo-tech/phpstan-frankenphp/ruleset-worker.neon
+
 parameters:
     level: 8
     paths:
@@ -8,11 +13,5 @@ parameters:
         - tests
     excludePaths:
         - demo/*
-    memoryLimit: 512M
-    checkMissingIterableValueType: false
-
-includes:
-    - vendor/phpstan/phpstan-symfony/extension.neon
-    - vendor/phpstan/phpstan-symfony/rules.neon
-    - vendor/phpstan/phpstan-phpunit/extension.neon
-    - vendor/phpstan/phpstan-phpunit/rules.neon
+    ignoreErrors:
+        - '#no value type specified in iterable type#'

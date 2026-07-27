@@ -1,60 +1,60 @@
-# Doctrine Encrypt Bundle – Demos
+# Doctrine Encrypt Bundle — Demos
 
-Cada demo es una app Symfony mínima con **FrankenPHP** y un **Caddyfile** propio, dockerizada y con Makefile.
+Each demo is a minimal Symfony app with **FrankenPHP**, its own **Caddyfile**, Docker, and a Makefile.
 
-Por defecto **`docker-compose`** usa **`APP_ENV=dev`** y **`Caddyfile.dev`** (sin worker PHP) para que los cambios de código/plantillas se vean al refrescar. El modo worker corresponde al **`Caddyfile`** de producción (véase [docs/DEMO-FRANKENPHP.md](../docs/DEMO-FRANKENPHP.md)).
+By default **`docker-compose`** uses **`APP_ENV=dev`**. Runtime mode is controlled by **`FRANKENPHP_MODE`** (`classic` \| `worker`, default **`worker`** in `.env.example`). See [docs/DEMO-FRANKENPHP.md](../docs/DEMO-FRANKENPHP.md).
 
-| Demo        | Puerto por defecto | PHP   |
-|------------|--------------------|-------|
-| symfony8   | 8008               | 8.4   |
+| Demo     | Default port | PHP |
+|----------|--------------|-----|
+| symfony8 | 8008         | 8.4 |
 
-## Requisitos
+## Requirements
 
-- Docker y Docker Compose
-- El repo del bundle clonado (las demos montan el bundle desde `../..` como `/var/doctrine-encrypt-bundle`)
+- Docker and Docker Compose
+- This bundle repository cloned (demos mount the bundle from `../..` as `/var/doctrine-encrypt-bundle`)
 
-## Uso rápido
+## Quick start
 
-Desde la carpeta de la demo (`demo/symfony8`):
-
-```bash
-make up        # Levanta el contenedor (FrankenPHP + Caddy)
-make install   # composer install dentro del contenedor
-make setup     # install + crear DB + schema + generar clave de cifrado
-```
-
-Luego abre en el navegador la URL que se indique (ej. `http://localhost:8008`).
-
-## Comandos Make
-
-- **up** – Levanta los contenedores (FrankenPHP sirve HTTP en el puerto indicado).
-- **down** – Para los contenedores.
-- **build** – Reconstruye la imagen sin caché.
-- **install** – `composer install` en el contenedor (usa el bundle desde `/var/doctrine-encrypt-bundle`).
-- **setup** – install + `doctrine:database:create` + `doctrine:schema:update` + `doctrine:encrypt:generate-secret-key` (crea archivos de clave y añade `APP_ENCRYPT_KEY` a `.env` si no existe).
-- **shell** – Abre una shell en el contenedor PHP.
-- **logs** – Muestra los logs del contenedor.
-- **db-create** – Crea la base SQLite.
-- **db-schema** – Actualiza el schema Doctrine.
-- **key** – Genera claves: `personal_data` usa `APP_ENCRYPT_KEY` (se imprime y debe añadirse a `.env`); `financial_data` usa el archivo `.demo_financial.key`.
-- **cache-clear** – Limpia la caché de Symfony.
-- **update-bundle** – Actualiza el bundle desde el path montado y limpia caché.
-- **test** – Ejecuta los tests de la demo (si existen).
-
-## Cambiar puerto
-
-En la carpeta de la demo:
+From the demo directory (`demo/symfony8`):
 
 ```bash
-PORT=9008 make up   # Symfony 8 en http://localhost:9008
+make up        # Start the FrankenPHP container
+make install   # composer install inside the container
+make setup     # install + create DB + schema + generate encryption key
 ```
 
-## Estructura de cada demo
+Then open the URL printed by `make up` (e.g. `http://localhost:8008`).
 
-- **Dockerfile** – Imagen FrankenPHP (Alpine), extensiones `zip`, `intl`, `sodium`, `pdo_sqlite`, Caddyfile custom.
-- **docker/frankenphp/Caddyfile** – Producción: worker en `index.php`. **Caddyfile.dev** – desarrollo: sin worker (se copia al arrancar si `APP_ENV=dev`).
-- **docker-compose.yml** – Servicio `php`, montaje del código de la demo y del bundle (`../..` → `/var/doctrine-encrypt-bundle`), `Caddyfile.dev` y `php-dev.ini` para desarrollo.
-- **Makefile** – Objetivos anteriores.
-- **public/index.php** – Front controller de Symfony.
+## Make targets
 
-El bundle se instala por **path repository** apuntando a `/var/doctrine-encrypt-bundle` (montado desde la raíz del repo del bundle).
+- **up** – Start containers (FrankenPHP serves HTTP on the configured port).
+- **down** – Stop containers.
+- **build** – Rebuild the image without cache.
+- **install** – `composer install` in the container (bundle from `/var/doctrine-encrypt-bundle`).
+- **setup** – install + `doctrine:database:create` + `doctrine:schema:update` + `doctrine:encrypt:generate-secret-key` (creates key files and adds `APP_ENCRYPT_KEY` to `.env` when missing).
+- **shell** – Open a shell in the PHP container.
+- **logs** – Show container logs.
+- **db-create** – Create the SQLite database.
+- **db-schema** – Update the Doctrine schema.
+- **key** – Generate keys: `personal_data` uses `APP_ENCRYPT_KEY` (printed; add it to `.env`); `financial_data` uses `.demo_financial.key`.
+- **cache-clear** – Clear the Symfony cache.
+- **update-bundle** – Refresh the path-mounted bundle and clear cache.
+- **test** – Run demo tests (when present).
+
+## Change port
+
+In the demo directory:
+
+```bash
+PORT=9008 make up   # Symfony 8 at http://localhost:9008
+```
+
+## Demo layout
+
+- **Dockerfile** – FrankenPHP (Alpine), extensions `zip`, `intl`, `sodium`, `pdo_sqlite`, custom Caddyfile.
+- **docker/frankenphp/Caddyfile** – Production: worker on `index.php`. **Caddyfile.dev** – classic mode (no worker).
+- **docker-compose.yml** – `php` service, mounts demo code and the bundle (`../..` → `/var/doctrine-encrypt-bundle`), plus `Caddyfile.dev` / `php-dev.ini` for development.
+- **Makefile** – Targets listed above.
+- **public/index.php** – Symfony front controller.
+
+The bundle is installed via a Composer **path repository** pointing at `/var/doctrine-encrypt-bundle` (mounted from the bundle repo root).

@@ -119,7 +119,7 @@ class EncryptUtilTest extends TestCase
         $registry = $this->createRegistryWithDefault($encryptor);
         $util     = new EncryptUtil($registry);
 
-        $this->assertSame('cipher' . EncryptUtil::ENCRYPTION_MARKER, $util->encrypt('plain', null));
+        $this->assertSame('cipher' . EncryptUtil::ENCRYPTION_MARKER, $util->encrypt('plain'));
     }
 
     public function testEncryptThrowsWhenConfigDoesNotExist(): void
@@ -153,6 +153,6 @@ class EncryptUtilTest extends TestCase
         $registry = $this->createRegistryWithDefault($encryptor);
         $util     = new EncryptUtil($registry);
 
-        $this->assertSame('plain', $util->decrypt('cipher' . EncryptUtil::ENCRYPTION_MARKER, null));
+        $this->assertSame('plain', $util->decrypt('cipher' . EncryptUtil::ENCRYPTION_MARKER));
     }
 }

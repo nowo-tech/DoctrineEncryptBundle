@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Command;
 
 use Closure;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Result;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadataFactory;
 use Nowo\DoctrineEncryptBundle\Command\DoctrineDecryptDatabaseCommand;
@@ -57,7 +60,7 @@ class RotateKeysCommandTest extends TestCase
         $metadataFactory->method('getAllMetadata')->willReturn([]);
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
-        $subscriber = new DoctrineEncryptSubscriber(null);
+        $subscriber = new DoctrineEncryptSubscriber();
         $command    = new RotateKeysCommand($em, new AttributeReader(), $subscriber, null, null, $kernel, []);
         $command->setApplication(new Application());
         $tester = new CommandTester($command);
@@ -409,13 +412,13 @@ class RotateKeysCommandTest extends TestCase
         return $app;
     }
 
-    private function createConnectionMock(): \Doctrine\DBAL\Connection
+    private function createConnectionMock(): Connection
     {
-        $result = $this->createMock(\Doctrine\DBAL\Result::class);
+        $result = $this->createMock(Result::class);
         $result->method('fetchAllAssociative')->willReturn([]);
-        $platform = $this->createMock(\Doctrine\DBAL\Platforms\AbstractPlatform::class);
+        $platform = $this->createMock(AbstractPlatform::class);
         $platform->method('quoteIdentifier')->willReturnCallback(static fn (string $s): string => '"' . $s . '"');
-        $conn = $this->createMock(\Doctrine\DBAL\Connection::class);
+        $conn = $this->createMock(Connection::class);
         $conn->method('getDatabasePlatform')->willReturn($platform);
         $conn->method('executeQuery')->willReturn($result);
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Command;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Nowo\DoctrineEncryptBundle\Command\GenerateSecretKeyCommand;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
@@ -21,7 +22,7 @@ class GenerateSecretKeyCommandTest extends TestCase
         $kernel = $this->createMock(KernelInterface::class);
         $kernel->method('getProjectDir')->willReturn($projectDir);
 
-        $em              = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em              = $this->createMock(EntityManagerInterface::class);
         $attributeReader = new AttributeReader();
         $subscriber      = $this->createMock(DoctrineEncryptSubscriber::class);
 

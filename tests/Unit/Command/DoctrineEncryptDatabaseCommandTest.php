@@ -109,7 +109,7 @@ class DoctrineEncryptDatabaseCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $subscriber = new DoctrineEncryptSubscriber(null);
+        $subscriber = new DoctrineEncryptSubscriber();
 
         $command = new DoctrineEncryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, null);
         $this->createCommandWithApplication($command);
@@ -292,9 +292,7 @@ class DoctrineEncryptDatabaseCommandTest extends TestCase
         $conn = $this->createConnectionMock($rows);
         $conn->expects($this->once())->method('executeStatement')->with(
             $this->stringContains('UPDATE'),
-            $this->callback(static function (array $params): bool {
-                return count($params) >= 2 && str_ends_with((string) $params[0], DoctrineEncryptSubscriber::ENCRYPTION_MARKER);
-            }),
+            $this->callback(static fn (array $params): bool => count($params) >= 2 && str_ends_with((string) $params[0], DoctrineEncryptSubscriber::ENCRYPTION_MARKER)),
             $this->anything(),
         );
 

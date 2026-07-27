@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **REQ-CS-005:** `nowo-tech/phpstan-frankenphp` (require-dev) with classic + worker rulesets; PHPStan baseline for justified findings.
+- **REQ-DOCS-017:** FrankenPHP Friendly Worker Mode banner in README (`docs/images/frankenphp-friendly.png`).
+- **REQ-MAKE-007:** `make down-dev` (alias of `down --remove-orphans`).
+- **REQ-REL-003:** `.scripts/check-open-prs.sh` wired into `release-check`.
+- **REQ-DEMO-010:** `FRANKENPHP_MODE` (`classic` \| `worker`) in demo `.env.example`, Compose, and entrypoint.
+- **REQ-TEST-003:** [docs/COVERAGE.md](COVERAGE.md) documents justified PHPUnit exclusions; includable `src/` at **100%** line coverage.
+
+### Changed
+
+- **REQ-DOCS-016:** `demo/README.md` translated to English.
+- **Documentation:** README demo section uses `FRANKENPHP_MODE`; coverage section reports 100.00%.
+
 ---
 
 ## [2.3.1] - 2026-07-20

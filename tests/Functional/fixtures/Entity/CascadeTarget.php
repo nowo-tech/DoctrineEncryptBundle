@@ -27,34 +27,22 @@ class CascadeTarget
         return $this->id;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getSecret()
+    public function getSecret(): ?string
     {
         return $this->secret;
     }
 
-    /**
-     * @param mixed $secret
-     */
-    public function setSecret($secret): void
+    public function setSecret(?string $secret): void
     {
         $this->secret = $secret;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getNotSecret()
+    public function getNotSecret(): ?string
     {
         return $this->notSecret;
     }
 
-    /**
-     * @param mixed $notSecret
-     */
-    public function setNotSecret($notSecret): void
+    public function setNotSecret(?string $notSecret): void
     {
         $this->notSecret = $notSecret;
     }

@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use Doctrine\Common\Annotations\AnnotationRegistry;
 
 $file = __DIR__ . '/../vendor/autoload.php';
 if (!file_exists($file)) {
@@ -8,6 +9,6 @@ if (!file_exists($file)) {
 }
 
 $autoload = require $file;
-if (method_exists(Doctrine\Common\Annotations\AnnotationRegistry::class, 'registerLoader')) {
-    Doctrine\Common\Annotations\AnnotationRegistry::registerLoader([$autoload, 'loadClass']);
+if (method_exists(AnnotationRegistry::class, 'registerLoader')) {
+    AnnotationRegistry::registerLoader([$autoload, 'loadClass']);
 }

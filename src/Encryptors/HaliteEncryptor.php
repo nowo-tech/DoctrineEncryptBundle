@@ -25,16 +25,14 @@ use function sprintf;
 class HaliteEncryptor implements EncryptorInterface
 {
     private ?EncryptionKey $encryptionKey = null;
-    private string $keyFile;
-    private ?string $keyContent;
+    private readonly ?string $keyContent;
 
     /**
      * @param string $keyFile path to the key file (ignored when $keyContent is set)
      * @param string|null $keyContent Optional key value (e.g. from env). When set, $keyFile is not read.
      */
-    public function __construct(string $keyFile, ?string $keyContent = null)
+    public function __construct(private readonly string $keyFile, ?string $keyContent = null)
     {
-        $this->keyFile    = $keyFile;
         $this->keyContent = $keyContent !== null && $keyContent !== '' ? $keyContent : null;
     }
 
@@ -61,9 +59,7 @@ class HaliteEncryptor implements EncryptorInterface
     {
         $data = Crypto::decrypt($data, $this->getKey());
 
-        if ($data instanceof HiddenString) {
-            $data = $data->getString();
-        }
+        $data = $data->getString();
 
         return $data;
     }
@@ -73,7 +69,7 @@ class HaliteEncryptor implements EncryptorInterface
      */
     private function getKey(): EncryptionKey
     {
-        if ($this->encryptionKey === null) {
+        if (!$this->encryptionKey instanceof EncryptionKey) {
             if ($this->keyContent !== null) {
                 $this->encryptionKey = $this->loadKeyFromString(trim($this->keyContent));
 
@@ -85,7 +81,7 @@ class HaliteEncryptor implements EncryptorInterface
             try {
                 $this->normalizeKeyFile();
                 $this->encryptionKey = KeyFactory::loadEncryptionKey($this->keyFile);
-            } catch (CannotPerformOperation $e) {
+            } catch (CannotPerformOperation) {
                 $this->encryptionKey = KeyFactory::generateEncryptionKey();
                 KeyFactory::save($this->encryptionKey, $this->keyFile);
             } catch (RangeException $e) {

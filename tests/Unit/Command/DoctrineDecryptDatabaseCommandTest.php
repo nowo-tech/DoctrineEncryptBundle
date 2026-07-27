@@ -137,7 +137,7 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
-        $subscriber = new DoctrineEncryptSubscriber(null);
+        $subscriber = new DoctrineEncryptSubscriber();
 
         $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, null);
         $this->createCommandWithApplication($command);
@@ -322,9 +322,7 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $conn           = $this->createConnectionMock($rows);
         $conn->expects($this->once())->method('executeStatement')->with(
             $this->stringContains('UPDATE'),
-            $this->callback(static function (array $params): bool {
-                return count($params) >= 2 && $params[0] === 'decrypted_plain';
-            }),
+            $this->callback(static fn (array $params): bool => count($params) >= 2 && $params[0] === 'decrypted_plain'),
             $this->anything(),
         );
 
@@ -388,9 +386,7 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $conn           = $this->createConnectionMock($rows);
         $conn->expects($this->once())->method('executeStatement')->with(
             $this->stringContains('UPDATE'),
-            $this->callback(static function (array $params): bool {
-                return count($params) >= 2 && $params[0] === 'badcipher';
-            }),
+            $this->callback(static fn (array $params): bool => count($params) >= 2 && $params[0] === 'badcipher'),
             $this->anything(),
         );
 

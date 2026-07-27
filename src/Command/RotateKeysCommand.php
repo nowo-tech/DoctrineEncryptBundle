@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Command;
 
+use Doctrine\ORM\EntityManagerInterface;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
+use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
+use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
@@ -22,12 +27,7 @@ use function sprintf;
  *
  * Each step asks for confirmation unless --no-interaction is used. Use --backup to back up the database and key files before rotating.
  */
-#[AsCommand(
-    name: 'doctrine:encrypt:rotate-keys',
-    description: 'Rotate encryption keys: backup (DB + keys), decrypt DB, change keys, re-encrypt',
-    hidden: false,
-    aliases: ['doctrine:encrypt:rotate-keys'],
-)]
+#[AsCommand(name: 'doctrine:encrypt:rotate-keys', description: 'Rotate encryption keys: backup (DB + keys), decrypt DB, change keys, re-encrypt', aliases: ['doctrine:encrypt:rotate-keys'], hidden: false)]
 class RotateKeysCommand extends AbstractCommand
 {
     private const BACKUP_DIR_PREFIX  = 'encrypt_rotation_backup_';
@@ -37,10 +37,10 @@ class RotateKeysCommand extends AbstractCommand
      * @param array<string, array{path: string|null, encryptor_class: string}> $keyPaths
      */
     public function __construct(
-        \Doctrine\ORM\EntityManagerInterface $entityManager,
-        \Nowo\DoctrineEncryptBundle\Mapping\AttributeReader $attributeReader,
-        \Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber $subscriber,
-        ?\Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface $defaultEncryptor,
+        EntityManagerInterface $entityManager,
+        AttributeReader $attributeReader,
+        DoctrineEncryptSubscriber $subscriber,
+        ?EncryptorInterface $defaultEncryptor,
         ?EncryptorRegistry $encryptorRegistry,
         private readonly KernelInterface $kernel,
         private readonly array $keyPaths
@@ -68,7 +68,7 @@ class RotateKeysCommand extends AbstractCommand
 
         $resolved    = $this->resolveKeyPaths($projectDir);
         $configNames = $this->encryptorRegistry?->getConfigNames() ?? [];
-        $configNames = array_values(array_filter($configNames, static fn (string $n) => $n !== 'default' || count($configNames) === 1));
+        $configNames = array_values(array_filter($configNames, static fn (string $n): bool => $n !== 'default' || count($configNames) === 1));
 
         if ($configNames === []) {
             $output->writeln('<error>No encryptor configs found. Configure nowo_doctrine_encrypt in config.</error>');
@@ -335,7 +335,7 @@ class RotateKeysCommand extends AbstractCommand
     private function runCommand(InputInterface $input, OutputInterface $output, string $commandName, array $args = []): int
     {
         $app = $this->getApplication();
-        if ($app === null) {
+        if (!$app instanceof Application) {
             return self::FAILURE;
         }
         $args['command'] = $commandName;

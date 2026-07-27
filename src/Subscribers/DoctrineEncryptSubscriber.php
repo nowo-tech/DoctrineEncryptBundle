@@ -16,12 +16,14 @@ use Doctrine\ORM\Event\PreFlushEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 // encryptorInterface
+use Doctrine\ORM\Mapping\Embedded;
+use Doctrine\Persistence\Mapping\ClassUtils;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+// attributes
 use ReflectionClass;
 use ReflectionProperty;
-// attributes
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Throwable;
 
@@ -64,9 +66,6 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
 
     private bool $encryptorOverrideSet = false;
 
-    /** Used for restoring after override. */
-    private ?EncryptorInterface $restoreEncryptor = null;
-
     /**
      * Count amount of decrypted values in this service.
      */
@@ -90,9 +89,6 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
             $this->registry = $registryOrEncryptor;
         } else {
             $this->registry = null;
-        }
-        if ($this->registry !== null) {
-            $this->restoreEncryptor = $this->registry->getDefault();
         }
     }
 
@@ -192,7 +188,7 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
         $unitOfWOrk = $preFlushEventArgs->getObjectManager()->getUnitOfWork();
         foreach ($unitOfWOrk->getIdentityMap() as $entityName => $entityArray) {
             if (isset($this->cachedDecryptions[$entityName])) {
-                foreach ($entityArray as $entityId => $instance) {
+                foreach ($entityArray as $instance) {
                     $this->processFields($instance);
                 }
             }
@@ -241,7 +237,7 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
     public function processFields(object $entity, bool $isEncryptOperation = true, ?string $configFilter = null): ?object
     {
         $encryptor = $this->getEncryptor();
-        if ($encryptor === null) {
+        if (!$encryptor instanceof EncryptorInterface) {
             return $entity;
         }
 
@@ -252,14 +248,14 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
 
         foreach ($properties as $refProperty) {
             $attributes = $refProperty->getAttributes();
-            $isEmbebed  = $this->defineAtributeType($attributes, 'Doctrine\ORM\Mapping\Embedded');
+            $isEmbebed  = $this->defineAtributeType($attributes, Embedded::class);
             if ($isEmbebed) {
                 $this->handleEmbeddedAnnotation($entity, $refProperty, $isEncryptOperation, $configFilter);
                 continue;
             }
 
             $encryptedAttr = $this->getEncryptedAttributeInstance($attributes);
-            if ($encryptedAttr === null) {
+            if (!$encryptedAttr instanceof Encrypted) {
                 continue;
             }
 
@@ -270,36 +266,32 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
                 }
             }
 
-            $propertyEncryptor = $this->encryptorOverride !== null
+            $propertyEncryptor = $this->encryptorOverride instanceof EncryptorInterface
                 ? $encryptor
                 : $this->registry->get($encryptedAttr->config);
 
             $pac   = PropertyAccess::createPropertyAccessor();
             $value = $pac->getValue($entity, $refProperty->getName());
             if ($encryptorMethod === 'decrypt') {
-                if ($value !== null && $value !== '') {
-                    if (str_ends_with($value, self::ENCRYPTION_MARKER)) {
-                        $ciphertext = substr($value, 0, -strlen(self::ENCRYPTION_MARKER));
-                        try {
-                            $currentPropValue = $propertyEncryptor->decrypt($ciphertext);
-                            ++$this->decryptCounter;
-                        } catch (Throwable $e) {
-                            // Ciphertext not valid (e.g. Halite "Invalid version tag", wrong key, or value was plain with <ENC> appended)
-                            $currentPropValue = $ciphertext;
-                        }
-                        $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
-                        $this->cachedDecryptions[$entity::class][spl_object_id($entity)][$refProperty->getName()][$currentPropValue] = $value;
+                if ($value !== null && $value !== '' && str_ends_with((string) $value, self::ENCRYPTION_MARKER)) {
+                    $ciphertext = substr((string) $value, 0, -strlen(self::ENCRYPTION_MARKER));
+                    try {
+                        $currentPropValue = $propertyEncryptor->decrypt($ciphertext);
+                        ++$this->decryptCounter;
+                    } catch (Throwable) {
+                        // Ciphertext not valid (e.g. Halite "Invalid version tag", wrong key, or value was plain with <ENC> appended)
+                        $currentPropValue = $ciphertext;
                     }
+                    $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
+                    $this->cachedDecryptions[$entity::class][spl_object_id($entity)][$refProperty->getName()][$currentPropValue] = $value;
                 }
-            } else {
-                if ($value !== null && $value !== '') {
-                    if (isset($this->cachedDecryptions[$entity::class][spl_object_id($entity)][$refProperty->getName()][$value])) {
-                        $pac->setValue($entity, $refProperty->getName(), $this->cachedDecryptions[$entity::class][spl_object_id($entity)][$refProperty->getName()][$value]);
-                    } elseif (!str_ends_with($value, self::ENCRYPTION_MARKER)) {
-                        ++$this->encryptCounter;
-                        $currentPropValue = $propertyEncryptor->encrypt($value) . self::ENCRYPTION_MARKER;
-                        $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
-                    }
+            } elseif ($value !== null && $value !== '') {
+                if (isset($this->cachedDecryptions[$entity::class][spl_object_id($entity)][$refProperty->getName()][$value])) {
+                    $pac->setValue($entity, $refProperty->getName(), $this->cachedDecryptions[$entity::class][spl_object_id($entity)][$refProperty->getName()][$value]);
+                } elseif (!str_ends_with((string) $value, self::ENCRYPTION_MARKER)) {
+                    ++$this->encryptCounter;
+                    $currentPropValue = $propertyEncryptor->encrypt($value) . self::ENCRYPTION_MARKER;
+                    $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
                 }
             }
         }
@@ -320,7 +312,7 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
         return null;
     }
 
-    private function handleEmbeddedAnnotation($entity, ReflectionProperty $embeddedProperty, bool $isEncryptOperation = true, ?string $configFilter = null): void
+    private function handleEmbeddedAnnotation(object $entity, ReflectionProperty $embeddedProperty, bool $isEncryptOperation = true, ?string $configFilter = null): void
     {
         $propName = $embeddedProperty->getName();
 
@@ -360,8 +352,8 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
      */
     private function getRealClass(object $entity): string
     {
-        if (class_exists(\Doctrine\Persistence\Mapping\ClassUtils::class)) {
-            return \Doctrine\Persistence\Mapping\ClassUtils::getClass($entity);
+        if (class_exists(ClassUtils::class)) {
+            return ClassUtils::getClass($entity);
         }
         if (class_exists(\Doctrine\Common\Util\ClassUtils::class)) {
             return \Doctrine\Common\Util\ClassUtils::getClass($entity);

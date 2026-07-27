@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Command;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadataFactory;
 use Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptStatusCommand;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\EntityWithConfigAlias;
@@ -26,7 +29,7 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
-        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $attributeReader = new AttributeReader();
@@ -53,7 +56,7 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
-        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $attributeReader = new AttributeReader();
@@ -77,7 +80,7 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadata]);
 
-        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $attributeReader = new AttributeReader();
@@ -106,7 +109,7 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadataSuper, $metadataEntity]);
 
-        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $attributeReader = new AttributeReader();
@@ -128,7 +131,7 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([]);
 
-        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $attributeReader = new AttributeReader();
@@ -158,7 +161,7 @@ class DoctrineEncryptStatusCommandTest extends TestCase
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([$metadataUser, $metadataEntityWithAlias]);
 
-        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $attributeReader = new AttributeReader();
@@ -180,7 +183,7 @@ class DoctrineEncryptStatusCommandTest extends TestCase
     {
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([]);
-        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $command = new DoctrineEncryptStatusCommand($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class), null, null, []);
@@ -195,15 +198,15 @@ class DoctrineEncryptStatusCommandTest extends TestCase
     {
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([]);
-        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $registry = new EncryptorRegistry(
-            ['default' => $this->createMock(\Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface::class)],
+            ['default' => $this->createMock(EncryptorInterface::class)],
             'default',
         );
         $keyPaths = [
-            'default' => ['path' => null, 'encryptor_class' => 'Nowo\\DoctrineEncryptBundle\\Encryptors\\HaliteEncryptor'],
+            'default' => ['path' => null, 'encryptor_class' => HaliteEncryptor::class],
         ];
         $command = new DoctrineEncryptStatusCommand($em, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class), null, $registry, $keyPaths);
         $tester  = new CommandTester($command);
@@ -220,7 +223,7 @@ class DoctrineEncryptStatusCommandTest extends TestCase
     {
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
         $metadataFactory->method('getAllMetadata')->willReturn([]);
-        $em = $this->createMock(\Doctrine\ORM\EntityManagerInterface::class);
+        $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
 
         $registry = new EncryptorRegistry([], 'default');

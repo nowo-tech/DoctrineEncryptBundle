@@ -4,6 +4,10 @@
 
 **Symfony bundle to encrypt Doctrine entity fields at rest** using [Halite](https://github.com/paragonie/halite) or [Defuse](https://github.com/defuse/php-encryption)—audited libraries, no custom crypto. For **Symfony 7.4+ and 8** · PHP 8.2+. Suits **GDPR** and compliance (e.g. Art. 32); supports key rotation and [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for anonymization and erasure.
 
+![FrankenPHP Friendly Worker Mode](docs/images/frankenphp-friendly.png)
+
+This bundle is **FrankenPHP worker mode friendly** (verified with `nowo-tech/phpstan-frankenphp`).
+
 > ⭐ **Found this useful?** [Install from Packagist](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) · Give it a **star** on [GitHub](https://github.com/nowo-tech/DoctrineEncryptBundle) so more developers can find it.
 
 ## Table of contents
@@ -165,6 +169,7 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 - [Custom encryptor](docs/custom_encryptor.md)
 - [MySQL AES_ENCRYPT / AES_DECRYPT (MysqlAes)](docs/MYSQL_AES.md)
 - [Performance (encryptors, LIKE, scalability)](docs/PERFORMANCE.md)
+- [Coverage policy](docs/COVERAGE.md)
 
 ## Requirements
 
@@ -178,7 +183,7 @@ See [docs/INSTALLATION.md](docs/INSTALLATION.md#requirements) and [docs/UPGRADIN
 
 ## Demo
 
-The Symfony 8 demo is in `demo/symfony8`. It runs with **FrankenPHP** and **Caddy** (HTTP on port 80 in the container). **`docker-compose`** defaults to **`APP_ENV=dev`**, so the entrypoint uses **Caddyfile.dev** (no PHP worker; changes visible on refresh). **Worker mode** is for a production-style setup — [docs/DEMO-FRANKENPHP.md](docs/DEMO-FRANKENPHP.md). Default host port: **8008** via `PORT`. Quick start: [docs/DEMO.md](docs/DEMO.md).
+The Symfony 8 demo is in `demo/symfony8`. It runs with **FrankenPHP** and **Caddy** (HTTP on port 80 in the container). **`FRANKENPHP_MODE`** selects **`classic`** or **`worker`** (default **`worker`** in `.env.example`) — [docs/DEMO-FRANKENPHP.md](docs/DEMO-FRANKENPHP.md). Default host port: **8008** via `PORT`. Quick start: [docs/DEMO.md](docs/DEMO.md).
 
 ## Development
 
@@ -187,7 +192,8 @@ Run tests and QA with Docker: `make up && make install && make test` (or `make t
 ## Tests and coverage
 
 - Tests: PHPUnit (unit and functional suites)
-- PHP: 96.14%
+- PHP: 100.00% of includable `src/` (see [docs/COVERAGE.md](docs/COVERAGE.md) for justified exclusions)
+- Run: `make test-coverage`
 
 ## License
 

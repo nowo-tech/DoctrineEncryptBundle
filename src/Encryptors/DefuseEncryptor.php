@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Encryptors;
 
+use Defuse\Crypto\Crypto;
 use RuntimeException;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -15,18 +16,16 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 class DefuseEncryptor implements EncryptorInterface
 {
-    private Filesystem $fs;
+    private readonly Filesystem $fs;
     private ?string $encryptionKey = null;
-    private string $keyFile;
-    private ?string $keyContent;
+    private readonly ?string $keyContent;
 
     /**
      * @param string $keyFile path to the key file (ignored when $keyContent is set)
      * @param string|null $keyContent Optional key value (e.g. from env). When set, $keyFile is not read.
      */
-    public function __construct(string $keyFile, ?string $keyContent = null)
+    public function __construct(private readonly string $keyFile, ?string $keyContent = null)
     {
-        $this->keyFile    = $keyFile;
         $this->keyContent = $keyContent !== null && $keyContent !== '' ? $keyContent : null;
         $this->fs         = new Filesystem();
     }
@@ -40,7 +39,7 @@ class DefuseEncryptor implements EncryptorInterface
      */
     public function encrypt(string $data): string
     {
-        return \Defuse\Crypto\Crypto::encryptWithPassword($data, $this->getKey());
+        return Crypto::encryptWithPassword($data, $this->getKey());
     }
 
     /**
@@ -52,7 +51,7 @@ class DefuseEncryptor implements EncryptorInterface
      */
     public function decrypt(string $data): string
     {
-        return \Defuse\Crypto\Crypto::decryptWithPassword($data, $this->getKey());
+        return Crypto::decryptWithPassword($data, $this->getKey());
     }
 
     /**

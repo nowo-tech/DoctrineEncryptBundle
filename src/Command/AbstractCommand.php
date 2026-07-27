@@ -81,7 +81,7 @@ abstract class AbstractCommand extends Command
 
             $properties = $this->getEncryptionableProperties($entityMetaData);
 
-            if (count($properties) == 0) {
+            if (count($properties) === 0) {
                 continue;
             }
 

@@ -25,10 +25,7 @@ use Symfony\Component\DependencyInjection\Reference;
 
 class DoctrineEncryptExtensionTest extends TestCase
 {
-    /**
-     * @var DoctrineEncryptExtension
-     */
-    private $extension;
+    private DoctrineEncryptExtension $extension;
 
     protected function setUp(): void
     {
@@ -374,10 +371,8 @@ class DoctrineEncryptExtensionTest extends TestCase
 
     private function createContainer(): ContainerBuilder
     {
-        $container = new ContainerBuilder(
+        return new ContainerBuilder(
             new ParameterBag(['kernel.debug' => false]),
         );
-
-        return $container;
     }
 }

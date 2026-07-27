@@ -9,18 +9,12 @@ use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 
 class WithUser
 {
-    #[Encrypted]
-    public string $name;
-
-    public ?string $foo;
-
-    #[ORM\Embedded(class: User::class)]
-    public User $user;
-
-    public function __construct(string $name, string $foo, User $user)
-    {
-        $this->name = $name;
-        $this->foo  = $foo;
-        $this->user = $user;
+    public function __construct(
+        #[Encrypted]
+        public string $name,
+        public ?string $foo,
+        #[ORM\Embedded(class: User::class)]
+        public User $user
+    ) {
     }
 }

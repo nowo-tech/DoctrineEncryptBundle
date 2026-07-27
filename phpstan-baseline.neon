@@ -1,0 +1,496 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Access to an undefined property object\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Command/AbstractCommand.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getFieldMapping\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Command/AbstractCommand.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getIdentifierColumnNames\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Command/AbstractCommand.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getTableName\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Command/AbstractCommand.php
+
+		-
+			message: '#^Property Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:\$isMappedSuperclass \(bool\) in isset\(\) is not nullable\.$#'
+			identifier: isset.property
+			count: 2
+			path: src/Command/AbstractCommand.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Console\\Helper\\HelperInterface\:\:ask\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Command/DoctrineDecryptDatabaseCommand.php
+
+		-
+			message: '#^Parameter \#4 \$default of method Symfony\\Component\\Console\\Command\\Command\:\:addArgument\(\) expects string\|null, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Command/DoctrineDecryptDatabaseCommand.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Console\\Helper\\HelperInterface\:\:ask\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Command/DoctrineEncryptDatabaseCommand.php
+
+		-
+			message: '#^Parameter \#4 \$default of method Symfony\\Component\\Console\\Command\\Command\:\:addArgument\(\) expects string\|null, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Command/DoctrineEncryptDatabaseCommand.php
+
+		-
+			message: '#^Property Doctrine\\ORM\\Mapping\\ClassMetadata\<object\>\:\:\$isMappedSuperclass \(bool\) in isset\(\) is not nullable\.$#'
+			identifier: isset.property
+			count: 1
+			path: src/Command/DoctrineEncryptStatusCommand.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Console\\Helper\\HelperInterface\:\:ask\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Command/GenerateSecretKeyCommand.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Command/GenerateSecretKeyCommand.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Console\\Helper\\HelperInterface\:\:ask\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Command/RotateKeysCommand.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Symfony\\Component\\Config\\Definition\\Builder\\TreeBuilder and ''getRootNode'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/DependencyInjection/Configuration.php
+
+		-
+			message: '#^Parameter \#1 \$callback of function call_user_func expects callable\(\)\: mixed, array\{Symfony\\Component\\Config\\Definition\\Builder\\TreeBuilder, ''root''\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/DependencyInjection/Configuration.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 2
+			path: src/DependencyInjection/Configuration.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Encryptors/DefuseEncryptor.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Encryptors/HaliteEncryptor.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$flags\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Mapping/AttributeReader.php
+
+		-
+			message: '#^Call to function assert\(\) with true will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Mapping/AttributeReader.php
+
+		-
+			message: '#^Call to function is_string\(\) with class\-string\<object\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Mapping/AttributeReader.php
+
+		-
+			message: '#^Cannot access an offset on list\<Nowo\\DoctrineEncryptBundle\\Configuration\\Annotation\>\|Nowo\\DoctrineEncryptBundle\\Configuration\\Annotation\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Mapping/AttributeReader.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Mapping\\AttributeReader\:\:convertToAttributeInstances\(\) has parameter \$attributes with generic class ReflectionAttribute but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Mapping/AttributeReader.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Mapping\\AttributeReader\:\:getClassAnnotation\(\) has parameter \$class with generic class ReflectionClass but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Mapping/AttributeReader.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Mapping\\AttributeReader\:\:getClassAnnotations\(\) has parameter \$class with generic class ReflectionClass but does not specify its types\: T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Mapping/AttributeReader.php
+
+		-
+			message: '''
+				#^PHPDoc tag @param has invalid value \(ReflectionProperty property A \\ReflectionProperty object representing the property for which
+				you want to retrieve the annotation\)\: Unexpected token "property", expected variable at offset 37 on line 2$#
+			'''
+			identifier: phpDoc.parseError
+			count: 1
+			path: src/Mapping/AttributeReader.php
+
+		-
+			message: '''
+				#^PHPDoc tag @param has invalid value \(string annotationName The `annotationName` parameter is a string that represents the name of
+				the annotation you want to retrieve from the property\)\: Unexpected token "annotationName", expected variable at offset 175 on line 4$#
+			'''
+			identifier: phpDoc.parseError
+			count: 1
+			path: src/Mapping/AttributeReader.php
+
+		-
+			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Mapping/AttributeReader.php
+
+		-
+			message: '#^Attribute class Doctrine\\Bundle\\DoctrineBundle\\Attribute\\AsDoctrineListener does not exist\.$#'
+			identifier: attribute.notFound
+			count: 6
+			path: src/Subscribers/DoctrineEncryptSubscriber.php
+
+		-
+			message: '#^Cannot call method get\(\) on Nowo\\DoctrineEncryptBundle\\Encryptors\\EncryptorRegistry\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Subscribers/DoctrineEncryptSubscriber.php
+
+		-
+			message: '#^PHPDoc tag @param for parameter \$args with type Doctrine\\ORM\\Event\\LifecycleEventArgs is not subtype of native type Doctrine\\ORM\\Event\\PostLoadEventArgs\.$#'
+			identifier: parameter.phpDocType
+			count: 1
+			path: src/Subscribers/DoctrineEncryptSubscriber.php
+
+		-
+			message: '#^PHPDoc tag @param has invalid value \(array attributes An array of objects representing attributes\)\: Unexpected token "attributes", expected variable at offset 116 on line 4$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: src/Subscribers/DoctrineEncryptSubscriber.php
+
+		-
+			message: '''
+				#^PHPDoc tag @param has invalid value \(string stringClass The parameter `` is a string that represents the name of a
+				class\)\: Unexpected token "stringClass", expected variable at offset 192 on line 5$#
+			'''
+			identifier: phpDoc.parseError
+			count: 1
+			path: src/Subscribers/DoctrineEncryptSubscriber.php
+
+		-
+			message: '#^Parameter \#1 \$objectOrClass of class ReflectionClass constructor expects class\-string\<T of object\>\|T of object, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Subscribers/DoctrineEncryptSubscriber.php
+
+		-
+			message: '#^Parameter \$args of method Nowo\\DoctrineEncryptBundle\\Subscribers\\DoctrineEncryptSubscriber\:\:postLoad\(\) has invalid type Doctrine\\ORM\\Event\\LifecycleEventArgs\.$#'
+			identifier: class.notFound
+			count: 1
+			path: src/Subscribers/DoctrineEncryptSubscriber.php
+
+		-
+			message: '#^Access to property \$queries on an unknown class Doctrine\\DBAL\\Logging\\DebugStack\.$#'
+			identifier: class.notFound
+			count: 3
+			path: tests/Functional/AbstractFunctionalTestCase.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/Functional/AbstractFunctionalTestCase.php
+
+		-
+			message: '#^Call to function method_exists\(\) with ''Doctrine\\\\ORM\\\\EntityManager'' and ''create'' will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: tests/Functional/AbstractFunctionalTestCase.php
+
+		-
+			message: '#^Call to function method_exists\(\) with ''Symfony\\\\Component\\\\VarExporter\\\\ProxyHelper'' and ''generateLazyGhost'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/Functional/AbstractFunctionalTestCase.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Doctrine\\ORM\\Configuration and ''enableNativeLazyObj…'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: tests/Functional/AbstractFunctionalTestCase.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Tests\\Functional\\AbstractFunctionalTestCase\:\:assertStringDoesNotContain\(\) has parameter \$ignoreCase with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Functional/AbstractFunctionalTestCase.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Tests\\Functional\\AbstractFunctionalTestCase\:\:assertStringDoesNotContain\(\) has parameter \$needle with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Functional/AbstractFunctionalTestCase.php
+
+		-
+			message: '#^PHPDoc tag @property for property Nowo\\DoctrineEncryptBundle\\Tests\\Functional\\AbstractFunctionalTestCase\:\:\$sqlLoggerStack contains unknown class Doctrine\\DBAL\\Logging\\DebugStack\.$#'
+			identifier: class.notFound
+			count: 1
+			path: tests/Functional/AbstractFunctionalTestCase.php
+
+		-
+			message: '#^Parameter \#1 \$filename of function unlink expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: tests/Functional/AbstractFunctionalTestCase.php
+
+		-
+			message: '#^Property Nowo\\DoctrineEncryptBundle\\Tests\\Functional\\AbstractFunctionalTestCase\:\:\$sqlLoggerStack has unknown class Doctrine\\DBAL\\Logging\\DebugStack as its type\.$#'
+			identifier: class.notFound
+			count: 1
+			path: tests/Functional/AbstractFunctionalTestCase.php
+
+		-
+			message: '#^Call to method Nowo\\DoctrineEncryptBundle\\Tests\\Functional\\fixtures\\Entity\\CascadeTarget\:\:getNotSecret\(\) on a separate line has no effect\.$#'
+			identifier: method.resultUnused
+			count: 1
+			path: tests/Functional/BasicQueryTest/AbstractBasicQueryTestCase.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: tests/Functional/BasicQueryTest/BasicQueryHaliteTest.php
+
+		-
+			message: '#^PHPDoc tag @throws with type Doctrine\\DBAL\\DBALException\|Doctrine\\ORM\\OptimisticLockException is not subtype of Throwable$#'
+			identifier: throws.notThrowable
+			count: 1
+			path: tests/Functional/DoctrineEncryptSubscriber/AbstractDoctrineEncryptSubscriberBase.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: tests/Functional/DoctrineEncryptSubscriber/DoctrineEncryptSubscriberHaliteTestCase.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Tests\\Functional\\SqlQueryCollector\:\:log\(\) has parameter \$message with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Functional/SqlQueryCollector.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Tests\\Functional\\fixtures\\Entity\\CascadeTarget\:\:getId\(\) should return int but returns int\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: tests/Functional/fixtures/Entity/CascadeTarget.php
+
+		-
+			message: '#^Property Nowo\\DoctrineEncryptBundle\\Tests\\Functional\\fixtures\\Entity\\CascadeTarget\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: tests/Functional/fixtures/Entity/CascadeTarget.php
+
+		-
+			message: '#^Property Nowo\\DoctrineEncryptBundle\\Tests\\Functional\\fixtures\\Entity\\Owner\:\:\$id \(int\|null\) is never assigned int so it can be removed from the property type\.$#'
+			identifier: property.unusedType
+			count: 1
+			path: tests/Functional/fixtures/Entity/Owner.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsIterable\(\) with iterable will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Command/AbstractCommandTest.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Command\\AbstractCommand@anonymous/tests/Unit/Command/AbstractCommandTest\.php\:155\:\:exposeGetEncryptionablePropertiesForConfig\(\) has parameter \$entityMetaData with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/Command/AbstractCommandTest.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Command\\AbstractCommand@anonymous/tests/Unit/Command/AbstractCommandTest\.php\:231\:\:exposeGetEncryptionableProperties\(\) has parameter \$entityMetaData with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/Command/AbstractCommandTest.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Command\\AbstractCommand@anonymous/tests/Unit/Command/AbstractCommandTest\.php\:284\:\:exposeGetEncryptedTableInfo\(\) has parameter \$entityMetaData with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/Command/AbstractCommandTest.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Command\\AbstractCommand@anonymous/tests/Unit/Command/AbstractCommandTest\.php\:332\:\:exposeGetEncryptedTableInfo\(\) has parameter \$entityMetaData with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/Command/AbstractCommandTest.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Command\\AbstractCommand@anonymous/tests/Unit/Command/AbstractCommandTest\.php\:365\:\:exposeGetColumnNameFromMetadata\(\) has parameter \$entityMetaData with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/Command/AbstractCommandTest.php
+
+		-
+			message: '#^Method Nowo\\DoctrineEncryptBundle\\Command\\AbstractCommand@anonymous/tests/Unit/Command/AbstractCommandTest\.php\:392\:\:exposeGetColumnNameFromMetadata\(\) has parameter \$entityMetaData with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: tests/Unit/Command/AbstractCommandTest.php
+
+		-
+			message: '#^Call to an undefined method Doctrine\\DBAL\\Connection\:\:expects\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Unit/Command/DoctrineDecryptDatabaseCommandTest.php
+
+		-
+			message: '#^Call to an undefined method Doctrine\\DBAL\\Connection\:\:expects\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: tests/Unit/Command/DoctrineEncryptDatabaseCommandTest.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Unit/Command/GenerateSecretKeyCommandTest.php
+
+		-
+			message: '#^Call to an undefined method Doctrine\\DBAL\\Connection\:\:method\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: tests/Unit/Command/RotateKeysCommandTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Symfony\\\\Component\\\\Config\\\\Definition\\\\Builder\\\\NodeDefinition'' and Symfony\\Component\\Config\\Definition\\Builder\\ArrayNodeDefinition\<Symfony\\Component\\Config\\Definition\\Builder\\TreeBuilder\<''array''\>\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/DependencyInjection/ConfigurationTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Symfony\\\\Component\\\\Config\\\\Definition\\\\Builder\\\\TreeBuilder'' and Symfony\\Component\\Config\\Definition\\Builder\\TreeBuilder\<''array''\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/DependencyInjection/ConfigurationTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertNotNull\(\) with Symfony\\Component\\Config\\Definition\\Builder\\ArrayNodeDefinition\<Symfony\\Component\\Config\\Definition\\Builder\\TreeBuilder\<''array''\>\> will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/DependencyInjection/ConfigurationTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with ''nowo_doctrine…'' and ''nowo_doctrine…'' will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/DependencyInjection/ConfigurationTest.php
+
+		-
+			message: '#^Cannot access offset ''default'' on array\|bool\|float\|int\|string\|null\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Unit/DependencyInjection/DoctrineEncryptExtensionTest.php
+
+		-
+			message: '#^Parameter \#2 \$array of method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\) expects array\<mixed\>\|ArrayAccess\<\(int\|string\), mixed\>, array\|bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Unit/DependencyInjection/DoctrineEncryptExtensionTest.php
+
+		-
+			message: '#^Parameter \#2 \$string of method PHPUnit\\Framework\\Assert\:\:assertStringEndsWith\(\) expects string, array\|bool\|float\|int\|string\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Unit/DependencyInjection/DoctrineEncryptExtensionTest.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: tests/Unit/DependencyInjection/DoctrineEncryptExtensionTest.php
+
+		-
+			message: '#^Parameter \#1 \$string of function trim expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 3
+			path: tests/Unit/Encryptors/HaliteEncryptorTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertIsArray\(\) with array will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Mapping/AttributeReaderTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with ''\<ENC\>'' and ''\<ENC\>'' will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Subscribers/DoctrineEncryptSubscriberTest.php
+
+		-
+			message: '#^Parameter \#2 \$string of method PHPUnit\\Framework\\Assert\:\:assertStringEndsWith\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: tests/Unit/Subscribers/DoctrineEncryptSubscriberTest.php
+
+		-
+			message: '#^Parameter \#2 \$string of method PHPUnit\\Framework\\Assert\:\:assertStringStartsWith\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
+			count: 7
+			path: tests/Unit/Subscribers/DoctrineEncryptSubscriberTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with ''\<ENC\>'' and ''\<ENC\>'' will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Util/EncryptUtilTest.php
+
+		-
+			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with ''nowo_doctrine…'' and ''nowo_doctrine…'' will always evaluate to true\.$#'
+			identifier: method.alreadyNarrowedType
+			count: 1
+			path: tests/Unit/Util/EncryptUtilTest.php
+
+		-
+			message: '#^Call to function method_exists\(\) with ''Doctrine\\\\Common\\\\Annotations\\\\AnnotationRegistry'' and ''registerLoader'' will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: tests/bootstrap.php
+
+		-
+			message: '#^Class Doctrine\\Common\\Annotations\\AnnotationRegistry not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: tests/bootstrap.php

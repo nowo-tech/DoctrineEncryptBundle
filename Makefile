@@ -5,7 +5,7 @@ COMPOSE_FILE := docker-compose.yml
 COMPOSE := docker-compose -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
-.PHONY: help up down build shell install update validate test test-coverage coverage-php-percent cs-check cs-fix qa clean ensure-up assets release-check release-check-demos composer-sync rector rector-dry phpstan check-no-cursor-coauthor strip-cursor-coauthor-from-history setup-hooks
+.PHONY: help up down down-dev build shell install update validate test test-coverage coverage-php-percent cs-check cs-fix qa clean ensure-up assets release-check release-check-demos composer-sync rector rector-dry phpstan check-no-cursor-coauthor check-open-prs strip-cursor-coauthor-from-history setup-hooks
 
 help:
 	@echo "Doctrine Encrypt Bundle - Development Commands"
@@ -15,19 +15,21 @@ help:
 	@echo "Targets:"
 	@echo "  up            Start Docker container"
 	@echo "  down          Stop Docker container"
+	@echo "  down-dev      Stop root container (alias of down; non-destructive)"
 	@echo "  build         Rebuild Docker image (no cache)"
 	@echo "  shell         Open shell in container"
 	@echo "  install       Install Composer dependencies"
 	@echo "  assets        No frontend assets in this bundle (no-op)"
 	@echo "  test          Run PHPUnit tests (starts container if needed)"
-	@echo "  test-coverage Run tests with code coverage; target 95%% (needs PCOV: run 'make build' if you see 'No code coverage driver')"
+	@echo "  test-coverage Run tests with code coverage; target >=99%% includable (needs PCOV: run 'make build' if you see 'No code coverage driver')"
 	@echo "  cs-check      Check code style"
 	@echo "  cs-fix        Fix code style"
 	@echo "  rector        Apply Rector refactoring"
 	@echo "  rector-dry    Run Rector in dry-run mode"
 	@echo "  phpstan       Run PHPStan static analysis"
 	@echo "  qa            Run all QA checks (validate + cs-check + test)"
-	@echo "  release-check Pre-release: cs-fix, cs-check, rector-dry, phpstan, test-coverage, demo healthchecks"
+	@echo "  release-check Pre-release: co-author + open-PRs + cs + phpstan + coverage + demos"
+	@echo "  check-open-prs Fail if unresolved open GitHub PRs remain (REQ-REL-003)"
 	@echo "  composer-sync Validate composer.json and align composer.lock (no install)"
 	@echo "  clean         Remove vendor and cache"
 	@echo "  update        Update composer.lock (composer update)"
@@ -45,7 +47,9 @@ up:
 	@echo "Container ready!"
 
 down:
-	$(COMPOSE) down
+	$(COMPOSE) down --remove-orphans
+
+down-dev: down
 
 build:
 	$(COMPOSE) build --no-cache
@@ -98,7 +102,7 @@ phpstan: ensure-up
 qa: ensure-up validate
 	$(COMPOSE) exec $(SERVICE_PHP) composer qa
 
-release-check: check-no-cursor-coauthor ensure-up composer-sync cs-fix cs-check rector-dry phpstan test-coverage release-check-demos
+release-check: check-no-cursor-coauthor check-open-prs ensure-up composer-sync cs-fix cs-check rector-dry phpstan test-coverage release-check-demos
 
 release-check-demos:
 	@$(MAKE) -C demo release-check
@@ -129,6 +133,10 @@ setup-hooks:
 check-no-cursor-coauthor:
 	@chmod +x .scripts/check-no-cursor-coauthor.sh
 	@./.scripts/check-no-cursor-coauthor.sh HEAD
+
+check-open-prs:
+	@chmod +x .scripts/check-open-prs.sh
+	@bash .scripts/check-open-prs.sh
 
 strip-cursor-coauthor-from-history:
 	@chmod +x .scripts/strip-cursor-coauthor-from-history.sh
