@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [2.3.2] - 2026-07-28
+
 ### Added
 
 - **REQ-CS-005:** `nowo-tech/phpstan-frankenphp` (require-dev) with classic + worker rulesets; PHPStan baseline for justified findings.
@@ -19,10 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **REQ-DOCS-016:** `demo/README.md` translated to English.
-- **Documentation:** README demo section uses `FRANKENPHP_MODE`; coverage section reports 100.00%.
 - **REQ-DOCS-002:** README `## Documentation` uses canonical base-link order; `GITHUB_CI.md` under Additional documentation.
 - **REQ-SF-005:** `SYMFONY_DEPRECATIONS_HELPER=max[direct]=0` in `phpunit.xml.dist`.
-- **REQ-PHP-001:** concrete services marked `final` (subscriber intentionally non-final for command/test collaboration).
+- **REQ-PHP-001:** concrete services marked `final` (subscriber intentionally non-final for command/test collaboration). Prefer `EncryptorInterface` / composition for custom encryptors.
+- **Documentation:** README demo section uses `FRANKENPHP_MODE`; coverage section reports 100.00%.
+- **Dev dependencies / CI:** php-cs-fixer, rector, phpstan, and `actions/cache` bumps (Dependabot).
+
+No application configuration changes required for typical Halite/Defuse/MysqlAes setups. See [UPGRADING.md](UPGRADING.md#upgrading-to-232).
 
 ---
 

@@ -29,6 +29,25 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.3.2
+
+No breaking changes for applications that use the bundle via Composer with Halite, Defuse, or MysqlAes as documented.
+
+### Optional notes
+
+- **Custom subclasses:** most concrete encryptors, commands, Twig extensions, and DI classes are now **`final`**. Implement `EncryptorInterface` (or compose services) instead of extending built-in encryptor/command classes. `DoctrineEncryptSubscriber` remains non-final for command/test collaboration.
+- **Maintainers:** `make down-dev`, `make check-open-prs`, FrankenPHP `FRANKENPHP_MODE`, and PHPStan FrankenPHP rules are available; see [GITHUB_CI.md](GITHUB_CI.md) and [DEMO-FRANKENPHP.md](DEMO-FRANKENPHP.md).
+- **Coverage:** see [COVERAGE.md](COVERAGE.md) for justified PHPUnit exclusions (includable `src/` is at 100%).
+
+Update as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+---
+
 ## Upgrading to 2.3.1
 
 No breaking changes for applications using the bundle via Composer.

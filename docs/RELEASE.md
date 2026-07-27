@@ -34,6 +34,13 @@
 
 ---
 
+## v2.3.2 (2026-07-28)
+
+- **Scope:** Nowo full-specs alignment — phpstan-frankenphp + FrankenPHP banner; `FRANKENPHP_MODE`; English `demo/README.md`; coverage 100% + COVERAGE.md; `down-dev` / `check-open-prs`; `max[direct]=0` deprecations; `final` services; canonical README docs order; Dependabot bumps (php-cs-fixer, rector, phpstan, actions/cache).
+- **Checklist:** CHANGELOG and UPGRADING updated; `make test` / `make phpstan`; resolve open PRs; `make check-no-cursor-coauthor`; commit; tag `v2.3.2`; push branch and tag.
+
+---
+
 ## v2.3.1 (2026-07-20)
 
 - **Scope:** Remove `demo/symfony7` (docs/Makefile); REQ-GIT-001 CI + scripts + hooks + GITHUB_CI.md; Code of Conduct; PHPUnit coverage excludes; drop obsolete `@Annotation`/`@Target` on `Encrypted`; README profile wording.
