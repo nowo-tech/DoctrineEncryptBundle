@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.4] - 2026-07-28
+
+### Changed
+
+- **REQ-DOCS-018:** GitHub About panel set — plain-text Description (aligned with `composer.json`), Website `https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle`, Topics (`php`, `symfony`, `symfony-bundle`, `frankenphp`, `doctrine`, `encryption`, `halite`, `defuse`, `gdpr`, `key-rotation`). Metadata is on GitHub only (not in the git tree).
+
+No application configuration or runtime changes. See [UPGRADING.md](UPGRADING.md#upgrading-to-234).
+
+---
+
 ## [2.3.3] - 2026-07-28
 
 ### Added

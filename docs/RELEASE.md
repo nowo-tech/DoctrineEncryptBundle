@@ -34,6 +34,13 @@
 
 ---
 
+## v2.3.4 (2026-07-28)
+
+- **Scope:** REQ-DOCS-018 — document GitHub About (Description / Packagist Website / Topics) already applied via `gh repo edit`.
+- **Checklist:** CHANGELOG and UPGRADING updated; working tree docs-only; commit; tag `v2.3.4`; push branch and tag.
+
+---
+
 ## v2.3.3 (2026-07-28)
 
 - **Scope:** Spec gaps — README stars/Coverage badges; Packagist metadata trim; demo PHP 8.5; PHPSTAN.md + baseline without blanket ignore; SECURITY checklist REQ-SEC-004; Twig decrypt hygiene; drop `.travis.yml`.

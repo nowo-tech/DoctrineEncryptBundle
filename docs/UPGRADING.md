@@ -29,6 +29,26 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.3.4
+
+No breaking changes and no Composer/runtime changes for applications.
+
+### Optional notes
+
+- **Maintainers:** GitHub repository **About** (Description, Website, Topics) was filled per REQ-DOCS-018. Re-check with:
+  ```bash
+  gh repo view nowo-tech/DoctrineEncryptBundle --json description,homepageUrl,repositoryTopics
+  ```
+
+Update as usual (optional; no code delta vs 2.3.3):
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+---
+
 ## Upgrading to 2.3.3
 
 No breaking changes for applications that use the bundle via Composer with Halite, Defuse, or MysqlAes as documented.
