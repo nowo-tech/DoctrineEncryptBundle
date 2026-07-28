@@ -14,7 +14,7 @@ The bundle includes a **dockerized** demo project (**Symfony 8**). It runs on **
 
 | Demo      | Path            | Default port | PHP | Notes |
 |-----------|-----------------|--------------|-----|-------|
-| Symfony 8 | `demo/symfony8/` | 8008         | 8.4 | Includes **MysqlAes** demo (`/mysql-aes-note`) |
+| Symfony 8 | `demo/symfony8/` | 8008         | 8.5 | FrankenPHP `1-php8.5-alpine`; **MysqlAes** demo (`/mysql-aes-note`) |
 
 ## Quick start (Docker)
 

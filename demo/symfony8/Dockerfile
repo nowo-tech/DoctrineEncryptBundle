@@ -1,6 +1,6 @@
-# FrankenPHP + PHP 8.4 for Doctrine Encrypt Bundle Demo (Symfony 8)
+# FrankenPHP + PHP 8.5 for Doctrine Encrypt Bundle Demo (Symfony 8)
 # https://frankenphp.dev/docs/docker/
-FROM dunglas/frankenphp:1-php8.4-alpine
+FROM dunglas/frankenphp:1-php8.5-alpine
 
 RUN apk add --no-cache git unzip bash
 

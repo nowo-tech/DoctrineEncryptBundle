@@ -6,7 +6,7 @@ By default **`docker-compose`** uses **`APP_ENV=dev`**. Runtime mode is controll
 
 | Demo     | Default port | PHP |
 |----------|--------------|-----|
-| symfony8 | 8008         | 8.4 |
+| symfony8 | 8008         | 8.5 |
 
 ## Requirements
 

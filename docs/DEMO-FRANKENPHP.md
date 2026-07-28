@@ -112,6 +112,19 @@ After changing env or Caddyfile, restart: `docker-compose restart` or `make -C d
 
 ---
 
+## Smoke check (demo up)
+
+After `make -C demo/symfony8 setup` (or `up` + `install` + schema/keys):
+
+1. Open `http://localhost:8008` (or the `PORT` from Compose) — home page must respond **200**.
+2. Confirm FrankenPHP PHP version in container: `make -C demo/symfony8 shell` then `php -v` → **8.5.x** (image `dunglas/frankenphp:1-php8.5-alpine`).
+3. Optional: create a secret message via CRUD and reload — ciphertext in DB, plaintext in UI after decrypt.
+4. Switch mode without rebuild: set `FRANKENPHP_MODE=classic` in `demo/symfony8/.env`, then `docker compose up -d` (recreate). Confirm classic vs worker behaviour as documented above.
+
+Release maintainers: include this smoke in pre-tag checks when demos change (see [RELEASE.md](RELEASE.md)).
+
+---
+
 ## Reproducing in another bundle
 
 See [TwigInspectorBundle DEMO-FRANKENPHP](https://github.com/nowo-tech/TwigInspectorBundle/blob/main/docs/DEMO-FRANKENPHP.md) section "Reproducing in another bundle" for the full checklist.

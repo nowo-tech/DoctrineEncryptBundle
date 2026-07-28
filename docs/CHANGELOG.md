@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.3] - 2026-07-28
+
+### Added
+
+- **REQ-CS-006:** [docs/PHPSTAN.md](PHPSTAN.md) documents level 8 + justified baseline categories (no blanket `ignoreErrors`).
+- **REQ-DOCS-004:** README badges for GitHub stars and Coverage.
+- **REQ-SEC-002:** Release security checklist includes AI audit (REQ-SEC-004).
+
+### Changed
+
+- **REQ-DEMO-010:** Demo FrankenPHP image bumped to `dunglas/frankenphp:1-php8.5-alpine`; docs/smoke notes updated.
+- **REQ-PKG-004:** Shorter Packagist `description` and focused `keywords`.
+- **Security:** Twig `|decrypt` dead `is_safe html` legacy code removed; SECURITY.md documents auto-escape + MysqlAes deprecation.
+- **Demo Compose:** removed Flex leftover `database_data` volume fragment.
+- **PHPStan:** baseline regenerated to absorb `missingType.iterableValue` (replacing blanket ignore).
+
+### Removed
+
+- Legacy `.travis.yml` (CI is GitHub Actions only).
+
+No application configuration changes required. See [UPGRADING.md](UPGRADING.md#upgrading-to-233).
+
+---
+
 ## [2.3.2] - 2026-07-28
 
 ### Added

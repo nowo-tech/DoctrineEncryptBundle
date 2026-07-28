@@ -1,5 +1,5 @@
 # PHPStan configuration for Doctrine Encrypt Bundle
-# Compatible with PHP 8.1+ and Symfony 7.x / 8.x
+# Level 8 (REQ-CS-006). PHP floor matches composer.json (>=8.2 <8.6).
 
 includes:
     - phpstan-baseline.neon
@@ -13,5 +13,3 @@ parameters:
         - tests
     excludePaths:
         - demo/*
-    ignoreErrors:
-        - '#no value type specified in iterable type#'

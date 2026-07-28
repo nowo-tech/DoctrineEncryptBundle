@@ -24,7 +24,7 @@ There is no separate HTTP API exposed by the bundle itself beyond what your app 
 | Database | Stolen DB without keys | Ciphertext remains confidential if keys are not leaked. |
 | Path / env | Misconfiguration | Wrong paths or env vars can point to world-readable key files or test keys in production. |
 | CLI | Privilege / operator error | Commands can mass-decrypt or re-encrypt; run only with appropriate access and backups. |
-| Twig | XSS / information disclosure | Decrypted values in HTML without escaping can leak data; follow Symfony escaping rules. |
+| Twig | XSS / information disclosure | `|decrypt` does **not** mark output as safe HTML — Twig auto-escaping applies. Still only decrypt what you must display. |
 | Dependencies | Vulnerable crypto or Symfony libs | Rely on audited Halite/Defuse and keep dependencies updated (`composer audit`). |
 
 ## Mitigations
@@ -33,7 +33,8 @@ There is no separate HTTP API exposed by the bundle itself beyond what your app 
 - Store keys **outside the web root**, restrict filesystem permissions, and prefer **secrets management** in production.
 - Keep **`secret_directory_path`** and env-based keys out of version control; use `.gitignore` for key files.
 - Run **key rotation** during maintenance windows with backups; use `doctrine:encrypt:rotate-keys` or the documented manual flow.
-- In Twig, only decrypt what you must display; escape output appropriately for your context (HTML, JSON, etc.).
+- In Twig, only decrypt what you must display; `|decrypt` is subject to auto-escaping (no `is_safe: html`). Escape explicitly when rendering outside HTML contexts if needed.
+- Prefer **Halite** or **Defuse** for new data. Treat **MysqlAes** as legacy MySQL interop only (`@deprecated`); do not choose it for new production deployments.
 - Run **`composer audit`** before releases and apply security updates promptly.
 
 ## Cryptography and secrets
@@ -79,9 +80,10 @@ Before tagging a release, confirm:
 | **Input / output** | Inputs validated; outputs escaped in Twig/templates where user-controlled. |
 | **Dependencies** | `composer audit` run; issues triaged. |
 | **Logging** | Logs do not print secrets, tokens, or session identifiers unnecessarily. |
-| **Cryptography** | If used: keys from secure config; never hardcoded. |
+| **Cryptography** | Prefer Halite/Defuse. `MysqlAes` is `@deprecated` (AES-128-ECB); legacy interop only — see [MYSQL_AES.md](MYSQL_AES.md). |
 | **Permissions / exposure** | Routes and admin features documented; roles configured for production. |
 | **Limits / DoS** | Timeouts, size limits, rate limits where applicable. |
+| **AI security audit (REQ-SEC-004)** | Latest grade recorded in the org report `BUNDLES_SECURITY_ANALYSIS.md` (DoctrineEncryptBundle entry). Must be **Pass (good)** or **Pass (conditional)** before tagging. |
 
 Record confirmation in the release PR or tag notes.
 

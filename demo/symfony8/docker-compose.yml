@@ -52,11 +52,6 @@ volumes:
   composer-cache:
   mysql_data:
 
-###> doctrine/doctrine-bundle ###
-  database_data:
-###< doctrine/doctrine-bundle ###
-    driver: local
-
 networks:
   doctrine-encrypt-demo-network:
     driver: bridge

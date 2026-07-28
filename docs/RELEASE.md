@@ -34,6 +34,13 @@
 
 ---
 
+## v2.3.3 (2026-07-28)
+
+- **Scope:** Spec gaps — README stars/Coverage badges; Packagist metadata trim; demo PHP 8.5; PHPSTAN.md + baseline without blanket ignore; SECURITY checklist REQ-SEC-004; Twig decrypt hygiene; drop `.travis.yml`.
+- **Checklist:** CHANGELOG and UPGRADING updated; `make test` / `make phpstan` / `composer validate --strict`; `make check-no-cursor-coauthor`; commit; tag `v2.3.3`; push branch and tag.
+
+---
+
 ## v2.3.2 (2026-07-28)
 
 - **Scope:** Nowo full-specs alignment — phpstan-frankenphp + FrankenPHP banner; `FRANKENPHP_MODE`; English `demo/README.md`; coverage 100% + COVERAGE.md; `down-dev` / `check-open-prs`; `max[direct]=0` deprecations; `final` services; canonical README docs order; Dependabot bumps (php-cs-fixer, rector, phpstan, actions/cache).

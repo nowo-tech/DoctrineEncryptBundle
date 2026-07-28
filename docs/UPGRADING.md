@@ -29,6 +29,24 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.3.3
+
+No breaking changes for applications that use the bundle via Composer with Halite, Defuse, or MysqlAes as documented.
+
+### Optional notes
+
+- **Twig `|decrypt`:** output remains subject to Twig auto-escaping (no `is_safe: html`). Prefer Halite/Defuse for new data; MysqlAes stays available but `@deprecated` for new production use.
+- **Maintainers / demos:** Symfony 8 demo image is FrankenPHP **PHP 8.5** (`dunglas/frankenphp:1-php8.5-alpine`). See [DEMO-FRANKENPHP.md](DEMO-FRANKENPHP.md) smoke check and [PHPSTAN.md](PHPSTAN.md) for baseline policy.
+
+Update as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+---
+
 ## Upgrading to 2.3.2
 
 No breaking changes for applications that use the bundle via Composer with Halite, Defuse, or MysqlAes as documented.

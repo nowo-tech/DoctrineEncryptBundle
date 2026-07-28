@@ -8,11 +8,8 @@ use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use Twig\Attribute\AsTwigFilter;
-use Twig\Extension\AbstractExtension;
 
 use function strlen;
-
-// use Twig\TwigFilter;
 
 /**
  * Twig extension for decryption filter.
@@ -24,23 +21,16 @@ use function strlen;
  *
  * Usage: {{ value|decrypt }} or {{ value|decrypt('financial_data') }}
  *
+ * Output is not marked HTML-safe — Twig auto-escaping applies (do not reintroduce is_safe html).
+ *
  * To decrypt then mask: {{ value|decrypt('personal_data')|mask(4) }} (mask from MaskExtension).
  */
-final class DecryptExtension /* extends AbstractExtension */
+final class DecryptExtension
 {
     public function __construct(
         private readonly EncryptorRegistry $registry
     ) {
     }
-
-    /*
-    public function getFilters(): array
-    {
-        return [
-            new TwigFilter('decrypt', $this->decrypt(...), ['is_safe' => ['html']]),
-        ];
-    }
-    */
 
     /**
      * Decrypts a value if it has the encryption marker at the end.
