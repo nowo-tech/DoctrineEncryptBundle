@@ -5,6 +5,8 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 ## Table of contents
 
 - [General upgrade process](#general-upgrade-process)
+- [Upgrading to 2.3.6](#upgrading-to-236)
+  - [Optional notes](#optional-notes)
 - [Upgrading to 2.3.5](#upgrading-to-235)
   - [Optional notes](#optional-notes)
 - [Upgrading to 2.3.4](#upgrading-to-234)
@@ -61,6 +63,23 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 6. **Test**  
    Verify that encrypted entities are still read/written correctly and that console commands work.
+
+---
+
+## Upgrading to 2.3.6
+
+No breaking changes for applications. Maintainer/CI Makefiles now tolerate Compose V2 and standalone checkouts without monorepo `.scripts/`.
+
+### Optional notes
+
+- Prefer Docker Compose V2 (`docker compose`). `make update-deps` remains available only when the monorepo helper Makefiles are present.
+
+Update as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
 
 ---
 

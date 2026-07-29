@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.3.6] - 2026-07-29](#236-2026-07-29)
+  - [Changed](#changed)
 - [[2.3.5] - 2026-07-29](#235-2026-07-29)
   - [Added](#added)
   - [Changed](#changed)
@@ -79,6 +81,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - [Fixed](#fixed)
 
 ## [Unreleased]
+
+---
+
+## [2.3.6] - 2026-07-29
+
+### Changed
+
+- **REQ-MAKE-010:** Root and `demo/symfony8` Makefiles prefer `docker compose` (V2) and fall back to `docker-compose` (V1).
+- **REQ-MAKE-009:** Monorepo `update-deps` includes use `-include` so standalone GitHub Actions checkouts do not fail when `../.scripts/` is absent.
+- Demo `config/reference.php`: drop auto-generated `declare(strict_types=1)` (Symfony Flex reference file).
+
+No application configuration changes required. See [UPGRADING.md](UPGRADING.md#upgrading-to-236).
 
 ---
 

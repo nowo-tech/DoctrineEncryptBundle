@@ -4,6 +4,7 @@
 
 - [Creating a new version (e.g. v1.1.0)](#creating-a-new-version-eg-v110)
 - [After releasing](#after-releasing)
+- [v2.3.6 (2026-07-29)](#v236-2026-07-29)
 - [v2.3.5 (2026-07-29)](#v235-2026-07-29)
 - [v2.3.4 (2026-07-28)](#v234-2026-07-28)
 - [v2.3.3 (2026-07-28)](#v233-2026-07-28)
@@ -58,6 +59,13 @@
 
 - Keep `## [Unreleased]` at the top of [CHANGELOG.md](CHANGELOG.md) for the next version; add new changes there.
 - Optionally bump a dev version in `composer.json` for development.
+
+---
+
+## v2.3.6 (2026-07-29)
+
+- **Scope:** REQ-MAKE-010 Compose V2 preference; REQ-MAKE-009 optional `-include` for monorepo update-deps; Flex `reference.php` hygiene.
+- **Checklist:** CHANGELOG and UPGRADING updated; `make test` / `make phpstan`; open PRs = 0; commit; tag `v2.3.6`; push branch and tag.
 
 ---
 
