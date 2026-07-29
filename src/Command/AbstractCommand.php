@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
@@ -46,6 +47,8 @@ abstract class AbstractCommand extends Command
      * Returns an iterable over all entities of the given class (for batch processing).
      *
      * @param string $entityName Fully qualified entity class name
+     *
+     * @return iterable<object>
      */
     protected function getEntityIterator(string $entityName): iterable
     {
@@ -68,6 +71,8 @@ abstract class AbstractCommand extends Command
 
     /**
      * Returns metadata for all entities that have at least one property marked with Encrypted.
+     *
+     * @return list<ClassMetadata<object>>
      */
     protected function getEncryptionableEntityMetaData(): array
     {
@@ -75,7 +80,7 @@ abstract class AbstractCommand extends Command
         $metaDataArray = $this->entityManager->getMetadataFactory()->getAllMetadata();
 
         foreach ($metaDataArray as $entityMetaData) {
-            if (isset($entityMetaData->isMappedSuperclass) && $entityMetaData->isMappedSuperclass) {
+            if ($entityMetaData->isMappedSuperclass) {
                 continue;
             }
 
@@ -94,13 +99,14 @@ abstract class AbstractCommand extends Command
     /**
      * Returns properties of the entity that are marked with the Encrypted attribute.
      *
-     * @param object $entityMetaData Doctrine entity metadata (ClassMetadata)
+     * @param ClassMetadata<object>|object $entityMetaData Doctrine entity metadata (ClassMetadata)
      *
      * @return array<ReflectionProperty>
      */
     protected function getEncryptionableProperties($entityMetaData): array
     {
         // Create reflectionClass for each meta data object
+        /** @var object{name: class-string} $entityMetaData */
         $reflectionClass = new ReflectionClass($entityMetaData->name);
         $propertyArray   = $reflectionClass->getProperties();
         $properties      = [];
@@ -117,13 +123,14 @@ abstract class AbstractCommand extends Command
     /**
      * Returns encrypted properties with their effective config name (resolves "default" to $defaultConfigName).
      *
-     * @param object $entityMetaData Doctrine entity metadata (ClassMetadata)
+     * @param ClassMetadata<object>|object $entityMetaData Doctrine entity metadata (ClassMetadata)
      * @param string $defaultConfigName Default config name (e.g. from EncryptorRegistry::getDefaultName())
      *
      * @return array<int, array{property: ReflectionProperty, config: string}>
      */
     protected function getEncryptionablePropertiesWithConfig($entityMetaData, string $defaultConfigName): array
     {
+        /** @var object{name: class-string} $entityMetaData */
         $reflectionClass = new ReflectionClass($entityMetaData->name);
         $result          = [];
         foreach ($reflectionClass->getProperties() as $property) {
@@ -141,7 +148,7 @@ abstract class AbstractCommand extends Command
      * Returns properties marked with Encrypted that belong to the given config.
      * When a property has config "default", it is included if $defaultConfigName === $configName.
      *
-     * @param object $entityMetaData Doctrine entity metadata
+     * @param ClassMetadata<object>|object $entityMetaData Doctrine entity metadata
      * @param string $configName Config name (e.g. personal_data, financial_data)
      * @param string $defaultConfigName Registry default config name (for resolving Encrypted('default'))
      *
@@ -149,6 +156,7 @@ abstract class AbstractCommand extends Command
      */
     protected function getEncryptionablePropertiesForConfig($entityMetaData, string $configName, string $defaultConfigName): array
     {
+        /** @var object{name: class-string} $entityMetaData */
         $reflectionClass = new ReflectionClass($entityMetaData->name);
         $propertyArray   = $reflectionClass->getProperties();
         $properties      = [];
@@ -170,6 +178,8 @@ abstract class AbstractCommand extends Command
      *
      * @param string $configName Config alias (e.g. personal_data)
      * @param string $defaultConfigName Registry default config name (for resolving Encrypted('default'))
+     *
+     * @return list<ClassMetadata<object>>
      */
     protected function getEncryptionableEntityMetaDataForConfig(string $configName, string $defaultConfigName): array
     {
@@ -177,7 +187,7 @@ abstract class AbstractCommand extends Command
         $metaDataArray = $this->entityManager->getMetadataFactory()->getAllMetadata();
 
         foreach ($metaDataArray as $entityMetaData) {
-            if (isset($entityMetaData->isMappedSuperclass) && $entityMetaData->isMappedSuperclass) {
+            if ($entityMetaData->isMappedSuperclass) {
                 continue;
             }
 
@@ -194,7 +204,7 @@ abstract class AbstractCommand extends Command
      * Returns table name, identifier column names, and encrypted column names for the given entity and config.
      * Used for raw SQL encrypt/decrypt (no Doctrine lifecycle events).
      *
-     * @param object $entityMetaData Doctrine ClassMetadata
+     * @param ClassMetadata<object>|object $entityMetaData Doctrine ClassMetadata
      * @param string $configName Config name (e.g. personal_data)
      * @param string $defaultConfigName Default config name for resolving Encrypted('default')
      *
@@ -202,6 +212,7 @@ abstract class AbstractCommand extends Command
      */
     protected function getEncryptedTableInfo($entityMetaData, string $configName, string $defaultConfigName): array
     {
+        /** @var ClassMetadata<object>&object{name: class-string} $entityMetaData */
         $table = $entityMetaData->getTableName();
         // Resolve identifier column names from field names so we use actual DB column names (Doctrine may expose field names in some versions)
         $idColumns = [];
@@ -226,7 +237,7 @@ abstract class AbstractCommand extends Command
     /**
      * Returns the database column name for a field (compatible with Doctrine ORM 2.x and 3.x).
      *
-     * @param object $entityMetaData Doctrine ClassMetadata
+     * @param ClassMetadata<object>|object $entityMetaData Doctrine ClassMetadata
      * @param string $fieldName Property/field name
      */
     protected function getColumnNameFromMetadata($entityMetaData, string $fieldName): string
@@ -234,6 +245,7 @@ abstract class AbstractCommand extends Command
         if (method_exists($entityMetaData, 'getColumnName')) {
             return $entityMetaData->getColumnName($fieldName);
         }
+        /** @var ClassMetadata<object> $entityMetaData */
         $mapping = $entityMetaData->getFieldMapping($fieldName);
 
         return $mapping['columnName'] ?? $fieldName;

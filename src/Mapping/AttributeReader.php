@@ -11,7 +11,7 @@ use ReflectionClass;
 use ReflectionProperty;
 
 use function assert;
-use function is_string;
+use function is_array;
 
 /**
  * Reads PHP 8 attributes from classes and properties, restricted to bundle annotation types.
@@ -27,11 +27,9 @@ final class AttributeReader
      * The function `getClassAnnotations` takes a `ReflectionClass` object as input and returns an array of
      * attribute instances.
      *
-     * @param ReflectionClass $class The parameter is an instance of the `ReflectionClass` class.
-     *                               It represents a class and provides methods to retrieve information about the class, such as its
-     *                               name, methods, properties, and annotations.
+     * @param ReflectionClass<object> $class the parameter is an instance of the `ReflectionClass` class
      *
-     * @return array an array of attribute instances
+     * @return array<string, Annotation|array<Annotation>>
      */
     public function getClassAnnotations(ReflectionClass $class): array
     {
@@ -42,13 +40,11 @@ final class AttributeReader
      * The function `getClassAnnotation` retrieves a specific class annotation by name, or returns null if
      * it doesn't exist.
      *
-     * @param ReflectionClass $class The parameter is an instance of the ReflectionClass class. It
-     *                               represents a class and provides methods to retrieve information about the class, such as its name,
-     *                               methods, properties, and annotations.
+     * @param ReflectionClass<object> $class the parameter is an instance of the ReflectionClass class
      * @param string $annotationName the parameter is a string that represents the name of
      *                               the annotation you want to retrieve from the class
      *
-     * @return Annotation|array|null an array, an instance of the Annotation class, or null
+     * @return Annotation|array<Annotation>|null an array, an instance of the Annotation class, or null
      */
     public function getClassAnnotation(ReflectionClass $class, string $annotationName): array|Annotation|null
     {
@@ -59,11 +55,9 @@ final class AttributeReader
      * The function `getPropertyAnnotations` returns an array of attribute instances for a given reflection
      * property.
      *
-     * @param ReflectionProperty $property The parameter is an instance of the
-     *                                     `ReflectionProperty` class. It represents a property of a class and provides information about that
-     *                                     property, such as its name, visibility, and annotations.
+     * @param ReflectionProperty $property the parameter is an instance of the `ReflectionProperty` class
      *
-     * @return array an array of property annotations
+     * @return array<string, Annotation|array<Annotation>>
      */
     public function getPropertyAnnotations(ReflectionProperty $property): array
     {
@@ -71,17 +65,14 @@ final class AttributeReader
     }
 
     /**
-     * @param ReflectionProperty property A \ReflectionProperty object representing the property for which
-     * you want to retrieve the annotation
-     * @param string annotationName The `annotationName` parameter is a string that represents the name of
-     * the annotation you want to retrieve from the property
+     * @param ReflectionProperty $property a \ReflectionProperty object representing the property for which
+     *                                     you want to retrieve the annotation
+     * @param string $annotationName the name of the annotation you want to retrieve from the property
      *
      * @phpstan-param class-string $annotationName
      *
-     * The function returns the annotation of a given property or null if it doesn't exist.
-     *
-     * @return Annotation|array|null an array or an instance of the Annotation class, or null if the
-     *                               specified annotation is not found
+     * @return Annotation|array<Annotation>|null an array or an instance of the Annotation class, or null if the
+     *                                           specified annotation is not found
      */
     public function getPropertyAnnotation(ReflectionProperty $property, string $annotationName): array|Annotation|null
     {
@@ -91,7 +82,7 @@ final class AttributeReader
     /**
      * Converts reflection attributes to instances, filtering to bundle annotation types only.
      *
-     * @param array<ReflectionAttribute> $attributes Reflection attributes from a class or property
+     * @param array<ReflectionAttribute<object>> $attributes Reflection attributes from a class or property
      *
      * @return array<string, Annotation|array<Annotation>> Attribute name => instance(s)
      */
@@ -101,7 +92,6 @@ final class AttributeReader
 
         foreach ($attributes as $attribute) {
             $attributeName = $attribute->getName();
-            assert(is_string($attributeName));
             // Only process bundle annotation types (e.g. Encrypted)
             if (!is_subclass_of($attributeName, Annotation::class)) {
                 continue;
@@ -111,11 +101,13 @@ final class AttributeReader
             assert($instance instanceof Annotation);
 
             if ($this->isRepeatable($attributeName)) {
-                if (!isset($instances[$attributeName])) {
+                if (!isset($instances[$attributeName]) || !is_array($instances[$attributeName])) {
                     $instances[$attributeName] = [];
                 }
-
-                $instances[$attributeName][] = $instance;
+                /** @var array<Annotation> $list */
+                $list                      = $instances[$attributeName];
+                $list[]                    = $instance;
+                $instances[$attributeName] = $list;
             } else {
                 $instances[$attributeName] = $instance;
             }
@@ -135,9 +127,15 @@ final class AttributeReader
             return $this->isRepeatableAttribute[$attributeClassName];
         }
 
+        assert(class_exists($attributeClassName));
         $reflectionClass = new ReflectionClass($attributeClassName);
-        $attribute       = $reflectionClass->getAttributes()[0]->newInstance();
+        $attribs         = $reflectionClass->getAttributes(Attribute::class);
+        if ($attribs === []) {
+            return $this->isRepeatableAttribute[$attributeClassName] = false;
+        }
+        /** @var Attribute $attrInstance */
+        $attrInstance = $attribs[0]->newInstance();
 
-        return $this->isRepeatableAttribute[$attributeClassName] = ($attribute->flags & Attribute::IS_REPEATABLE) > 0;
+        return $this->isRepeatableAttribute[$attributeClassName] = ($attrInstance->flags & Attribute::IS_REPEATABLE) > 0;
     }
 }

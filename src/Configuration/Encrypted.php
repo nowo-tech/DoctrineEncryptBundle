@@ -22,7 +22,7 @@ final class Encrypted implements Annotation
     public string $config = 'default';
 
     /**
-     * @param array|string $configOrValues Config alias (e.g. 'personal_data'), or annotation array with 'config'/'value' key
+     * @param array<string, mixed>|string $configOrValues Config alias (e.g. 'personal_data'), or annotation array with 'config'/'value' key
      * @param string|null $config Config alias when using named argument (e.g. #[Encrypted(config: 'financial_data')])
      */
     public function __construct(string|array $configOrValues = 'default', ?string $config = null)

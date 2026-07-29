@@ -2,26 +2,16 @@
 
 PHPStan runs at **level 8** (`phpstan.neon.dist`) with `nowo-tech/phpstan-frankenphp` classic + worker rulesets (REQ-CS-005).
 
-There is **no** blanket `ignoreErrors` in `phpstan.neon.dist`. Known issues are tracked in the committed **`phpstan-baseline.neon`**.
+- `ignoreErrors` in config is **empty** (`[]`).
+- Committed **`phpstan-baseline.neon`** is empty (`ignoreErrors: []`) — analysis is clean at level 8.
+- `treatPhpDocTypesAsCertain: false` avoids false positives on Doctrine/Twig PHPDoc edges.
+- Bootstrap: `phpstan/bootstrap.php` (+ stubs) for optional `AsDoctrineListener` when doctrine-bundle is not installed in the analyser context.
 
 ## Baseline policy
 
 - Prefer **fixing** findings over growing the baseline.
-- Regenerate the baseline only in a dedicated change (do not silently expand it with unrelated work).
-- New production code must not add baseline entries without a linked issue or an entry in the table below.
-
-## Baseline categories (justified)
-
-Approximate mix after the 2026-07-28 refresh (~118 entries):
-
-| Identifier | Approx. count | Justification | Removal target |
-|------------|---------------|---------------|----------------|
-| `missingType.iterableValue` | ~37 | Test helpers and array-shaped configs without value types; low risk, high noise | Annotate arrays / `@phpstan-type` in tests and DI Configuration |
-| `argument.type` | ~15 | Doctrine / Reflection / mock seams in subscriber and AttributeReader | Narrow types where safe without breaking ORM 2/3 dual support |
-| `method.notFound` / `class.notFound` | ~15 | Conditional stubs and PHPUnit doubles; some Attribute API edges | Replace with interfaces or stubs under `tests/` |
-| `missingType.parameter` | ~9 | Legacy PHPDoc gaps on command helpers | Add parameter types incrementally |
-| `method.alreadyNarrowedType` / `function.alreadyNarrowedType` | ~15 | Defensive `is_*` after typed params (CLI / crypto paths) | Simplify after PHP 8.2+ assert cleanup |
-| Other (`phpDoc.parseError`, generics, dead code, …) | remainder | Isolated; mostly tests and AttributeReader | Fix when touching those files |
+- Do **not** reintroduce baseline entries without a linked issue and an entry in this doc.
+- New production code must not add baseline noise; CI runs `composer phpstan` on every push (see `.github/workflows/ci.yml`).
 
 ## Commands
 

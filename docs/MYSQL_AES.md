@@ -2,6 +2,27 @@
 
 The bundle provides a **`MysqlAes`** encryptor that uses **AES-128-ECB** with the same key padding as MySQL’s [`AES_ENCRYPT()`](https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html) / [`AES_DECRYPT()`](https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html) when `block_encryption_mode` is `aes-128-ecb` (default).
 
+## Table of contents
+
+- [Configuration](#configuration)
+- [The `<ENC>` marker — when you need it (and when you must not add it)](#the-enc-marker-when-you-need-it-and-when-you-must-not-add-it)
+  - [“I used `AES_ENCRYPT` and Doctrine / Twig does not decrypt”](#i-used-aes_encrypt-and-doctrine-twig-does-not-decrypt)
+  - [Insert encrypted data **for Doctrine** (you do not build `<ENC>` yourself)](#insert-encrypted-data-for-doctrine-you-do-not-build-enc-yourself)
+  - [Insert with **`AES_ENCRYPT` in SQL** (no `<ENC>`)](#insert-with-aes_encrypt-in-sql-no-enc)
+  - [Advanced: SQL `INSERT` into an ORM column **with** `<ENC>` (MySQL only)](#advanced-sql-insert-into-an-orm-column-with-enc-mysql-only)
+- [Inserting encrypted data in MySQL (native SQL)](#inserting-encrypted-data-in-mysql-native-sql)
+  - [1. Table and column type](#1-table-and-column-type)
+  - [2. INSERT in SQL (mysql client)](#2-insert-in-sql-mysql-client)
+  - [3. INSERT with bound parameters (Doctrine DBAL)](#3-insert-with-bound-parameters-doctrine-dbal)
+  - [4. UPDATE an existing row](#4-update-an-existing-row)
+  - [5. INSERT with multiple columns (plain + encrypted)](#5-insert-with-multiple-columns-plain-encrypted)
+  - [6. Two paths — do not mix formats on the same column](#6-two-paths-do-not-mix-formats-on-the-same-column)
+  - [7. Same key as the bundle `MysqlAes` encryptor](#7-same-key-as-the-bundle-mysqlaes-encryptor)
+- [Native SQL (repository / read)](#native-sql-repository-read)
+  - [LIKE filters (demo lists)](#like-filters-demo-lists)
+- [Performance](#performance)
+- [Security notes](#security-notes)
+
 ## Configuration
 
 ```yaml

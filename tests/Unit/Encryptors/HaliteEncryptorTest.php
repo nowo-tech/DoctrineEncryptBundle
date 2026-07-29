@@ -134,7 +134,7 @@ class HaliteEncryptorTest extends TestCase
         $keyObj  = KeyFactory::generateEncryptionKey();
         $tmp     = tempnam(sys_get_temp_dir(), 'halite_');
         KeyFactory::save($keyObj, $tmp);
-        $keyContent = trim(file_get_contents($tmp));
+        $keyContent = trim((string) file_get_contents($tmp));
         @unlink($tmp);
 
         $halite    = new HaliteEncryptor($keyfile, $keyContent);
@@ -176,7 +176,7 @@ class HaliteEncryptorTest extends TestCase
         try {
             $halite = new HaliteEncryptor($keyfile);
             $halite->encrypt(self::DATA);
-            $this->assertSame(trim($keyContent), file_get_contents($keyfile));
+            $this->assertSame(trim((string) $keyContent), (string) file_get_contents($keyfile));
         } finally {
             @unlink($keyfile);
         }
@@ -217,7 +217,7 @@ class HaliteEncryptorTest extends TestCase
         $keyObj = KeyFactory::generateEncryptionKey();
         $tmp    = tempnam(sys_get_temp_dir(), 'halite_');
         KeyFactory::save($keyObj, $tmp);
-        $keyContent = "\n  " . trim(file_get_contents($tmp)) . "  \n";
+        $keyContent = "\n  " . trim((string) file_get_contents($tmp)) . "  \n";
         @unlink($tmp);
 
         $halite    = new HaliteEncryptor('/nonexistent.key', $keyContent);

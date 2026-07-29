@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Tests\Functional;
 
 use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Logging\DebugStack;
 use Doctrine\DBAL\Logging\Middleware;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
@@ -13,36 +12,24 @@ use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\Driver\AttributeDriver;
 use Doctrine\ORM\ORMSetup;
 use Doctrine\ORM\Tools\SchemaTool;
-use InvalidArgumentException;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use PHPUnit\Framework\Constraint\LogicalNot;
 use PHPUnit\Framework\Constraint\StringContains;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\VarExporter\ProxyHelper;
 
 use function count;
-use function is_bool;
-use function is_string;
 
 use const E_ALL;
 use const PHP_VERSION_ID;
 
-/**
- * @property DebugStack|SqlQueryCollector $sqlLoggerStack
- */
 abstract class AbstractFunctionalTestCase extends TestCase
 {
-    /** @var DoctrineEncryptSubscriber */
-    protected $subscriber;
-    /** @var EncryptorInterface */
-    protected $encryptor;
-    /** @var false|string */
-    protected $dbFile;
-    /** @var EntityManager */
-    protected $entityManager;
-    /** @var DebugStack|SqlQueryCollector */
-    protected $sqlLoggerStack;
+    protected DoctrineEncryptSubscriber $subscriber;
+    protected EncryptorInterface $encryptor;
+    protected string $dbFile;
+    protected EntityManager $entityManager;
+    protected SqlQueryCollector $sqlLoggerStack;
 
     abstract protected function getEncryptor(): EncryptorInterface;
 
@@ -51,16 +38,8 @@ abstract class AbstractFunctionalTestCase extends TestCase
      */
     private function configureOrmLazyObjects(Configuration $config): void
     {
-        if (method_exists($config, 'enableNativeLazyObjects') && PHP_VERSION_ID >= 80400) {
+        if (PHP_VERSION_ID >= 80400) {
             $config->enableNativeLazyObjects(true);
-
-            return;
-        }
-
-        if (!method_exists(ProxyHelper::class, 'generateLazyGhost')) {
-            $config->setProxyDir(sys_get_temp_dir() . '/doctrine_orm_proxies');
-            $config->setProxyNamespace('Nowo\DoctrineEncryptBundle\Tests\Proxies');
-            $config->setAutoGenerateProxyClasses(true);
         }
     }
 
@@ -78,28 +57,21 @@ abstract class AbstractFunctionalTestCase extends TestCase
             $config->setAutoGenerateProxyClasses(true);
         }
 
-        $this->dbFile = tempnam(sys_get_temp_dir(), 'nowo_encrypt_db');
+        $dbFile       = tempnam(sys_get_temp_dir(), 'nowo_encrypt_db');
+        $this->dbFile = $dbFile !== false ? $dbFile : sys_get_temp_dir() . '/nowo_encrypt_db_' . uniqid('', true);
         $conn         = [
             'driver' => 'pdo_sqlite',
             'path'   => $this->dbFile,
         ];
 
-        $useDbal4 = !class_exists(DebugStack::class);
-
-        if (!$useDbal4 && method_exists(EntityManager::class, 'create')) {
-            $this->entityManager  = EntityManager::create($conn, $config);
-            $this->sqlLoggerStack = new DebugStack();
-            $this->entityManager->getConnection()->getConfiguration()->setSQLLogger($this->sqlLoggerStack);
-        } else {
-            $sqlCollector = new SqlQueryCollector();
-            $dbalConfig   = new \Doctrine\DBAL\Configuration();
-            if (class_exists(Middleware::class)) {
-                $dbalConfig->setMiddlewares([new Middleware($sqlCollector)]);
-            }
-            $connection           = DriverManager::getConnection($conn, $dbalConfig);
-            $this->entityManager  = new EntityManager($connection, $config);
-            $this->sqlLoggerStack = $sqlCollector;
+        $sqlCollector = new SqlQueryCollector();
+        $dbalConfig   = new \Doctrine\DBAL\Configuration();
+        if (class_exists(Middleware::class)) {
+            $dbalConfig->setMiddlewares([new Middleware($sqlCollector)]);
         }
+        $connection           = DriverManager::getConnection($conn, $dbalConfig);
+        $this->entityManager  = new EntityManager($connection, $config);
+        $this->sqlLoggerStack = $sqlCollector;
 
         $schemaTool = new SchemaTool($this->entityManager);
         $classes    = $this->entityManager->getMetadataFactory()->getAllMetadata();
@@ -127,9 +99,12 @@ abstract class AbstractFunctionalTestCase extends TestCase
     protected function tearDown(): void
     {
         $this->entityManager->getConnection()->close();
-        unlink($this->dbFile);
+        if ($this->dbFile !== '') {
+            unlink($this->dbFile);
+        }
     }
 
+    /** @return array<string, mixed>|null */
     protected function getLatestInsertQuery(): ?array
     {
         $insertQueries = array_values(array_filter($this->sqlLoggerStack->queries, static fn (array $queryData) => stripos($queryData['sql'], 'INSERT ') === 0));
@@ -137,6 +112,7 @@ abstract class AbstractFunctionalTestCase extends TestCase
         return current(array_reverse($insertQueries)) ?: null;
     }
 
+    /** @return array<string, mixed>|null */
     protected function getLatestUpdateQuery(): ?array
     {
         $insertQueries = array_values(array_filter($this->sqlLoggerStack->queries, static fn (array $queryData) => stripos($queryData['sql'], 'UPDATE ') === 0));
@@ -153,24 +129,10 @@ abstract class AbstractFunctionalTestCase extends TestCase
     }
 
     /**
-     * Asserts that a string starts with a given prefix.
-     *
-     * @param string $string
+     * Asserts that a string does not contain a given needle.
      */
-    public function assertStringDoesNotContain($needle, $string, $ignoreCase = false, string $message = ''): void
+    public function assertStringDoesNotContain(string $needle, string $string, bool $ignoreCase = false, string $message = ''): void
     {
-        if (!is_string($needle)) {
-            throw new InvalidArgumentException('Argument 1 must be a string');
-        }
-
-        if (!is_string($string)) {
-            throw new InvalidArgumentException('Argument 2 must be a string');
-        }
-
-        if (!is_bool($ignoreCase)) {
-            throw new InvalidArgumentException('Argument 3 must be a boolean');
-        }
-
         $constraint = new LogicalNot(new StringContains(
             $needle,
             $ignoreCase,

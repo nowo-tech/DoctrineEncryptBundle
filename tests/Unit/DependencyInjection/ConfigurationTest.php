@@ -82,8 +82,11 @@ class ConfigurationTest extends TestCase
         $configuration = new Configuration();
         $treeBuilder   = $configuration->getConfigTreeBuilder();
 
+        // @phpstan-ignore method.alreadyNarrowedType (TreeBuilder return type is known, but testing the API contract)
         $this->assertInstanceOf(TreeBuilder::class, $treeBuilder);
+        // @phpstan-ignore method.alreadyNarrowedType (getRootNode() cannot return null here, but testing robustness)
         $this->assertNotNull($treeBuilder->getRootNode());
+        // @phpstan-ignore method.alreadyNarrowedType (NodeDefinition return type is known, but testing the API contract)
         $this->assertInstanceOf(NodeDefinition::class, $treeBuilder->getRootNode());
     }
 
@@ -100,6 +103,7 @@ class ConfigurationTest extends TestCase
 
     public function testConfigurationAliasConstant(): void
     {
+        // @phpstan-ignore method.alreadyNarrowedType (intentional constant regression guard)
         $this->assertSame('nowo_doctrine_encrypt', Configuration::ALIAS);
     }
 
@@ -184,6 +188,11 @@ class ConfigurationTest extends TestCase
         $this->assertArrayNotHasKey('configs', $config);
     }
 
+    /**
+     * @param array<string, mixed> $config
+     *
+     * @return array<string, mixed>
+     */
     private function process(array $config): array
     {
         $configuration = new Configuration();

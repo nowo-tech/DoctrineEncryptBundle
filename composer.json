@@ -4,6 +4,7 @@
   "type": "symfony-bundle",
   "license": "MIT",
   "keywords": [
+    "php",
     "doctrine",
     "symfony",
     "symfony-bundle",
@@ -11,7 +12,8 @@
     "halite",
     "defuse",
     "gdpr",
-    "key-rotation"
+    "key-rotation",
+    "frankenphp"
   ],
   "homepage": "https://github.com/nowo-tech/DoctrineEncryptBundle",
   "support": {

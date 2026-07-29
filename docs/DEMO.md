@@ -2,6 +2,16 @@
 
 The bundle includes a **dockerized** demo project (**Symfony 8**). It runs on **FrankenPHP** with a custom **Caddyfile** and has its own **Makefile**.
 
+## Table of contents
+
+- [Screenshots](#screenshots)
+- [Quick start (Docker)](#quick-start-docker)
+- [Makefile targets](#makefile-targets)
+- [FrankenPHP (runtime and worker mode)](#frankenphp-runtime-and-worker-mode)
+- [What each demo includes](#what-each-demo-includes)
+- [Multiple encryptors and EncryptUtil](#multiple-encryptors-and-encryptutil)
+- [Troubleshooting: `composer update` and security advisories](#troubleshooting-composer-update-and-security-advisories)
+
 ## Screenshots
 
 **Demo home** – Overview, CRUD link and console commands:

@@ -17,6 +17,9 @@ use function extension_loaded;
 
 class GenerateSecretKeyCommandTest extends TestCase
 {
+    /**
+     * @param array<string, array{path: string|null, encryptor_class: string}> $keyPaths
+     */
     private function createCommand(array $keyPaths, string $projectDir = '/tmp'): GenerateSecretKeyCommand
     {
         $kernel = $this->createMock(KernelInterface::class);
@@ -154,7 +157,7 @@ class GenerateSecretKeyCommandTest extends TestCase
         $this->assertSame(0, $tester->getStatusCode());
         $this->assertStringContainsString('Overwrite', $tester->getDisplay());
         $this->assertStringContainsString('saved to', $tester->getDisplay());
-        $content = file_get_contents($keyPath);
+        $content = (string) file_get_contents($keyPath);
         $this->assertNotSame('old-content', $content);
         $this->assertMatchesRegularExpression('/^[a-f0-9]+$/i', trim($content), 'Key file must be hex');
         unlink($keyPath);
@@ -320,7 +323,7 @@ class GenerateSecretKeyCommandTest extends TestCase
         $this->assertSame(0, $tester->getStatusCode());
         $this->assertFileExists($keyPath);
         $this->assertStringContainsString('Created', $tester->getDisplay());
-        $content = file_get_contents($keyPath);
+        $content = (string) file_get_contents($keyPath);
         $this->assertMatchesRegularExpression('/^[a-f0-9]+$/i', trim($content));
         unlink($keyPath);
         rmdir($baseDir . '/subdir');

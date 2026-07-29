@@ -5,7 +5,105 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Table of contents
+
+- [[Unreleased]](#unreleased)
+- [[2.3.5] - 2026-07-29](#235-2026-07-29)
+  - [Added](#added)
+  - [Changed](#changed)
+  - [Documentation](#documentation)
+- [[2.3.4] - 2026-07-28](#234-2026-07-28)
+  - [Changed](#changed)
+- [[2.3.3] - 2026-07-28](#233-2026-07-28)
+  - [Added](#added)
+  - [Changed](#changed)
+  - [Removed](#removed)
+- [[2.3.2] - 2026-07-28](#232-2026-07-28)
+  - [Added](#added)
+  - [Changed](#changed)
+- [[2.3.1] - 2026-07-20](#231-2026-07-20)
+  - [Removed](#removed)
+  - [Added](#added)
+  - [Changed](#changed)
+- [[2.3.0] - 2026-07-18](#230-2026-07-18)
+  - [Changed](#changed)
+- [[2.2.3] - 2026-07-09](#223-2026-07-09)
+  - [Added](#added)
+  - [Changed](#changed)
+- [[2.2.2] - 2026-06-11](#222-2026-06-11)
+  - [Fixed](#fixed)
+- [[2.2.1] - 2026-06-11](#221-2026-06-11)
+  - [Fixed](#fixed)
+- [[2.2.0] - 2026-06-01](#220-2026-06-01)
+  - [Fixed](#fixed)
+  - [Changed](#changed)
+  - [Removed](#removed)
+- [[2.1.0] - 2026-06-01](#210-2026-06-01)
+  - [Added](#added)
+  - [Changed](#changed)
+- [[2.0.10] - 2026-02-21](#2010-2026-02-21)
+  - [Fixed](#fixed)
+  - [Changed](#changed)
+- [[2.0.9] - 2026-02-21](#209-2026-02-21)
+  - [Changed](#changed)
+  - [Fixed](#fixed)
+- [[2.0.8] - 2026-02-20](#208-2026-02-20)
+  - [Fixed](#fixed)
+- [[2.0.7] - 2026-02-20](#207-2026-02-20)
+  - [Added](#added)
+  - [Changed](#changed)
+  - [Fixed](#fixed)
+  - [Tests](#tests)
+- [[2.0.6] - 2026-02-20](#206-2026-02-20)
+  - [Added](#added)
+  - [Fixed](#fixed)
+- [[2.0.5] - 2026-02-20](#205-2026-02-20)
+  - [Added](#added)
+  - [Changed](#changed)
+- [[2.0.4] - 2026-02-19](#204-2026-02-19)
+  - [Fixed](#fixed)
+- [[2.0.3] - 2026-02-19](#203-2026-02-19)
+  - [Changed](#changed)
+- [[2.0.2] - 2026-02-19](#202-2026-02-19)
+  - [Fixed](#fixed)
+- [[2.0.1] - 2026-02-19](#201-2026-02-19)
+  - [Added](#added)
+  - [Changed](#changed)
+  - [Fixed](#fixed)
+- [[2.0.0] - 2026-02-19](#200-2026-02-19)
+  - [Removed](#removed)
+  - [Changed](#changed)
+- [[1.0.0] - 2026-02-19](#100-2026-02-19)
+  - [Added](#added)
+  - [Changed](#changed)
+  - [Fixed](#fixed)
+
 ## [Unreleased]
+
+---
+
+## [2.3.5] - 2026-07-29
+
+### Added
+
+- **`make demo-smoke`** + `.github/workflows/demo-smoke.yml`: boot `demo/symfony8` and assert HTTP 200 (REQ-TEST-011).
+- PHPStan bootstrap (`phpstan/bootstrap.php` + stubs) for optional `AsDoctrineListener` when doctrine-bundle is absent.
+- CI job **PHPStan** in `.github/workflows/ci.yml` (REQ-CS-006).
+
+### Changed
+
+- **REQ-CS-006:** `phpstan-baseline.neon` emptied (`ignoreErrors: []`); analyse clean at level 8 with `treatPhpDocTypesAsCertain: false`. Types/PHPDoc tightened across `src/` and tests.
+- `composer.json` keywords: add `php`, `frankenphp`.
+- README FrankenPHP banner sentence uses the canonical short form (REQ-DOCS-017).
+- [docs/PHPSTAN.md](PHPSTAN.md) updated for empty baseline policy.
+
+### Documentation
+
+- Table of contents on long docs (REQ-DOCS-005).
+- INSTALLATION: recipe path corrected to `.symfony/recipe/`.
+- DEMO-FRANKENPHP: `make demo-smoke` (REQ-TEST-011).
+
+No application configuration changes required. See [UPGRADING.md](UPGRADING.md#upgrading-to-235).
 
 ---
 

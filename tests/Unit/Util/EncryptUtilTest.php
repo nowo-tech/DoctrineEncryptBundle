@@ -104,11 +104,13 @@ class EncryptUtilTest extends TestCase
 
     public function testEncryptionMarkerConstant(): void
     {
+        // @phpstan-ignore method.alreadyNarrowedType (intentional constant regression guard)
         $this->assertSame('<ENC>', EncryptUtil::ENCRYPTION_MARKER);
     }
 
     public function testUtilNameConstant(): void
     {
+        // @phpstan-ignore method.alreadyNarrowedType (intentional constant regression guard)
         $this->assertSame('nowo_doctrine_encrypt.encrypt_util', EncryptUtil::UTIL_NAME);
     }
 

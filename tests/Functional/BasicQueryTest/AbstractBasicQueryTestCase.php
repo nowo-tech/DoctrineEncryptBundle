@@ -45,7 +45,7 @@ abstract class AbstractBasicQueryTestCase extends AbstractFunctionalTestCase
         $this->assertEquals($afterFirstFlush, $this->getCurrentQueryCount());
 
         // Test if no query is executed when reading unrelated field
-        $user->getNotSecret();
+        $_ = $user->getNotSecret();
         $this->entityManager->flush();
         $this->assertEquals($afterFirstFlush, $this->getCurrentQueryCount());
 

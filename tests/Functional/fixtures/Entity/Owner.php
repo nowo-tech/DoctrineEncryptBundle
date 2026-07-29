@@ -13,6 +13,7 @@ class Owner
     #[ORM\Id]
     #[ORM\Column(type: 'integer')]
     #[ORM\GeneratedValue]
+    // @phpstan-ignore property.unusedType (Doctrine sets id via reflection)
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', nullable: true)]

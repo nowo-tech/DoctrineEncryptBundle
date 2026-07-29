@@ -16,6 +16,7 @@ use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Command\fixtures\DummyEncryptorForCommand;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use stdClass;
@@ -54,6 +55,11 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         };
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     *
+     * @return Connection&MockObject
+     */
     private function createConnectionMock(array $rows = []): Connection
     {
         $result = $this->createMock(Result::class);
@@ -308,7 +314,7 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $def = $command->getDefinition();
         $this->assertTrue($def->hasArgument('config'));
         $this->assertTrue($def->hasArgument('batchSize'));
-        $this->assertSame(5, $def->getArgument('batchSize')->getDefault());
+        $this->assertSame('5', $def->getArgument('batchSize')->getDefault());
     }
 
     public function testExecuteDecryptLoopCallsExecuteStatementWhenRowHasEncryptedValue(): void

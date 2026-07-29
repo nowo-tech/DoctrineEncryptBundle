@@ -12,6 +12,7 @@ use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -19,6 +20,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Throwable;
 
+use function assert;
 use function count;
 use function in_array;
 use function sprintf;
@@ -54,7 +56,7 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
             $this->addArgument('config', InputArgument::OPTIONAL, 'Config name to use (e.g. personal_data, financial_data). If omitted, all configs are processed in turn.');
         }
         if (!$def->hasArgument('batchSize')) {
-            $this->addArgument('batchSize', InputArgument::OPTIONAL, 'The update batch size (smaller = less memory; configurable via nowo_doctrine_encrypt.batch_size)', $this->defaultBatchSize);
+            $this->addArgument('batchSize', InputArgument::OPTIONAL, 'The update batch size (smaller = less memory; configurable via nowo_doctrine_encrypt.batch_size)', (string) $this->defaultBatchSize);
         }
         if (!$def->hasOption('force')) {
             $this->addOption('force', null, InputOption::VALUE_NONE, 'Do not ask for confirmation (use with --no-interaction).');
@@ -121,6 +123,7 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
             false,
         );
 
+        assert($question instanceof QuestionHelper);
         $proceed = $input->getOption('force') || $question->ask($input, $output, $confirmationQuestion);
         if (!$proceed) {
             return self::SUCCESS;

@@ -13,6 +13,7 @@ use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use ParagonIE\Halite\KeyFactory;
 use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -20,6 +21,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\HttpKernel\KernelInterface;
 
+use function assert;
 use function dirname;
 use function in_array;
 use function sprintf;
@@ -118,7 +120,7 @@ final class GenerateSecretKeyCommand extends AbstractCommand
      * Generates or outputs key for a single config.
      *
      * @param string $configName Config alias
-     * @param array $info Resolved path and encryptor_class
+     * @param array{path: string|null, encryptor_class: string} $info Resolved path and encryptor_class
      * @param InputInterface $input Console input
      * @param OutputInterface $output Console output
      */
@@ -139,7 +141,8 @@ final class GenerateSecretKeyCommand extends AbstractCommand
         }
 
         if (file_exists($path) && !$force) {
-            $helper   = $this->getHelper('question');
+            $helper = $this->getHelper('question');
+            assert($helper instanceof QuestionHelper);
             $question = new ConfirmationQuestion(sprintf('Key file already exists at %s. Overwrite? (y/yes) ', $path), false);
             if (!$helper->ask($input, $output, $question)) {
                 $output->writeln('<comment>Aborted.</comment>');
@@ -191,6 +194,8 @@ final class GenerateSecretKeyCommand extends AbstractCommand
 
     /**
      * When config has no path (uses secret_key_env_var with %env(APP_ENCRYPT_KEY)%): generate and emit the key value and indicate the variable is not set yet.
+     *
+     * @param array{path: string|null, encryptor_class: string} $info
      */
     private function outputEnvKeyInfo(string $configName, array $info, OutputInterface $output): void
     {
@@ -227,7 +232,7 @@ final class GenerateSecretKeyCommand extends AbstractCommand
             try {
                 KeyFactory::save($encryptionKey, $tmp);
 
-                return trim(file_get_contents($tmp));
+                return trim((string) file_get_contents($tmp));
             } finally {
                 @unlink($tmp);
             }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Tests\Functional;
 
 use Psr\Log\AbstractLogger;
+use Stringable;
 
 /**
  * PSR-3 logger that collects SQL queries for tests.
@@ -17,7 +18,7 @@ final class SqlQueryCollector extends AbstractLogger
     /** @var list<array{sql: string}> */
     public $queries = [];
 
-    public function log($level, $message, array $context = []): void
+    public function log(mixed $level, string|Stringable $message, array $context = []): void
     {
         $this->queries[] = [
             'sql'    => $context['sql'] ?? $message,

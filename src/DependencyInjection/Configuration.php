@@ -7,8 +7,6 @@ namespace Nowo\DoctrineEncryptBundle\DependencyInjection;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-use function call_user_func;
-
 /**
  * Defines and validates the bundle configuration tree (default_profile, profiles per encryptor).
  *
@@ -30,14 +28,7 @@ final class Configuration implements ConfigurationInterface
     {
         // Create tree builder
         $treeBuilder = new TreeBuilder(self::ALIAS);
-        if (method_exists($treeBuilder, 'getRootNode')) {
-            $rootNode = $treeBuilder->getRootNode();
-        } else {
-            // BC layer for symfony/config 4.1 and older (TreeBuilder::root() before getRootNode() existed)
-            /** @codeCoverageIgnoreStart - getRootNode() exists in current symfony/config */
-            $rootNode = call_user_func([$treeBuilder, 'root'], self::ALIAS);
-            /* @codeCoverageIgnoreEnd */
-        }
+        $rootNode    = $treeBuilder->getRootNode();
 
         // Single grammar: default_profile + profiles. When #[Encrypted] has no alias (or "default"), the encryptor for default_profile is used.
         $rootNode
@@ -86,12 +77,12 @@ final class Configuration implements ConfigurationInterface
                             ->scalarNode('secret_key_env_var')->defaultNull()->info('Key content from env: use %env(APP_ENCRYPT_KEY)% so Symfony resolves it at config load and the bundle receives the value. When set, secret_directory_path and secret_key_filename are not allowed.')->end()
                         ->end()
                         ->validate()
-                            ->ifTrue(static function (array $v): bool {
-                                $useEnv  = isset($v['secret_key_env_var']) && $v['secret_key_env_var'] !== '' && $v['secret_key_env_var'] !== null;
-                                $usePath = isset($v['secret_directory_path']) && $v['secret_directory_path'] !== '' && $v['secret_directory_path'] !== null;
+                    ->ifTrue(static function (array $v): bool {
+                        $useEnv  = isset($v['secret_key_env_var']) && $v['secret_key_env_var'] !== '';
+                        $usePath = isset($v['secret_directory_path']) && $v['secret_directory_path'] !== '';
 
-                                return $useEnv && $usePath;
-                            })
+                        return $useEnv && $usePath;
+                    })
                             ->thenInvalid('Cannot set both secret_key_env_var and secret_directory_path.')
                         ->end()
                         ->beforeNormalization()

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Functional\DoctrineEncryptSubscriber;
 
-use Doctrine\DBAL\DBALException;
-use Doctrine\ORM\OptimisticLockException;
 use Nowo\DoctrineEncryptBundle\Tests\Functional\AbstractFunctionalTestCase;
 use Nowo\DoctrineEncryptBundle\Tests\Functional\fixtures\Entity\CascadeTarget;
 use Nowo\DoctrineEncryptBundle\Tests\Functional\fixtures\Entity\Owner;
@@ -77,10 +75,6 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
         $this->assertEquals($secret, $decrypted);
     }
 
-    /**
-     * @throws DBALException
-     * @throws OptimisticLockException
-     */
     public function testEncryptionDoesNotHappenWhenThereIsNoChange(): void
     {
         $secret    = "It's a secret";

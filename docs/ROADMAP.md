@@ -2,6 +2,15 @@
 
 This document outlines the direction of Doctrine Encrypt Bundle and helps contributors and users understand upcoming priorities.
 
+## Table of contents
+
+- [Vision](#vision)
+- [Current focus (2.x)](#current-focus-2x)
+- [Short term (next releases)](#short-term-next-releases)
+- [Possible future (ideas, not committed)](#possible-future-ideas-not-committed)
+- [Out of scope (for this bundle)](#out-of-scope-for-this-bundle)
+- [Community](#community)
+
 ## Vision
 
 Doctrine Encrypt Bundle aims to provide **simple, secure field-level encryption** for Doctrine ORM entities in Symfony applications, using well-audited libraries (Halite, Defuse) and a clear upgrade path when moving from older or custom encryptors.

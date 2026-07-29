@@ -8,8 +8,13 @@ includes:
 
 parameters:
     level: 8
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors: []
     paths:
         - src
         - tests
     excludePaths:
         - demo/*
+        - tests/bootstrap.php
+    bootstrapFiles:
+        - phpstan/bootstrap.php

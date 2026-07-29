@@ -11,6 +11,7 @@ use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -19,6 +20,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\HttpKernel\KernelInterface;
 
+use function assert;
 use function count;
 use function sprintf;
 
@@ -164,7 +166,8 @@ final class RotateKeysCommand extends AbstractCommand
             $output->writeln('Update the encryption key in your .env (e.g. APP_ENCRYPT_KEY), then continue.');
             if (!$noInteraction) {
                 $helper = $this->getHelper('question');
-                $q      = new Question('Press Enter when .env is updated to continue (or Ctrl+C to abort)...', '');
+                assert($helper instanceof QuestionHelper);
+                $q = new Question('Press Enter when .env is updated to continue (or Ctrl+C to abort)...', '');
                 $helper->ask($input, $output, $q);
             } else {
                 $output->writeln('<comment>Running with --no-interaction: ensure .env is updated before re-encryption.</comment>');
@@ -320,7 +323,8 @@ final class RotateKeysCommand extends AbstractCommand
         if ($noInteraction) {
             return true;
         }
-        $helper   = $this->getHelper('question');
+        $helper = $this->getHelper('question');
+        assert($helper instanceof QuestionHelper);
         $question = new ConfirmationQuestion('<question>' . $message . '</question> [y/N] ', $default);
 
         return (bool) $helper->ask($input, $output, $question);

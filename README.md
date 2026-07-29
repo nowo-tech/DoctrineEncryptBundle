@@ -6,7 +6,7 @@
 
 ![FrankenPHP Friendly Worker Mode](docs/images/frankenphp-friendly.png)
 
-This bundle is **FrankenPHP worker mode friendly** (verified with `nowo-tech/phpstan-frankenphp`).
+This bundle is **FrankenPHP worker mode friendly**.
 
 > ⭐ **Found this useful?** [Install from Packagist](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) · Give it a **star** on [GitHub](https://github.com/nowo-tech/DoctrineEncryptBundle) so more developers can find it.
 

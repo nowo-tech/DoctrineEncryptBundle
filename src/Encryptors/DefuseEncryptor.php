@@ -71,7 +71,7 @@ final class DefuseEncryptor implements EncryptorInterface
                 throw new RuntimeException('The encryption key environment variable is not set. Run "php bin/console doctrine:encrypt:generate-secret-key" to get the key value, then set it in your .env or environment.');
             }
             if ($this->fs->exists($this->keyFile)) {
-                $this->encryptionKey = trim(file_get_contents($this->keyFile));
+                $this->encryptionKey = trim((string) file_get_contents($this->keyFile));
             } else {
                 $string              = random_bytes(255);
                 $this->encryptionKey = bin2hex($string);

@@ -114,7 +114,15 @@ After changing env or Caddyfile, restart: `docker-compose restart` or `make -C d
 
 ## Smoke check (demo up)
 
-After `make -C demo/symfony8 setup` (or `up` + `install` + schema/keys):
+Automated smoke (REQ-TEST-011):
+
+```bash
+make demo-smoke
+```
+
+This boots `demo/symfony8` and asserts **HTTP 200** on `http://localhost:8008/` (or `PORT` from `.env` / `.env.example`). CI runs the same target via `.github/workflows/demo-smoke.yml` (schedule / tag / workflow_dispatch).
+
+Manual checks after `make -C demo/symfony8 setup` (or `up` + `install` + schema/keys):
 
 1. Open `http://localhost:8008` (or the `PORT` from Compose) — home page must respond **200**.
 2. Confirm FrankenPHP PHP version in container: `make -C demo/symfony8 shell` then `php -v` → **8.5.x** (image `dunglas/frankenphp:1-php8.5-alpine`).

@@ -1,5 +1,18 @@
 # Usage
 
+## Table of contents
+
+- [Marking properties as encrypted](#marking-properties-as-encrypted)
+- [Multiple encryptors](#multiple-encryptors)
+- [EncryptUtil (programmatic encrypt/decrypt)](#encryptutil-programmatic-encryptdecrypt)
+- [Twig filter `|decrypt`](#twig-filter-decrypt)
+- [Twig filter `|mask`](#twig-filter-mask)
+- [MaskUtil (masking in PHP)](#maskutil-masking-in-php)
+- [Searching and performance](#searching-and-performance)
+- [Embedded entities](#embedded-entities)
+- [Console commands](#console-commands)
+- [Custom encryptor](#custom-encryptor)
+
 ## Marking properties as encrypted
 
 Use the `Encrypted` attribute (PHP 8+) on any Doctrine entity property that should be encrypted at rest:

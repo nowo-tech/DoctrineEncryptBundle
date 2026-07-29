@@ -20,8 +20,6 @@ class BasicQueryHaliteTest extends AbstractBasicQueryTestCase
     {
         if (!extension_loaded('sodium')) {
             $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
-
-            return;
         }
 
         parent::setUp();

@@ -36,7 +36,7 @@ Use a constraint such as `^1.0` to stay on the current major version.
 
 ### With Symfony Flex
 
-If you use Symfony Flex and the bundle is installed from Packagist, the recipe (once merged in [symfony/recipes-contrib](https://github.com/symfony/recipes-contrib)) will register the bundle and create `config/packages/nowo_doctrine_encrypt.yaml` automatically. The recipe source is in the bundle repo under `Recipe/`. Until the recipe is on the Flex server, register the bundle and config manually as below.
+If you use Symfony Flex and the bundle is installed from Packagist, the recipe (once merged in [symfony/recipes-contrib](https://github.com/symfony/recipes-contrib)) will register the bundle and create `config/packages/nowo_doctrine_encrypt.yaml` automatically. The recipe source is in the bundle repo under `.symfony/recipe/`. Until the recipe is on the Flex server, register the bundle and config manually as below.
 
 ### Manual registration
 

@@ -7,7 +7,6 @@ namespace Nowo\DoctrineEncryptBundle\Subscribers;
 // use Doctrine\Common\EventSubscriber;
 // events
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
-use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Event\PostLoadEventArgs;
@@ -22,11 +21,13 @@ use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 // attributes
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Throwable;
 
+use function assert;
 use function count;
 use function strlen;
 
@@ -79,6 +80,7 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
      */
     public int $encryptCounter = 0;
 
+    /** @var array<string, array<int, array<string, array<string, mixed>>>> */
     private array $cachedDecryptions = [];
 
     /**
@@ -173,8 +175,6 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
     /**
      * Listen a postLoad lifecycle event.
      * Decrypt entities property's values when loaded into the entity manger.
-     *
-     * @param LifecycleEventArgs $args
      */
     public function postLoad(PostLoadEventArgs $args): void
     {
@@ -269,7 +269,7 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
                 }
             }
 
-            $propertyEncryptor = $this->encryptorOverride instanceof EncryptorInterface
+            $propertyEncryptor = $this->encryptorOverride instanceof EncryptorInterface || $this->registry === null
                 ? $encryptor
                 : $this->registry->get($encryptedAttr->config);
 
@@ -302,6 +302,9 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
         return $entity;
     }
 
+    /**
+     * @param array<ReflectionAttribute<object>> $attributes
+     */
     private function getEncryptedAttributeInstance(array $attributes): ?Encrypted
     {
         foreach ($attributes as $attribute) {
@@ -331,9 +334,8 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
     /**
      * The function checks if a given string class exists in an array of attributes.
      *
-     * @param array attributes An array of objects representing attributes
-     * @param string stringClass The parameter `` is a string that represents the name of a
-     * class
+     * @param array<ReflectionAttribute<object>> $attributes An array of objects representing attributes
+     * @param string $stringClass The name of a class to check for in the attributes
      *
      * @return bool a boolean value. It returns true if the given string class is found in the array of
      *              attributes, and false otherwise.
@@ -377,9 +379,12 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
      * including inherited ones from extended classes.
      *
      * @param string $className Class name
+     *
+     * @return array<string, ReflectionProperty>
      */
     private function getClassProperties(string $className): array
     {
+        assert(class_exists($className));
         $reflectionClass = new ReflectionClass($className);
         $properties      = $reflectionClass->getProperties();
         $propertiesArray = [];

@@ -2,6 +2,16 @@
 
 Thank you for considering contributing to Doctrine Encrypt Bundle.
 
+## Table of contents
+
+- [Code of Conduct](#code-of-conduct)
+- [Development setup](#development-setup)
+- [Code style](#code-style)
+- [Tests](#tests)
+- [Pull requests](#pull-requests)
+  - [Local git hooks (maintainers)](#local-git-hooks-maintainers)
+- [Reporting issues](#reporting-issues)
+
 ## Code of Conduct
 
 This project follows the [Contributor Covenant Code of Conduct](../CODE_OF_CONDUCT.md). By participating, you are expected to uphold it. Please report unacceptable behavior to **hectorfranco@nowo.tech**.

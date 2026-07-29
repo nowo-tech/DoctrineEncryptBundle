@@ -121,7 +121,7 @@ final class HaliteEncryptor implements EncryptorInterface
         if (!is_file($this->keyFile) || !is_readable($this->keyFile)) {
             return;
         }
-        $content = file_get_contents($this->keyFile);
+        $content = (string) file_get_contents($this->keyFile);
         $trimmed = trim($content);
         if ($trimmed !== $content) {
             file_put_contents($this->keyFile, $trimmed);

@@ -4,6 +4,18 @@ Repository-local **product spec** and **`REQ-*`** traceability (Makefiles, demos
 
 This repository is **prepared to use Engram** with Cursor (and other MCP-compatible editors). The configuration is already present so that once you install the Engram CLI, your AI agent can use persistent memory across sessions.
 
+## Table of contents
+
+- [What is Engram?](#what-is-engram)
+- [Repository setup](#repository-setup)
+- [How to install Engram](#how-to-install-engram)
+  - [Option 1: npm (recommended)](#option-1-npm-recommended)
+  - [Option 2: Homebrew](#option-2-homebrew)
+  - [Verify](#verify)
+- [How to use](#how-to-use)
+- [Clearing or resetting the vault](#clearing-or-resetting-the-vault)
+- [References](#references)
+
 ## What is Engram?
 
 **Engram** is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that gives AI coding agents (Cursor, Claude Code, etc.) **persistent memory**. It stores context in a local vault (SQLite) so the agent does not need to re-discover project structure and conventions in every session.

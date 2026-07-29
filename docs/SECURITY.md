@@ -1,5 +1,18 @@
 # Security
 
+## Table of contents
+
+- [Scope](#scope)
+- [Attack surface](#attack-surface)
+- [Threat model and risks](#threat-model-and-risks)
+- [Mitigations](#mitigations)
+- [Cryptography and secrets](#cryptography-and-secrets)
+- [Logging](#logging)
+- [Dependencies and updates](#dependencies-and-updates)
+- [Reporting a vulnerability](#reporting-a-vulnerability)
+- [Best practices](#best-practices)
+- [Release security checklist (12.4.1)](#release-security-checklist-1241)
+
 ## Scope
 
 This document covers **Nowo Doctrine Encrypt Bundle** (`nowo-tech/doctrine-encrypt-bundle`): field-level encryption for Doctrine entities using Halite or Defuse, console commands for status, database encrypt/decrypt, key generation, and key rotation. It does **not** replace transport security (HTTPS), authentication, or authorization in your application.

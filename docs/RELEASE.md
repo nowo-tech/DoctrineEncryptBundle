@@ -1,5 +1,32 @@
 # Release process
 
+## Table of contents
+
+- [Creating a new version (e.g. v1.1.0)](#creating-a-new-version-eg-v110)
+- [After releasing](#after-releasing)
+- [v2.3.5 (2026-07-29)](#v235-2026-07-29)
+- [v2.3.4 (2026-07-28)](#v234-2026-07-28)
+- [v2.3.3 (2026-07-28)](#v233-2026-07-28)
+- [v2.3.2 (2026-07-28)](#v232-2026-07-28)
+- [v2.3.1 (2026-07-20)](#v231-2026-07-20)
+- [v2.3.0 (2026-07-18)](#v230-2026-07-18)
+- [v2.2.3 (2026-07-09)](#v223-2026-07-09)
+- [v2.2.2 (2026-06-11)](#v222-2026-06-11)
+- [v2.2.1 (2026-06-11)](#v221-2026-06-11)
+- [v2.2.0 (2026-06-01)](#v220-2026-06-01)
+- [v2.1.0 (2026-06-01)](#v210-2026-06-01)
+- [v2.0.10 (2026-02-21)](#v2010-2026-02-21)
+- [v2.0.9 (2026-02-21)](#v209-2026-02-21)
+- [v2.0.8 (2026-02-20)](#v208-2026-02-20)
+- [v2.0.7 (2026-02-20)](#v207-2026-02-20)
+- [v2.0.6 (2026-02-20)](#v206-2026-02-20)
+- [v2.0.5 (2026-02-20)](#v205-2026-02-20)
+- [v2.0.4 (2026-02-19)](#v204-2026-02-19)
+- [v2.0.3 (2026-02-19)](#v203-2026-02-19)
+- [v2.0.2 (2026-02-19)](#v202-2026-02-19)
+- [v2.0.1 (2026-02-19)](#v201-2026-02-19)
+- [v2.0.0 (2026-02-19)](#v200-2026-02-19)
+
 ## Creating a new version (e.g. v1.1.0)
 
 1. **Ensure everything is ready**
@@ -31,6 +58,13 @@
 
 - Keep `## [Unreleased]` at the top of [CHANGELOG.md](CHANGELOG.md) for the next version; add new changes there.
 - Optionally bump a dev version in `composer.json` for development.
+
+---
+
+## v2.3.5 (2026-07-29)
+
+- **Scope:** Empty PHPStan baseline (level 8 clean) + types/PHPDoc cleanup; CI PHPStan job; `make demo-smoke` / demo-smoke workflow (REQ-TEST-011); docs TOC (REQ-DOCS-005); keywords `php`/`frankenphp`; PHPSTAN.md refresh.
+- **Checklist:** CHANGELOG and UPGRADING updated; `make test` / `make phpstan` / `make cs-check`; open PRs = 0; commit; tag `v2.3.5`; push branch and tag.
 
 ---
 

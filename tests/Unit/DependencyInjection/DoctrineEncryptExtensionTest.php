@@ -62,6 +62,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->extension->load([[]], $container);
 
         $path = $container->getParameter('nowo_doctrine_encrypt.secret_key_path');
+        $this->assertIsString($path);
         $this->assertStringEndsWith('.Halite.default.key', $path);
     }
 
@@ -71,7 +72,10 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->extension->load([['profiles' => []]], $container);
 
         $this->assertTrue($container->hasDefinition('nowo_doctrine_encrypt.encryptor.default'));
-        $this->assertStringEndsWith('.Halite.default.key', $container->getParameter('nowo_doctrine_encrypt.secret_key_path'));
+        $secretPath = $container->getParameter('nowo_doctrine_encrypt.secret_key_path');
+        $this->assertIsString($secretPath);
+        $this->assertStringEndsWith('.Halite.default.key', $secretPath);
+        /** @var array<string, mixed> $keyPaths */
         $keyPaths = $container->getParameter('nowo_doctrine_encrypt.key_paths');
         $this->assertArrayHasKey('default', $keyPaths);
     }
@@ -149,8 +153,6 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->extension->load([$config], $container);
 
         $this->markTestSkipped();
-
-        $this->assertSame(self::class, $container->getParameter('nowo_doctrine_encrypt.encryptor_class_name'));
     }
 
     public function testLoadWithProfilesRegistersMultipleEncryptors(): void
@@ -172,7 +174,9 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->extension->load([$config], $container);
 
         $this->assertSame(HaliteEncryptor::class, $container->getParameter('nowo_doctrine_encrypt.encryptor_class_name'));
-        $this->assertStringEndsWith('.Halite.personal_data.key', $container->getParameter('nowo_doctrine_encrypt.secret_key_path'));
+        $keyPath = $container->getParameter('nowo_doctrine_encrypt.secret_key_path');
+        $this->assertIsString($keyPath);
+        $this->assertStringEndsWith('.Halite.personal_data.key', $keyPath);
         $this->assertTrue($container->hasDefinition('nowo_doctrine_encrypt.encryptor.personal_data'));
         $this->assertTrue($container->hasDefinition('nowo_doctrine_encrypt.encryptor.financial_data'));
         $registryDef = $container->getDefinition('nowo_doctrine_encrypt.encryptor_registry');
@@ -195,6 +199,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->extension->load([$config], $container);
 
         $this->assertSame('/var/keys/.my_encrypt.key', $container->getParameter('nowo_doctrine_encrypt.secret_key_path'));
+        /** @var array<string, array<string, mixed>> $keyPaths */
         $keyPaths = $container->getParameter('nowo_doctrine_encrypt.key_paths');
         $this->assertSame('/var/keys/.my_encrypt.key', $keyPaths['default']['path']);
     }
@@ -213,6 +218,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         ];
         $this->extension->load([$config], $container);
 
+        /** @var array<string, array<string, mixed>> $keyPaths */
         $keyPaths = $container->getParameter('nowo_doctrine_encrypt.key_paths');
         $this->assertArrayHasKey('default', $keyPaths);
         $this->assertNull($keyPaths['default']['path']);

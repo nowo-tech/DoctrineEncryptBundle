@@ -92,7 +92,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->subscriber->processFields($user, true);
 
         $this->assertStringStartsWith('encrypted-', $user->name);
-        $this->assertStringStartsWith('encrypted-', $user->getAddress());
+        $this->assertStringStartsWith('encrypted-', (string) $user->getAddress());
     }
 
     public function testProcessFieldsEncryptExtend(): void
@@ -102,8 +102,8 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->subscriber->processFields($user, true);
 
         $this->assertStringStartsWith('encrypted-', $user->name);
-        $this->assertStringStartsWith('encrypted-', $user->getAddress());
-        $this->assertStringStartsWith('encrypted-', $user->extra);
+        $this->assertStringStartsWith('encrypted-', (string) $user->getAddress());
+        $this->assertStringStartsWith('encrypted-', (string) $user->extra);
     }
 
     public function testProcessFieldsEncryptEmbedded(): void
@@ -115,7 +115,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->assertStringStartsWith('encrypted-', $withUser->name);
         $this->assertSame('foo', $withUser->foo);
         $this->assertStringStartsWith('encrypted-', $withUser->user->name);
-        $this->assertStringStartsWith('encrypted-', $withUser->user->getAddress());
+        $this->assertStringStartsWith('encrypted-', (string) $withUser->user->getAddress());
     }
 
     public function testProcessFieldsEncryptNull(): void
@@ -235,7 +235,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->subscriber->onFlush($onFlush);
 
         $this->assertStringStartsWith('encrypted-', $user->name);
-        $this->assertStringStartsWith('encrypted-', $user->getAddress());
+        $this->assertStringStartsWith('encrypted-', (string) $user->getAddress());
     }
 
     /**
@@ -274,7 +274,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->subscriber->preUpdate($args);
 
         $this->assertStringStartsWith('encrypted-', $user->name);
-        $this->assertStringStartsWith('encrypted-', $user->getAddress());
+        $this->assertStringStartsWith('encrypted-', (string) $user->getAddress());
     }
 
     public function testPostUpdateDecryptsEntity(): void
@@ -332,8 +332,8 @@ class DoctrineEncryptSubscriberTest extends TestCase
 
         $this->assertStringStartsWith('encrypted-', $user->name);
         $this->assertStringEndsWith(DoctrineEncryptSubscriber::ENCRYPTION_MARKER, $user->name);
-        $this->assertStringStartsWith('encrypted-', $user->getAddress());
-        $this->assertStringEndsWith(DoctrineEncryptSubscriber::ENCRYPTION_MARKER, $user->getAddress());
+        $this->assertStringStartsWith('encrypted-', (string) $user->getAddress());
+        $this->assertStringEndsWith(DoctrineEncryptSubscriber::ENCRYPTION_MARKER, (string) $user->getAddress());
 
         $this->subscriber->processFields($user, false);
         $this->assertSame('0', $user->name);
@@ -430,6 +430,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
 
     public function testEncryptionMarkerConstant(): void
     {
+        // @phpstan-ignore method.alreadyNarrowedType (intentional constant regression guard)
         $this->assertSame('<ENC>', DoctrineEncryptSubscriber::ENCRYPTION_MARKER);
     }
 
@@ -509,7 +510,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->subscriber->processFields($user, true);
 
         $this->assertStringEndsWith('<ENC>', $user->name);
-        $this->assertStringEndsWith('<ENC>', $user->getAddress());
+        $this->assertStringEndsWith('<ENC>', (string) $user->getAddress());
     }
 
     public function testProcessFieldsHandleEmbeddedWhenEmbeddedIsNull(): void

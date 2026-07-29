@@ -2,6 +2,41 @@
 
 This guide explains how to upgrade the Doctrine Encrypt Bundle between versions. For a list of changes in each version, see [CHANGELOG.md](CHANGELOG.md).
 
+## Table of contents
+
+- [General upgrade process](#general-upgrade-process)
+- [Upgrading to 2.3.5](#upgrading-to-235)
+  - [Optional notes](#optional-notes)
+- [Upgrading to 2.3.4](#upgrading-to-234)
+  - [Optional notes](#optional-notes)
+- [Upgrading to 2.3.3](#upgrading-to-233)
+  - [Optional notes](#optional-notes)
+- [Upgrading to 2.3.2](#upgrading-to-232)
+  - [Optional notes](#optional-notes)
+- [Upgrading to 2.3.1](#upgrading-to-231)
+  - [Demo apps (maintainers / contributors only)](#demo-apps-maintainers--contributors-only)
+  - [Maintainer tooling](#maintainer-tooling)
+- [Upgrading to 2.3.0](#upgrading-to-230)
+- [Upgrading to 2.2.3](#upgrading-to-223)
+- [Upgrading to 2.2.2](#upgrading-to-222)
+- [Upgrading to 2.2.1](#upgrading-to-221)
+- [Upgrading to 2.2.0](#upgrading-to-220)
+- [Upgrading to 2.1.0](#upgrading-to-210)
+  - [Optional: MySQL AES interoperability](#optional-mysql-aes-interoperability)
+- [Upgrading to 2.0.10](#upgrading-to-2010)
+- [Upgrading to 2.0.9](#upgrading-to-209)
+- [Upgrading to 2.0.8](#upgrading-to-208)
+- [Upgrading to 2.0.7](#upgrading-to-207)
+- [Upgrading to 2.0.6](#upgrading-to-206)
+- [Upgrading to 2.0.5](#upgrading-to-205)
+- [Upgrading to 2.0.4](#upgrading-to-204)
+- [Upgrading to 2.0.3](#upgrading-to-203)
+- [Upgrading to 2.0.2](#upgrading-to-202)
+- [Upgrading to 2.0.1](#upgrading-to-201)
+- [Upgrading to 2.0.0](#upgrading-to-200)
+- [Upgrading to 1.0.0](#upgrading-to-100)
+- [Upgrading from ambta/doctrine-encrypt-bundle or hec-franco/doctrine-encrypt-bundle](#upgrading-from-ambtadoctrine-encrypt-bundle-or-hec-francodoctrine-encrypt-bundle)
+
 ## General upgrade process
 
 1. **Back up configuration**  
@@ -26,6 +61,23 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 6. **Test**  
    Verify that encrypted entities are still read/written correctly and that console commands work.
+
+---
+
+## Upgrading to 2.3.5
+
+No breaking changes for applications that use the bundle via Composer with Halite, Defuse, or MysqlAes as documented.
+
+### Optional notes
+
+- **Maintainers:** PHPStan baseline is empty; CI runs PHPStan on every push. Use `make demo-smoke` (or the `demo-smoke` workflow on tags) to verify the Symfony 8 demo boots with HTTP 200. See [PHPSTAN.md](PHPSTAN.md) and [DEMO-FRANKENPHP.md](DEMO-FRANKENPHP.md).
+
+Update as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
 
 ---
 

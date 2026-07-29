@@ -2,6 +2,15 @@
 
 The bundle provides console commands to inspect encryption status, encrypt or decrypt the database, generate a secret key, and rotate keys.
 
+## Table of contents
+
+- [List commands](#list-commands)
+- [Status](#status)
+- [Encrypt database](#encrypt-database)
+- [Decrypt database](#decrypt-database)
+- [Generate secret key](#generate-secret-key)
+- [Rotate keys](#rotate-keys)
+
 ## List commands
 
 ```bash

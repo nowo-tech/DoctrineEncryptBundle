@@ -2,6 +2,17 @@
 
 The bundle is configured under the root key `nowo_doctrine_encrypt`. The only supported structure is **`default_profile`** plus **`profiles`** (a map of profile name ⇒ options). There is no root-level `encryptor_class` or `secret_directory_path`; use a single entry under `profiles` (e.g. `default`) for one encryptor. When `#[Encrypted]` has no alias (or uses `"default"`), the encryptor for `default_profile` is used.
 
+## Table of contents
+
+- [Options](#options)
+- [Example: single encryptor (default)](#example-single-encryptor-default)
+- [Example: multiple encryptors](#example-multiple-encryptors)
+- [Encryptors](#encryptors)
+  - [Encryptor and query performance (overview)](#encryptor-and-query-performance-overview)
+- [Secret key: file or env](#secret-key-file-or-env)
+- [Secret key files (when using path)](#secret-key-files-when-using-path)
+- [Loading configuration](#loading-configuration)
+
 ## Options
 
 | Option | Type | Default | Description |

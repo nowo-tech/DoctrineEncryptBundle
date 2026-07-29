@@ -13,6 +13,7 @@ class CascadeTarget
     #[ORM\Id]
     #[ORM\Column(type: 'integer')]
     #[ORM\GeneratedValue]
+    // @phpstan-ignore property.unusedType (Doctrine sets id via reflection)
     private ?int $id = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
@@ -22,7 +23,7 @@ class CascadeTarget
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $notSecret = null;
 
-    public function getId(): int
+    public function getId(): ?int
     {
         return $this->id;
     }

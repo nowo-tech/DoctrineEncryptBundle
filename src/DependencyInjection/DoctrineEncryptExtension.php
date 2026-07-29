@@ -39,7 +39,7 @@ final class DoctrineEncryptExtension extends Extension
     /**
      * Loads the bundle configuration, service definitions, and registers encryptor profiles.
      *
-     * @param array $configs Merged config from config files
+     * @param array<mixed> $configs Merged config from config files
      * @param ContainerBuilder $container Container to register services and parameters in
      */
     public function load(array $configs, ContainerBuilder $container): void
@@ -64,7 +64,7 @@ final class DoctrineEncryptExtension extends Extension
      * Registers one encryptor service per profile and sets the registry and parameters.
      *
      * @param ContainerBuilder $container Container builder
-     * @param array $config Processed config (profiles, default_profile)
+     * @param array<mixed> $config Processed config (profiles, default_profile)
      */
     private function registerProfiles(ContainerBuilder $container, array $config): void
     {

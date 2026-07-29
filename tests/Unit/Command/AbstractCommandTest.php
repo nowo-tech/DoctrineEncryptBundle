@@ -43,6 +43,7 @@ class AbstractCommandTest extends TestCase
                 return 0;
             }
 
+            /** @return list<object{name: class-string, isMappedSuperclass: bool}> */
             public function exposeGetEncryptionableEntityMetaData(): array
             {
                 return $this->getEncryptionableEntityMetaData();
@@ -73,6 +74,7 @@ class AbstractCommandTest extends TestCase
                 return 0;
             }
 
+            /** @return list<object{name: class-string, isMappedSuperclass: bool}> */
             public function exposeGetEncryptionableEntityMetaData(): array
             {
                 return $this->getEncryptionableEntityMetaData();
@@ -101,6 +103,7 @@ class AbstractCommandTest extends TestCase
                 return 0;
             }
 
+            /** @return iterable<object> */
             public function exposeGetEntityIterator(string $entityName): iterable
             {
                 return $this->getEntityIterator($entityName);
@@ -159,7 +162,7 @@ class AbstractCommandTest extends TestCase
             }
 
             /** @return array<ReflectionProperty> */
-            public function exposeGetEncryptionablePropertiesForConfig($entityMetaData, string $configName, string $defaultConfigName): array
+            public function exposeGetEncryptionablePropertiesForConfig(object $entityMetaData, string $configName, string $defaultConfigName): array
             {
                 return $this->getEncryptionablePropertiesForConfig($entityMetaData, $configName, $defaultConfigName);
             }
@@ -199,6 +202,7 @@ class AbstractCommandTest extends TestCase
                 return 0;
             }
 
+            /** @return list<object{name: class-string, isMappedSuperclass: bool}> */
             public function exposeGetEncryptionableEntityMetaDataForConfig(string $configName, string $defaultConfigName): array
             {
                 return $this->getEncryptionableEntityMetaDataForConfig($configName, $defaultConfigName);
@@ -235,7 +239,7 @@ class AbstractCommandTest extends TestCase
             }
 
             /** @return array<ReflectionProperty> */
-            public function exposeGetEncryptionableProperties($entityMetaData): array
+            public function exposeGetEncryptionableProperties(object $entityMetaData): array
             {
                 return $this->getEncryptionableProperties($entityMetaData);
             }
@@ -265,6 +269,7 @@ class AbstractCommandTest extends TestCase
                 return 'user';
             }
 
+            /** @return list<string> */
             public function getIdentifierFieldNames(): array
             {
                 return ['id'];
@@ -287,7 +292,8 @@ class AbstractCommandTest extends TestCase
                 return 0;
             }
 
-            public function exposeGetEncryptedTableInfo($entityMetaData, string $configName, string $defaultConfigName): array
+            /** @return array{table: string, idColumns: array<int, string>, columns: array<int, array{field: string, column: string}>} */
+            public function exposeGetEncryptedTableInfo(object $entityMetaData, string $configName, string $defaultConfigName): array
             {
                 return $this->getEncryptedTableInfo($entityMetaData, $configName, $defaultConfigName);
             }
@@ -313,6 +319,7 @@ class AbstractCommandTest extends TestCase
                 return 'tbl_user';
             }
 
+            /** @return list<string> */
             public function getIdentifierColumnNames(): array
             {
                 return ['id_col'];
@@ -335,7 +342,8 @@ class AbstractCommandTest extends TestCase
                 return 0;
             }
 
-            public function exposeGetEncryptedTableInfo($entityMetaData, string $configName, string $defaultConfigName): array
+            /** @return array{table: string, idColumns: array<int, string>, columns: array<int, array{field: string, column: string}>} */
+            public function exposeGetEncryptedTableInfo(object $entityMetaData, string $configName, string $defaultConfigName): array
             {
                 return $this->getEncryptedTableInfo($entityMetaData, $configName, $defaultConfigName);
             }
@@ -351,6 +359,7 @@ class AbstractCommandTest extends TestCase
         $metadata = new class {
             public string $name = User::class;
 
+            /** @return array<string, mixed> */
             public function getFieldMapping(string $fieldName): array
             {
                 return ['columnName' => 'mapped_' . $fieldName];
@@ -368,7 +377,7 @@ class AbstractCommandTest extends TestCase
                 return 0;
             }
 
-            public function exposeGetColumnNameFromMetadata($entityMetaData, string $fieldName): string
+            public function exposeGetColumnNameFromMetadata(object $entityMetaData, string $fieldName): string
             {
                 return $this->getColumnNameFromMetadata($entityMetaData, $fieldName);
             }
@@ -380,6 +389,7 @@ class AbstractCommandTest extends TestCase
     public function testGetColumnNameFromMetadataUsesFieldNameWhenMappingHasNoColumnName(): void
     {
         $metadata = new class {
+            /** @return array<string, mixed> */
             public function getFieldMapping(string $fieldName): array
             {
                 return [];
@@ -395,7 +405,7 @@ class AbstractCommandTest extends TestCase
                 return 0;
             }
 
-            public function exposeGetColumnNameFromMetadata($entityMetaData, string $fieldName): string
+            public function exposeGetColumnNameFromMetadata(object $entityMetaData, string $fieldName): string
             {
                 return $this->getColumnNameFromMetadata($entityMetaData, $fieldName);
             }
@@ -415,6 +425,7 @@ class AbstractCommandTest extends TestCase
                 return 0;
             }
 
+            /** @param array<string, mixed> $row */
             public function exposeGetRowValue(array $row, string $columnName): mixed
             {
                 return $this->getRowValue($row, $columnName);
@@ -437,6 +448,7 @@ class AbstractCommandTest extends TestCase
                 return 0;
             }
 
+            /** @param array<string, mixed> $row */
             public function exposeGetRowValue(array $row, string $columnName): mixed
             {
                 return $this->getRowValue($row, $columnName);
@@ -459,6 +471,7 @@ class AbstractCommandTest extends TestCase
                 return 0;
             }
 
+            /** @param array<string, mixed> $row */
             public function exposeGetRowValue(array $row, string $columnName): mixed
             {
                 return $this->getRowValue($row, $columnName);

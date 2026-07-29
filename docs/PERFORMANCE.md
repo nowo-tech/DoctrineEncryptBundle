@@ -4,6 +4,16 @@ This page compares **qualitative** performance characteristics of the encryptors
 
 See also [MYSQL_AES.md](MYSQL_AES.md) (MySQL-native encryption and LIKE demos) and the symfony8 demo at `/mysql-aes-note`.
 
+## Table of contents
+
+- [Summary table (at rest: persist / load)](#summary-table-at-rest-persist-load)
+- [Console batch commands](#console-batch-commands)
+- [Search, `LIKE`, and filtering](#search-like-and-filtering)
+  - [Relative cost (typical ordering, worst → best for large tables)](#relative-cost-typical-ordering-worst-best-for-large-tables)
+- [Encryptor choice vs performance](#encryptor-choice-vs-performance)
+- [Practical recommendations](#practical-recommendations)
+- [Related documentation](#related-documentation)
+
 ## Summary table (at rest: persist / load)
 
 | Approach | Where crypto runs | Typical CPU per field | Security (default) | Best for |

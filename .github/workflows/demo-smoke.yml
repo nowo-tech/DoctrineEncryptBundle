@@ -1,0 +1,26 @@
+# REQ-TEST-011 — Demo smoke: boot FrankenPHP demos and assert HTTP 200.
+name: Demo smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 * * 1"
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  demo-smoke:
+    name: Demo symfony8 smoke (HTTP 200)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Compose
+        run: docker compose version
+
+      - name: Run demo smoke (REQ-TEST-011)
+        run: make demo-smoke

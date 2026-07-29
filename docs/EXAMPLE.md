@@ -2,6 +2,15 @@
 
 This page shows a complete example: an entity with encrypted fields, fixtures, a controller, a Twig template, and what the encrypted data looks like in the database.
 
+## Table of contents
+
+- [Entity](#entity)
+- [Fixtures](#fixtures)
+- [Controller](#controller)
+- [Template](#template)
+- [What you see in the database](#what-you-see-in-the-database)
+- [See also](#see-also)
+
 ## Entity
 
 ```php

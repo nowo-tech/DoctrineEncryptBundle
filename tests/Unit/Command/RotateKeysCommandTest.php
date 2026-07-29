@@ -18,6 +18,7 @@ use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
@@ -29,6 +30,9 @@ use Symfony\Component\HttpKernel\KernelInterface;
 
 class RotateKeysCommandTest extends TestCase
 {
+    /**
+     * @param array<string, array{path: string|null, encryptor_class: string}> $keyPaths
+     */
     private function createRotateCommand(
         array $keyPaths,
         string $projectDir = '/tmp',
@@ -412,6 +416,7 @@ class RotateKeysCommandTest extends TestCase
         return $app;
     }
 
+    /** @return Connection&MockObject */
     private function createConnectionMock(): Connection
     {
         $result = $this->createMock(Result::class);

@@ -8,6 +8,17 @@ This guide describes a safe procedure to **rotate encryption keys**: back up the
 
 **Important:** Key rotation touches all encrypted data. Plan the steps, run them in a maintenance window, and verify backups before starting.
 
+## Table of contents
+
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [Step 1: Back up the current state](#step-1-back-up-the-current-state)
+- [Step 2: Decrypt the database](#step-2-decrypt-the-database)
+- [Step 3: Change the key(s)](#step-3-change-the-keys)
+- [Step 4: Re-encrypt the database](#step-4-re-encrypt-the-database)
+- [Step 5: After rotation](#step-5-after-rotation)
+- [Summary checklist](#summary-checklist)
+
 ## Overview
 
 1. **Back up** the database and the current key file(s).
