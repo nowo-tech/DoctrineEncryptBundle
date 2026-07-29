@@ -2,26 +2,28 @@
 
 [![CI](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml/badge.svg)](https://github.com/nowo-tech/DoctrineEncryptBundle/actions/workflows/ci.yml) [![Packagist Version](https://img.shields.io/packagist/v/nowo-tech/doctrine-encrypt-bundle.svg?style=flat)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![Packagist Downloads](https://img.shields.io/packagist/dt/nowo-tech/doctrine-encrypt-bundle.svg)](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php)](https://php.net) [![Symfony](https://img.shields.io/badge/Symfony-7.4%20%7C%208.0%20%7C%208.1%2B-000000?logo=symfony)](https://symfony.com) [![GitHub stars](https://img.shields.io/github/stars/nowo-tech/DoctrineEncryptBundle.svg?style=social&label=Star)](https://github.com/nowo-tech/DoctrineEncryptBundle) [![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen)](#tests-and-coverage)
 
+> ⭐ **Found this useful?** [Install from Packagist](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) · Give it a **star** on [GitHub](https://github.com/nowo-tech/DoctrineEncryptBundle) so more developers can find it.
+
 **Symfony bundle to encrypt Doctrine entity fields at rest** using [Halite](https://github.com/paragonie/halite) or [Defuse](https://github.com/defuse/php-encryption)—audited libraries, no custom crypto. For **Symfony 7.4+ and 8** · PHP 8.2+. Suits **GDPR** and compliance (e.g. Art. 32); supports key rotation and [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for anonymization and erasure.
 
 ![FrankenPHP Friendly Worker Mode](docs/images/frankenphp-friendly.png)
 
 This bundle is **FrankenPHP worker mode friendly**.
 
-> ⭐ **Found this useful?** [Install from Packagist](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) · Give it a **star** on [GitHub](https://github.com/nowo-tech/DoctrineEncryptBundle) so more developers can find it.
-
 ## Table of contents
 
 - [Quick search terms](#quick-search-terms)
 - [Features](#features)
 - [Installation](#installation)
+- [Requirements](#requirements)
 - [Configuration](#configuration)
 - [Usage](#usage)
-- [Documentation](#documentation)
-- [Requirements](#requirements)
 - [Demo](#demo)
 - [Development](#development)
-- [License & author](#license--author)
+- [Documentation](#documentation)
+- [Tests and coverage](#tests-and-coverage)
+- [License](#license)
+- [Author](#author)
 
 ## Quick search terms
 
@@ -63,6 +65,16 @@ return [
   Nowo\DoctrineEncryptBundle\NowoDoctrineEncryptBundle::class => ['all' => true],
 ];
 ```
+
+## Requirements
+
+- PHP >= 8.2
+- **Symfony 7.4+ or 8** (^7.0 \|\| ^8.0; tested on **7.4**, **8.0**, **8.1**). See `composer.json`.
+- Doctrine ORM ^2.15 \|\| ^3.0
+- paragonie/halite (included); for Defuse: `defuse/php-encryption ^2.1`
+- ext-sodium recommended for Halite (or sodium_compat)
+
+See [docs/INSTALLATION.md](docs/INSTALLATION.md#requirements) and [docs/UPGRADING.md](docs/UPGRADING.md#upgrading-to-220) for compatibility notes.
 
 ## Configuration
 
@@ -142,6 +154,14 @@ private ?string $iban = null;
 
 Values are encrypted on persist/update and decrypted on load. For **programmatic** use: **EncryptUtil** (encrypt/decrypt) and **MaskUtil** (mask for display). In Twig use the **`|decrypt`** and **`|mask`** filters. See [docs/USAGE.md](docs/USAGE.md) for EncryptUtil, MaskUtil, Twig filters, embedded entities, and inheritance.
 
+## Demo
+
+The Symfony 8 demo is in `demo/symfony8`. It runs with **FrankenPHP** and **Caddy** (HTTP on port 80 in the container). **`FRANKENPHP_MODE`** selects **`classic`** or **`worker`** (default **`worker`** in `.env.example`) — [docs/DEMO-FRANKENPHP.md](docs/DEMO-FRANKENPHP.md). Default host port: **8008** via `PORT`. Quick start: [docs/DEMO.md](docs/DEMO.md).
+
+## Development
+
+Run tests and QA with Docker: `make up && make install && make test` (or `make test-coverage`, `make qa`). Without Docker: `composer install && composer test`. See [Makefile](Makefile) for all targets.
+
 ## Documentation
 
 - [Installation](docs/INSTALLATION.md)
@@ -171,24 +191,6 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 - [Performance (encryptors, LIKE, scalability)](docs/PERFORMANCE.md)
 - [Coverage policy](docs/COVERAGE.md)
 - [PHPStan level and baseline](docs/PHPSTAN.md)
-
-## Requirements
-
-- PHP >= 8.2
-- **Symfony 7.4+ or 8** (^7.0 \|\| ^8.0; tested on **7.4**, **8.0**, **8.1**). See `composer.json`.
-- Doctrine ORM ^2.15 \|\| ^3.0
-- paragonie/halite (included); for Defuse: `defuse/php-encryption ^2.1`
-- ext-sodium recommended for Halite (or sodium_compat)
-
-See [docs/INSTALLATION.md](docs/INSTALLATION.md#requirements) and [docs/UPGRADING.md](docs/UPGRADING.md#upgrading-to-220) for compatibility notes.
-
-## Demo
-
-The Symfony 8 demo is in `demo/symfony8`. It runs with **FrankenPHP** and **Caddy** (HTTP on port 80 in the container). **`FRANKENPHP_MODE`** selects **`classic`** or **`worker`** (default **`worker`** in `.env.example`) — [docs/DEMO-FRANKENPHP.md](docs/DEMO-FRANKENPHP.md). Default host port: **8008** via `PORT`. Quick start: [docs/DEMO.md](docs/DEMO.md).
-
-## Development
-
-Run tests and QA with Docker: `make up && make install && make test` (or `make test-coverage`, `make qa`). Without Docker: `composer install && composer test`. See [Makefile](Makefile) for all targets.
 
 ## Tests and coverage
 
