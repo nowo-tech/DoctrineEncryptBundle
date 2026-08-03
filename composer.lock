@@ -4101,16 +4101,16 @@
         },
         {
             "name": "nowo-tech/phpstan-frankenphp",
-            "version": "v1.0.1",
+            "version": "v1.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nowo-tech/PhpStanFrankenPhp.git",
-                "reference": "c27fbbec6f3430763ddf9854f5ec6b0ebb15f1fd"
+                "reference": "8edcc44f9059541a31d87766cac12bd4002e7932"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nowo-tech/PhpStanFrankenPhp/zipball/c27fbbec6f3430763ddf9854f5ec6b0ebb15f1fd",
-                "reference": "c27fbbec6f3430763ddf9854f5ec6b0ebb15f1fd",
+                "url": "https://api.github.com/repos/nowo-tech/PhpStanFrankenPhp/zipball/8edcc44f9059541a31d87766cac12bd4002e7932",
+                "reference": "8edcc44f9059541a31d87766cac12bd4002e7932",
                 "shasum": ""
             },
             "require": {
@@ -4159,7 +4159,7 @@
                     "homepage": "https://nowo.tech"
                 }
             ],
-            "description": "PHPStan rules to migrate PHP apps from PHP-FPM to FrankenPHP classic mode, then worker mode. Rules are split by migration level with documented justification and application order.",
+            "description": "PHPStan rules that help you migrate from PHP-FPM to FrankenPHP classic, then to worker mode. Rules are split by level with demos for every case.",
             "homepage": "https://github.com/nowo-tech/PhpStanFrankenPhp",
             "keywords": [
                 "PHPStan",
@@ -4183,7 +4183,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-07-22T15:59:27+00:00"
+            "time": "2026-07-29T14:51:52+00:00"
         },
         {
             "name": "paragonie/random_compat",
