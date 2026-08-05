@@ -47,12 +47,20 @@ There is no separate HTTP API exposed by the bundle itself beyond what your app 
 - Keep **`secret_directory_path`** and env-based keys out of version control; use `.gitignore` for key files.
 - Run **key rotation** during maintenance windows with backups; use `doctrine:encrypt:rotate-keys` or the documented manual flow.
 - In Twig, only decrypt what you must display; `|decrypt` is subject to auto-escaping (no `is_safe: html`). Escape explicitly when rendering outside HTML contexts if needed.
-- Prefer **Halite** or **Defuse** for new data. Treat **MysqlAes** as legacy MySQL interop only (`@deprecated`); do not choose it for new production deployments.
+- Prefer **Halite** or **Defuse** for new data. **Do not use MysqlAes for new production deployments.** Treat **MysqlAes** as legacy MySQL interop only (`@deprecated` since 2.1.0; constructor emits `trigger_deprecation`). Existing MysqlAes deployments keep working (no hard-fail in prod) — plan migration to Halite/Defuse.
 - Run **`composer audit`** before releases and apply security updates promptly.
 
 ## Cryptography and secrets
 
 Encryption uses **Paragonie Halite** or **Defuse php-encryption** (authenticated encryption). Keys are never hardcoded in bundle sources; they come from your configuration (files or env). Do not log key material or full plaintext of encrypted fields at INFO/DEBUG in production.
+
+### MysqlAes (legacy — do not use in new production)
+
+`MysqlAesEncryptor` exists only for interoperability with MySQL `AES_ENCRYPT` / `AES_DECRYPT` (AES-128-ECB). It is **deprecated since 2.1.0** and triggers a deprecation notice on construction. It does **not** hard-fail in production so existing deployments keep working, but:
+
+- **Do not** select MysqlAes for new projects or new encrypted columns in production.
+- **Migrate** existing MysqlAes ciphertext to Halite or Defuse (decrypt with MysqlAes, re-encrypt with Halite/Defuse; see [MYSQL_AES.md](MYSQL_AES.md) and key-rotation docs).
+- Prefer authenticated encryption (Halite/Defuse) for any new at-rest field encryption.
 
 ## Logging
 
@@ -93,7 +101,7 @@ Before tagging a release, confirm:
 | **Input / output** | Inputs validated; outputs escaped in Twig/templates where user-controlled. |
 | **Dependencies** | `composer audit` run; issues triaged. |
 | **Logging** | Logs do not print secrets, tokens, or session identifiers unnecessarily. |
-| **Cryptography** | Prefer Halite/Defuse. `MysqlAes` is `@deprecated` (AES-128-ECB); legacy interop only — see [MYSQL_AES.md](MYSQL_AES.md). |
+| **Cryptography** | Prefer Halite/Defuse for all new prod data. `MysqlAes` is `@deprecated` since 2.1.0 (AES-128-ECB; deprecation notice only — no prod hard-fail); migrate legacy data — see [MYSQL_AES.md](MYSQL_AES.md). |
 | **Permissions / exposure** | Routes and admin features documented; roles configured for production. |
 | **Limits / DoS** | Timeouts, size limits, rate limits where applicable. |
 | **AI security audit (REQ-SEC-004)** | Latest grade recorded in the org report `BUNDLES_SECURITY_ANALYSIS.md` (DoctrineEncryptBundle entry). Must be **Pass (good)** or **Pass (conditional)** before tagging. |

@@ -44,6 +44,12 @@ final class MysqlAesEncryptor implements EncryptorInterface
      */
     public function __construct(private readonly string $keyFile, ?string $keyContent = null)
     {
+        trigger_deprecation(
+            'nowo-tech/doctrine-encrypt-bundle',
+            '2.1.0',
+            'MysqlAesEncryptor is deprecated and not recommended for new production deployments (AES-128-ECB). Prefer HaliteEncryptor or DefuseEncryptor and migrate existing ciphertext.',
+        );
+
         $this->keyContent = $keyContent !== null && $keyContent !== '' ? $keyContent : null;
     }
 
