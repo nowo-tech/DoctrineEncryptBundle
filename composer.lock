@@ -4102,16 +4102,16 @@
         },
         {
             "name": "nowo-tech/phpstan-frankenphp",
-            "version": "v1.0.2",
+            "version": "v1.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nowo-tech/PhpStanFrankenPhp.git",
-                "reference": "8edcc44f9059541a31d87766cac12bd4002e7932"
+                "reference": "17f99e7d84286ec3a73f7918765f3ed4cf2916d2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nowo-tech/PhpStanFrankenPhp/zipball/8edcc44f9059541a31d87766cac12bd4002e7932",
-                "reference": "8edcc44f9059541a31d87766cac12bd4002e7932",
+                "url": "https://api.github.com/repos/nowo-tech/PhpStanFrankenPhp/zipball/17f99e7d84286ec3a73f7918765f3ed4cf2916d2",
+                "reference": "17f99e7d84286ec3a73f7918765f3ed4cf2916d2",
                 "shasum": ""
             },
             "require": {
@@ -4184,7 +4184,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-07-29T14:51:52+00:00"
+            "time": "2026-08-03T12:45:27+00:00"
         },
         {
             "name": "paragonie/random_compat",
