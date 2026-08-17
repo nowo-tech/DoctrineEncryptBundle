@@ -4,7 +4,7 @@
 
 > ⭐ **Found this useful?** [Install from Packagist](https://packagist.org/packages/nowo-tech/doctrine-encrypt-bundle) · Give it a **star** on [GitHub](https://github.com/nowo-tech/DoctrineEncryptBundle) so more developers can find it.
 
-**Symfony bundle to encrypt Doctrine entity fields at rest** using [Halite](https://github.com/paragonie/halite) or [Defuse](https://github.com/defuse/php-encryption)—audited libraries, no custom crypto. For **Symfony 7.4+ and 8** · PHP 8.2+. Suits **GDPR** and compliance (e.g. Art. 32); supports key rotation and [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for anonymization and erasure.
+**Symfony bundle to encrypt Doctrine entity fields at rest** using [Halite](https://github.com/paragonie/halite) or [Defuse](https://github.com/defuse/php-encryption)—audited libraries, no custom crypto. For **Symfony 7.4+ and 8** · PHP 8.2+. Suits **GDPR** and compliance (e.g. Art. 32); supports key rotation and [AnonymizeBundle](https://github.com/nowo-tech/AnonymizeBundle) for anonymization and erasure.
 
 ![FrankenPHP Friendly Worker Mode](docs/images/frankenphp-friendly.png)
 
@@ -40,8 +40,8 @@ Looking for **Doctrine encryption**, **encrypt entity fields**, **Halite Symfony
 - ✅ **Twig filters** — `|decrypt` (decrypt in templates; optional config: `{{ value|decrypt }}` or `{{ value|decrypt('financial_data') }}`) and `|mask` (mask for display: `{{ value|mask(4) }}` or `{{ value|decrypt|mask(4) }}`)
 - ✅ Works with **embedded entities** and **inheritance**
 - ✅ Console commands: status, generate secret key, encrypt/decrypt database, **rotate keys** (backup, decrypt, change keys, re-encrypt with confirmations)
-- ✅ **Key rotation** — one command or manual steps; combinable with [Nowo\AnonymizedBundle](https://github.com/nowo-tech/AnonymizedBundle) for GDPR-compliant anonymization and erasure
-- ✅ **Symfony Flex** recipe (register bundle + config; see [docs/INSTALLATION.md](docs/INSTALLATION.md))
+- ✅ **Key rotation** — one command or manual steps; combinable with [AnonymizeBundle](https://github.com/nowo-tech/AnonymizeBundle) for GDPR-compliant anonymization and erasure
+- ✅ **Symfony Flex** recipe stub — see [docs/INSTALLATION.md](docs/INSTALLATION.md) (recipes-contrib merge is still pending; Flex applies it when the recipe is enabled)
 - ✅ Compatible with **Symfony 7.4+ and 8** and **Doctrine ORM 2.x and 3.x**
 - ✅ Compatible with **FrankenPHP** (HTTP runtime and optional **worker** mode; demos default to **`APP_ENV=dev`** with **Caddyfile.dev**, i.e. no PHP worker — see [docs/DEMO-FRANKENPHP.md](docs/DEMO-FRANKENPHP.md) and [Installation → FrankenPHP](docs/INSTALLATION.md#frankenphp-runtime-and-worker-mode))
 
