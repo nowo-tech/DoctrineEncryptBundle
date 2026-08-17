@@ -20,7 +20,6 @@ use PHPUnit\Framework\TestCase;
 
 use function count;
 
-use const E_ALL;
 use const PHP_VERSION_ID;
 
 abstract class AbstractFunctionalTestCase extends TestCase
@@ -92,8 +91,6 @@ abstract class AbstractFunctionalTestCase extends TestCase
             ],
             $this->subscriber,
         );
-
-        error_reporting(E_ALL);
     }
 
     protected function tearDown(): void
