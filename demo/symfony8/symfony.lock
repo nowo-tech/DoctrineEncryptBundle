@@ -37,6 +37,9 @@
     "nowo-tech/doctrine-encrypt-bundle": {
         "version": "dev-master"
     },
+    "nowo-tech/hot-reload-bundle": {
+        "version": "v1.3.2"
+    },
     "nowo-tech/twig-inspector-bundle": {
         "version": "v1.0.31"
     },

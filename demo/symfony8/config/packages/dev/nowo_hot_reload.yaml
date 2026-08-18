@@ -1,0 +1,15 @@
+# FrankenPHP Hot Reload — development only (do not enable in production).
+nowo_hot_reload:
+    enabled: true
+    auto_inject: true
+    require_frankenphp_env: true
+    allow_production: false
+    idiomorph: true
+    preserve_selectors:
+        - '[id^="sfwdt"]'
+        - '.sf-toolbar'
+        - '.sf-minitoolbar'
+    preserve_observe: true
+    csp_augment_script_src: true
+    csp_script_src_hosts:
+        - 'https://cdn.jsdelivr.net'
