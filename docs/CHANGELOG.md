@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.3.9] - 2026-08-19](#239-2026-08-19)
 - [[2.3.8] - 2026-08-19](#238-2026-08-19)
 - [[2.3.7] - 2026-08-18](#237-2026-08-18)
 - [[2.3.6] - 2026-07-29](#236-2026-07-29)
@@ -83,6 +84,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - [Fixed](#fixed)
 
 ## [Unreleased]
+
+## [2.3.9] - 2026-08-19
+
+### Security
+
+- **Production guard:** container compilation fails when any profile uses the deprecated `MysqlAes` encryptor in `prod` (REQ-SEC-004). Use Halite or Defuse and migrate legacy ciphertext.
 
 ## [2.3.8] - 2026-08-19
 
