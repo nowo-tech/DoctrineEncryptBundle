@@ -73,10 +73,7 @@ final class DoctrineEncryptExtension extends Extension
         foreach ($profiles as $name => $options) {
             $encryptorClass = $options['encryptor_class'] ?? '';
             if ($encryptorClass === 'MysqlAes' || $encryptorClass === MysqlAesEncryptor::class) {
-                throw new InvalidArgumentException(sprintf(
-                    'nowo_doctrine_encrypt.profiles.%s uses MysqlAes, which is blocked in production. Use Halite or Defuse and migrate legacy ciphertext.',
-                    $name,
-                ));
+                throw new InvalidArgumentException(sprintf('nowo_doctrine_encrypt.profiles.%s uses MysqlAes, which is blocked in production. Use Halite or Defuse and migrate legacy ciphertext.', $name));
             }
         }
     }
