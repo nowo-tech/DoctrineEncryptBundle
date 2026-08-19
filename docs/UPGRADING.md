@@ -66,6 +66,14 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.3.8
+
+No application upgrade steps.
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
 ## Upgrading to 2.3.7
 
 No application upgrade steps. **Demos only:** Hot Reload Bundle `^1.4` (FrankenPHP Mercure/`hot_reload`, `dev`/`test`). Continue requiring `nowo-tech/doctrine-encrypt-bundle` as before.
