@@ -386,7 +386,7 @@ class DoctrineEncryptExtensionTest extends TestCase
             [
                 'profiles' => [
                     'legacy' => [
-                        'encryptor_class' => 'MysqlAes',
+                        'encryptor_class'    => 'MysqlAes',
                         'secret_key_env_var' => '%env(MYSQL_AES_KEY)%',
                     ],
                 ],
@@ -402,7 +402,7 @@ class DoctrineEncryptExtensionTest extends TestCase
             [
                 'profiles' => [
                     'legacy' => [
-                        'encryptor_class' => 'MysqlAes',
+                        'encryptor_class'    => 'MysqlAes',
                         'secret_key_env_var' => '%env(MYSQL_AES_KEY)%',
                     ],
                 ],
@@ -416,7 +416,7 @@ class DoctrineEncryptExtensionTest extends TestCase
     {
         return new ContainerBuilder(
             new ParameterBag([
-                'kernel.debug' => false,
+                'kernel.debug'       => false,
                 'kernel.environment' => $environment,
             ]),
         );
