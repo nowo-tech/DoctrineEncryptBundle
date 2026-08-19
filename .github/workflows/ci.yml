@@ -87,6 +87,9 @@ jobs:
             symfony/var-exporter:${VAR_EXPORTER} \
             --no-interaction --no-update
           composer update --with-all-dependencies --no-interaction --prefer-dist --no-progress
+      - name: Composer audit (Critical/High)
+        run: composer audit --locked
+
 
       - name: Run tests
         run: |
