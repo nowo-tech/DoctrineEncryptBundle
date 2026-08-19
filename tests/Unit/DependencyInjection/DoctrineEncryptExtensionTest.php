@@ -375,10 +375,50 @@ class DoctrineEncryptExtensionTest extends TestCase
         // If getArguments() is empty, the registry is injected by autowiring at compile time
     }
 
-    private function createContainer(): ContainerBuilder
+    public function testMysqlAesBlockedInProduction(): void
+    {
+        $container = $this->createContainer('prod');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('MysqlAes, which is blocked in production');
+
+        $this->extension->load([
+            [
+                'profiles' => [
+                    'legacy' => [
+                        'encryptor_class' => 'MysqlAes',
+                        'secret_key_env_var' => '%env(MYSQL_AES_KEY)%',
+                    ],
+                ],
+            ],
+        ], $container);
+    }
+
+    public function testMysqlAesAllowedInDev(): void
+    {
+        $container = $this->createContainer('dev');
+
+        $this->extension->load([
+            [
+                'profiles' => [
+                    'legacy' => [
+                        'encryptor_class' => 'MysqlAes',
+                        'secret_key_env_var' => '%env(MYSQL_AES_KEY)%',
+                    ],
+                ],
+            ],
+        ], $container);
+
+        $this->assertTrue($container->hasDefinition('nowo_doctrine_encrypt.encryptor.legacy'));
+    }
+
+    private function createContainer(string $environment = 'dev'): ContainerBuilder
     {
         return new ContainerBuilder(
-            new ParameterBag(['kernel.debug' => false]),
+            new ParameterBag([
+                'kernel.debug' => false,
+                'kernel.environment' => $environment,
+            ]),
         );
     }
 }

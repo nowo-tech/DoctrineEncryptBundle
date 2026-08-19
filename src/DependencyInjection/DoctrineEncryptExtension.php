@@ -57,7 +57,28 @@ final class DoctrineEncryptExtension extends Extension
         }
         $config['profiles'] = $profiles;
 
+        $this->assertNoMysqlAesInProduction($container, $profiles);
         $this->registerProfiles($container, $config);
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $profiles
+     */
+    private function assertNoMysqlAesInProduction(ContainerBuilder $container, array $profiles): void
+    {
+        if ($container->getParameter('kernel.environment') !== 'prod') {
+            return;
+        }
+
+        foreach ($profiles as $name => $options) {
+            $encryptorClass = $options['encryptor_class'] ?? '';
+            if ($encryptorClass === 'MysqlAes' || $encryptorClass === MysqlAesEncryptor::class) {
+                throw new InvalidArgumentException(sprintf(
+                    'nowo_doctrine_encrypt.profiles.%s uses MysqlAes, which is blocked in production. Use Halite or Defuse and migrate legacy ciphertext.',
+                    $name,
+                ));
+            }
+        }
     }
 
     /**
