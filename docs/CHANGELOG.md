@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.3.11] - 2026-08-20](#2311-2026-08-20)
 - [[2.3.10] - 2026-08-20](#2310-2026-08-20)
 - [[2.3.9] - 2026-08-19](#239-2026-08-19)
 - [[2.3.8] - 2026-08-19](#238-2026-08-19)
@@ -85,6 +86,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - [Fixed](#fixed)
 
 ## [Unreleased]
+
+## [2.3.11] - 2026-08-20
+
+### Documentation
+
+- **UPGRADING.md:** production MysqlAes hard-fail (since 2.3.9) is documented at the top of the guide so upgrades that skip 2.3.9 notes cannot miss it. 2.3.10 no longer reads as “no steps” for MysqlAes hosts.
 
 ## [2.3.10] - 2026-08-20
 

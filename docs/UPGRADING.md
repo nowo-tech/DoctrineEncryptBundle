@@ -5,6 +5,10 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 ## Table of contents
 
 - [General upgrade process](#general-upgrade-process)
+- [Production breaking change (MysqlAes since 2.3.9)](#production-breaking-change-mysqlaes-since-239)
+- [Upgrading to 2.3.11](#upgrading-to-2311)
+- [Upgrading to 2.3.10](#upgrading-to-2310)
+- [Upgrading to 2.3.9](#upgrading-to-239)
 - [Upgrading to 2.3.6](#upgrading-to-236)
   - [Optional notes](#optional-notes)
 - [Upgrading to 2.3.5](#upgrading-to-235)
@@ -39,6 +43,20 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 - [Upgrading to 1.0.0](#upgrading-to-100)
 - [Upgrading from ambta/doctrine-encrypt-bundle or hec-franco/doctrine-encrypt-bundle](#upgrading-from-ambtadoctrine-encrypt-bundle-or-hec-francodoctrine-encrypt-bundle)
 
+## Production breaking change (MysqlAes since 2.3.9)
+
+**MysqlAes is rejected in `prod`.** Since **2.3.9**, container compilation **hard-fails** if any `nowo_doctrine_encrypt.profiles.*.encryptor` is `MysqlAes` (short name or FQCN) when `kernel.environment` is `prod`.
+
+This is **not** undone in 2.3.10 or 2.3.11. Jumping from 2.3.8 (or earlier) to any later tag has the same requirement:
+
+1. In a non-prod environment, decrypt MysqlAes ciphertext and re-encrypt with **Halite** or **Defuse** (see [MYSQL_AES.md](MYSQL_AES.md)).
+2. Change every production profile `encryptor` / `encryptor_class` away from MysqlAes.
+3. Then deploy **2.3.9+** and run `php bin/console cache:clear --env=prod`.
+
+Leaving MysqlAes only in `dev`/`test` still compiles. Using it in production config will not boot.
+
+---
+
 ## General upgrade process
 
 1. **Back up configuration**  
@@ -66,9 +84,22 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.3.11
+
+From **2.3.10** — Documentation-only: the 2.3.9 MysqlAes production hard-fail is called out at the top of this guide (2.3.10 previously said “no application upgrade steps”, which was misleading if you skipped 2.3.9 notes).
+
+If you are still on **2.3.8 or earlier**, follow [Upgrading to 2.3.9](#upgrading-to-239) **before** deploying this tag.
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear --env=prod
+```
+
 ## Upgrading to 2.3.10
 
-From **2.3.9** — No application upgrade steps (MysqlAes prod-guard regression tests + SECURITY.md sync).
+From **2.3.9** — No new application steps **if you already migrated off MysqlAes in production**. Regression tests + SECURITY.md only.
+
+**If you skipped 2.3.9:** the MysqlAes prod hard-fail is already in effect. Follow [Upgrading to 2.3.9](#upgrading-to-239) before this cache clear.
 
 ```bash
 composer update nowo-tech/doctrine-encrypt-bundle
