@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.3.10] - 2026-08-20](#2310-2026-08-20)
 - [[2.3.9] - 2026-08-19](#239-2026-08-19)
 - [[2.3.8] - 2026-08-19](#238-2026-08-19)
 - [[2.3.7] - 2026-08-18](#237-2026-08-18)
@@ -84,6 +85,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - [Fixed](#fixed)
 
 ## [Unreleased]
+
+## [2.3.10] - 2026-08-20
+
+### Tests
+
+- **Crypto prod guard:** regression tests for MysqlAes FQCN and mixed profiles blocked in `prod`; Halite still allowed (`DoctrineEncryptExtensionTest`).
+
+### Documentation
+
+- **SECURITY.md:** align MysqlAes guidance with the hard-fail production guard shipped in 2.3.9.
 
 ## [2.3.9] - 2026-08-19
 

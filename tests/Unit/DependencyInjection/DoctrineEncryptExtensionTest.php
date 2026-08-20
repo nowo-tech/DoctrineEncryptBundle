@@ -13,6 +13,7 @@ use Nowo\DoctrineEncryptBundle\DependencyInjection\DoctrineEncryptExtension;
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
@@ -392,6 +393,67 @@ class DoctrineEncryptExtensionTest extends TestCase
                 ],
             ],
         ], $container);
+    }
+
+    public function testMysqlAesFqcnBlockedInProduction(): void
+    {
+        $container = $this->createContainer('prod');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('MysqlAes, which is blocked in production');
+
+        $this->extension->load([
+            [
+                'profiles' => [
+                    'legacy' => [
+                        'encryptor_class'    => MysqlAesEncryptor::class,
+                        'secret_key_env_var' => '%env(MYSQL_AES_KEY)%',
+                    ],
+                ],
+            ],
+        ], $container);
+    }
+
+    public function testMixedProfilesBlocksWhenAnyUsesMysqlAesInProd(): void
+    {
+        $container = $this->createContainer('prod');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('MysqlAes, which is blocked in production');
+
+        $this->extension->load([
+            [
+                'default_profile' => 'safe',
+                'profiles'        => [
+                    'safe' => [
+                        'encryptor_class'       => 'Halite',
+                        'secret_directory_path' => '%kernel.project_dir%',
+                    ],
+                    'legacy' => [
+                        'encryptor_class'    => 'MysqlAes',
+                        'secret_key_env_var' => '%env(MYSQL_AES_KEY)%',
+                    ],
+                ],
+            ],
+        ], $container);
+    }
+
+    public function testHaliteAllowedInProduction(): void
+    {
+        $container = $this->createContainer('prod');
+
+        $this->extension->load([
+            [
+                'profiles' => [
+                    'default' => [
+                        'encryptor_class'       => 'Halite',
+                        'secret_directory_path' => '%kernel.project_dir%',
+                    ],
+                ],
+            ],
+        ], $container);
+
+        $this->assertTrue($container->hasDefinition('nowo_doctrine_encrypt.encryptor.default'));
     }
 
     public function testMysqlAesAllowedInDev(): void

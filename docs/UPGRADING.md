@@ -66,6 +66,14 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ---
 
+## Upgrading to 2.3.10
+
+From **2.3.9** — No application upgrade steps (MysqlAes prod-guard regression tests + SECURITY.md sync).
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
 ## Upgrading to 2.3.9
 
 From **2.3.8** — If any `nowo_doctrine_encrypt.profiles.*.encryptor` is `MysqlAes` in production, switch to Halite/Defuse and re-encrypt data before deploying.
