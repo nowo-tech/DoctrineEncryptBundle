@@ -22,7 +22,7 @@ services:
       - APP_DEBUG=1
       - APP_SECRET=${APP_SECRET:-demo-secret}
       - FRANKENPHP_MODE=${FRANKENPHP_MODE:-worker}
-      - DATABASE_URL=${DATABASE_URL:-sqlite:///%kernel.project_dir%/var/data.db}
+      - DATABASE_URL=${DATABASE_URL:-mysql://encrypt:encrypt@db:3306/encrypt_demo?serverVersion=8.0&charset=utf8mb4}
       - MYSQL_AES_KEY=${MYSQL_AES_KEY:-demo-mysql-aes-key}
     # Mitigate Docker/WSL DNS failures resolving repo.packagist.org (composer curl error 6).
     dns:
