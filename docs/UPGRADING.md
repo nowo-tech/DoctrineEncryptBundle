@@ -4,6 +4,8 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 
 ## Table of contents
 
+
+- [From 2.3.11 to 2.3.12](#from-2311-to-2312)
 - [General upgrade process](#general-upgrade-process)
 - [Production breaking change (MysqlAes since 2.3.9)](#production-breaking-change-mysqlaes-since-239)
 - [Upgrading to 2.3.11](#upgrading-to-2311)
