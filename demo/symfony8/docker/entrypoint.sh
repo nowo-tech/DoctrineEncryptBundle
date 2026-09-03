@@ -26,6 +26,8 @@ case "$MODE" in
 esac
 echo "FrankenPHP mode: $MODE"
 
+git config --global --add safe.directory /app 2>/dev/null || true
+git config --global --add safe.directory /var/doctrine-encrypt-bundle 2>/dev/null || true
 
 mkdir -p /app/var/cache /app/var/log /app/var
 chmod -R 777 /app/var 2>/dev/null || true
