@@ -45,22 +45,24 @@ help:
 	@echo ""
 
 up:
-	@if [ ! -f .env ]; then cp .env.example .env 2>/dev/null || (echo "APP_ENV=dev" > .env; echo "APP_SECRET=change-me" >> .env; echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/data.db" >> .env); fi
+	@if [ ! -f .env ]; then cp .env.example .env 2>/dev/null || true; fi
 	$(COMPOSE) up -d
-	@echo "Waiting for container to be ready..."
-	@sleep 5
-	@echo "Installing dependencies..."
-	@i=0; \
-	until $(COMPOSE) exec -T -e COMPOSER_MEMORY_LIMIT=-1 $(SERVICE_PHP) composer install --no-interaction; do \
-		i=$$((i+1)); \
-		if [ $$i -ge 5 ]; then exit 1; fi; \
-		echo "composer install failed, retry $$i..."; \
-		sleep 5; \
-	done
-	@echo "Creating database, schema and loading fixtures..."
-	@$(MAKE) db-create db-schema key fixtures
+	@echo "Waiting for entrypoint (composer, schema, fixtures) and FrankenPHP..."
 	@PORT=$$(grep "^PORT=" .env 2>/dev/null | cut -d= -f2 | tr -d '\r'); \
 	[ -z "$$PORT" ] && PORT=$$(grep "^PORT=" .env.example 2>/dev/null | cut -d= -f2 | tr -d '\r'); \
+	[ -z "$$PORT" ] && PORT=8008; \
+	code=000; \
+	i=0; \
+	while [ $$i -lt 90 ]; do \
+		code=$$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$$PORT 2>/dev/null || echo "000"); \
+		if [ "$$code" = "200" ]; then break; fi; \
+		i=$$((i+1)); sleep 2; \
+	done; \
+	if [ "$$code" != "200" ]; then \
+		echo "Demo not ready (HTTP $$code)"; \
+		$(COMPOSE) logs --tail=80 db $(SERVICE_PHP) || true; \
+		exit 1; \
+	fi; \
 	echo "Demo started at: http://localhost:$$PORT"
 down:
 	$(COMPOSE) down
