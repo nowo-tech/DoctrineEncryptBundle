@@ -50,7 +50,13 @@ up:
 	@echo "Waiting for container to be ready..."
 	@sleep 5
 	@echo "Installing dependencies..."
-	@$(COMPOSE) exec -T -e COMPOSER_MEMORY_LIMIT=-1 $(SERVICE_PHP) composer install --no-interaction
+	@i=0; \
+	until $(COMPOSE) exec -T -e COMPOSER_MEMORY_LIMIT=-1 $(SERVICE_PHP) composer install --no-interaction; do \
+		i=$$((i+1)); \
+		if [ $$i -ge 5 ]; then exit 1; fi; \
+		echo "composer install failed, retry $$i..."; \
+		sleep 5; \
+	done
 	@echo "Creating database, schema and loading fixtures..."
 	@$(MAKE) db-create db-schema key fixtures
 	@PORT=$$(grep "^PORT=" .env 2>/dev/null | cut -d= -f2 | tr -d '\r'); \
