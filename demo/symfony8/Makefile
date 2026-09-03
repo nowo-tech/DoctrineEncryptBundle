@@ -97,18 +97,19 @@ db-create: ensure-up
 db-schema: ensure-up
 	@echo "Waiting for MySQL from PHP container..."
 	@i=0; \
-	while [ $$i -lt 30 ]; do \
-		if $(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:schema:update --force --no-interaction 2>/dev/null; then \
+	while [ $$i -lt 60 ]; do \
+		if $(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:database:create --if-not-exists --no-interaction 2>/dev/null; then \
 			break; \
 		fi; \
 		i=$$((i+1)); \
 		sleep 2; \
 	done; \
-	if [ $$i -ge 30 ]; then \
+	if [ $$i -ge 60 ]; then \
 		echo "MySQL not reachable from demo PHP container"; \
-		$(COMPOSE) logs --tail=50 db $(SERVICE_PHP) 2>/dev/null || $(COMPOSE) logs --tail=50 mysql $(SERVICE_PHP) || true; \
+		$(COMPOSE) logs --tail=50 db $(SERVICE_PHP) || true; \
 		exit 1; \
 	fi
+	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:schema:update --force --no-interaction
 
 key: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) php bin/console doctrine:encrypt:generate-secret-key 2>/dev/null || true

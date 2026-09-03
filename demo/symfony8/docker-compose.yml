@@ -29,7 +29,8 @@ services:
       - 8.8.8.8
       - 8.8.4.4
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - doctrine-encrypt-demo-network
 
@@ -45,6 +46,11 @@ services:
       - mysql_data:/var/lib/mysql
     expose:
       - "3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uencrypt", "-pencrypt"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     networks:
       - doctrine-encrypt-demo-network
 
