@@ -24,6 +24,10 @@ use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\WithOptionalUser;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\WithUser;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
+use WeakMap;
+
+use function count;
 
 class DoctrineEncryptSubscriberTest extends TestCase
 {
@@ -381,6 +385,75 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->assertStringEndsWith('<ENC>', $user->name);
     }
 
+    public function testDecryptionCacheDoesNotOutliveEntitiesAcrossRequestsWithoutReset(): void
+    {
+        // Request 1: user A is loaded and decrypted, then the request ends and the entity is released
+        $userA = new User('encrypted-Alice<ENC>', 'encrypted-Madrid<ENC>');
+        $this->subscriber->processFields($userA, false);
+        $this->assertSame(1, $this->decryptionCacheSize());
+        unset($userA);
+        gc_collect_cycles();
+
+        $this->assertSame(0, $this->decryptionCacheSize());
+
+        // Request 2: same listener instance, no reset(); a new entity (possibly with a reused object id)
+        $userB = new User('Alice', 'Madrid');
+        $this->subscriber->processFields($userB, true);
+
+        $this->assertSame('encrypted-Alice<ENC>', $userB->name);
+        $this->assertSame('encrypted-Madrid<ENC>', $userB->getAddress());
+        $this->assertSame(2, $this->subscriber->encryptCounter);
+    }
+
+    public function testDecryptionCacheDoesNotUsePlaintextAsKeys(): void
+    {
+        $user = new User('encrypted-Alice<ENC>', 'encrypted-Madrid<ENC>');
+        $this->subscriber->processFields($user, false);
+
+        $entry = $this->decryptionCache()[$user];
+
+        $this->assertSame(['name', 'address'], array_keys($entry));
+        $this->assertSame(['plaintext' => 'Alice', 'ciphertext' => 'encrypted-Alice<ENC>'], $entry['name']);
+    }
+
+    public function testChangedValueIsEncryptedAgainInsteadOfRestoringCachedCiphertext(): void
+    {
+        $user = new User('encrypted-Alice<ENC>', 'encrypted-Madrid<ENC>');
+        $this->subscriber->processFields($user, false);
+
+        $user->name = 'Bob';
+        $this->subscriber->processFields($user, true);
+
+        $this->assertSame('encrypted-Bob<ENC>', $user->name);
+        $this->assertSame('encrypted-Madrid<ENC>', $user->getAddress());
+    }
+
+    public function testResetClearsDecryptionCacheAndEncryptorOverride(): void
+    {
+        $user = new User('encrypted-Alice<ENC>', 'encrypted-Madrid<ENC>');
+        $this->subscriber->processFields($user, false);
+        $this->subscriber->setEncryptor(null);
+
+        $this->subscriber->reset();
+
+        $this->assertSame(0, $this->decryptionCacheSize());
+        $this->assertSame($this->encryptor, $this->subscriber->getEncryptor());
+    }
+
+    public function testPreFlushSkipsClassesWithoutDecryptedEntities(): void
+    {
+        $user = new User('David', 'Switzerland');
+
+        $uow = $this->createMock(UnitOfWork::class);
+        $uow->method('getIdentityMap')->willReturn([User::class => [$user]]);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->method('getUnitOfWork')->willReturn($uow);
+
+        $this->subscriber->preFlush(new PreFlushEventArgs($em));
+
+        $this->assertSame('David', $user->name);
+    }
+
     public function testOnFlushRecomputesChangeSetWhenEncryptionOccurs(): void
     {
         $user = new User('David', 'Switzerland');
@@ -573,5 +646,21 @@ class DoctrineEncryptSubscriberTest extends TestCase
 
         $this->assertSame('dec-default', $entity->defaultField);
         $this->assertSame('encrypted-y<ENC>', $entity->otherField);
+    }
+
+    /**
+     * @return WeakMap<object, array<string, array{plaintext: string, ciphertext: mixed}>>
+     */
+    private function decryptionCache(): WeakMap
+    {
+        $cache = (new ReflectionProperty(DoctrineEncryptSubscriber::class, 'cachedDecryptions'))->getValue($this->subscriber);
+        $this->assertInstanceOf(WeakMap::class, $cache);
+
+        return $cache;
+    }
+
+    private function decryptionCacheSize(): int
+    {
+        return count($this->decryptionCache());
     }
 }

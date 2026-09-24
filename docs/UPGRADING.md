@@ -5,6 +5,7 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 ## Table of contents
 
 
+- [Upgrading to 2.3.13](#upgrading-to-2313)
 - [From 2.3.11 to 2.3.12](#from-2311-to-2312)
 - [General upgrade process](#general-upgrade-process)
 - [Production breaking change (MysqlAes since 2.3.9)](#production-breaking-change-mysqlaes-since-239)
@@ -44,6 +45,24 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 - [Upgrading to 2.0.0](#upgrading-to-200)
 - [Upgrading to 1.0.0](#upgrading-to-100)
 - [Upgrading from ambta/doctrine-encrypt-bundle or hec-franco/doctrine-encrypt-bundle](#upgrading-from-ambtadoctrine-encrypt-bundle-or-hec-francodoctrine-encrypt-bundle)
+
+## Upgrading to 2.3.13
+
+No YAML configuration changes for typical Halite/Defuse setups. FrankenPHP worker mode with **no kernel reset between requests** is supported (see [FRANKENPHP-WORKER-AUDIT.md](FRANKENPHP-WORKER-AUDIT.md)).
+
+### Notes
+
+- The service id `Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber` is now an alias of `nowo_doctrine_encrypt.orm_subscriber` (one listener instance instead of two). If you decorated or re-tagged the class-id service, target `nowo_doctrine_encrypt.orm_subscriber` instead.
+- A new `kernel.request` listener resets entity managers that are **closed** (after a failed flush) at the start of each main request. Open managers and their identity maps are not touched.
+- Subclasses of `DoctrineEncryptSubscriber` that accessed the private `$cachedDecryptions` array must not rely on its former shape (it is now a `WeakMap`).
+- Do not call `DoctrineEncryptSubscriber::setEncryptor()` from HTTP code in a worker (override would persist across requests until `reset()`).
+
+Update as usual:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
 
 ## Production breaking change (MysqlAes since 2.3.9)
 

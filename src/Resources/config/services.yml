@@ -54,13 +54,15 @@ services:
 
   Nowo\DoctrineEncryptBundle\Mapping\AttributeReader: '@nowo_doctrine_attribute_reader'
 
-  Nowo\DoctrineEncryptBundle\Subscribers\:
-    resource: '../../Subscribers/*'
+  # Single listener instance: the class id is an alias, so the #[AsDoctrineListener] attributes
+  # do not register a second, independent listener.
+  Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber: '@nowo_doctrine_encrypt.orm_subscriber'
 
   nowo_doctrine_encrypt.orm_subscriber:
     class: Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber
     arguments: ["@nowo_doctrine_encrypt.encryptor_registry"]
     tags:
+      - { name: 'kernel.reset', method: 'reset' }
       - { name: 'doctrine.event_listener', event: 'postUpdate', priority: 500, connection: 'default' }
       - { name: 'doctrine.event_listener', event: 'preUpdate', priority: 500, connection: 'default' }
       - { name: 'doctrine.event_listener', event: 'postLoad', priority: 500, connection: 'default' }
@@ -70,6 +72,12 @@ services:
 
   nowo_doctrine_encrypt.subscriber:
     alias: nowo_doctrine_encrypt.orm_subscriber
+
+  Nowo\DoctrineEncryptBundle\EventListener\ClosedEntityManagerRecoveryListener:
+    arguments:
+      $managerRegistry: '@?doctrine'
+    tags:
+      - { name: 'kernel.event_subscriber' }
 
   Nowo\DoctrineEncryptBundle\Twig\:
     resource: '../../Twig/*'

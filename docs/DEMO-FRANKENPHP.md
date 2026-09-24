@@ -9,6 +9,8 @@ This document describes how the bundle's demo applications run under **FrankenPH
 - [Development configuration](#development-configuration)
 - [Production configuration](#production-configuration)
 - [Switching classic vs worker (`FRANKENPHP_MODE`)](#switching-classic-vs-worker-frankenphp_mode)
+- [Bundle compatibility (kernel not reset)](#bundle-compatibility-kernel-not-reset)
+- [Smoke check (demo up)](#smoke-check-demo-up)
 - [Reproducing in another bundle](#reproducing-in-another-bundle)
 - [Troubleshooting](#troubleshooting)
 
@@ -110,6 +112,12 @@ Use the default Caddyfile (with worker). Set `APP_ENV=prod` and `APP_DEBUG=0`. D
 Recreate the container after changing `.env` (`docker compose up -d`).
 
 After changing env or Caddyfile, restart: `docker-compose restart` or `make -C demo/symfony8 restart`.
+
+---
+
+## Bundle compatibility (kernel not reset)
+
+The bundle is audited for FrankenPHP **worker** mode when the Symfony kernel is **not** rebooted between requests (scenario B). Summary: `WeakMap` decryption cache, single ORM listener, `kernel.reset` on the listener, and recovery of **closed** entity managers on `kernel.request`. Details: [FRANKENPHP-WORKER-AUDIT.md](FRANKENPHP-WORKER-AUDIT.md).
 
 ---
 

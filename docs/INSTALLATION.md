@@ -104,20 +104,28 @@ php bin/console doctrine:encrypt:generate-secret-key
 
 ## FrankenPHP (runtime and worker mode)
 
-The bundle is **compatible with FrankenPHP** in both modes:
+The bundle is **compatible with FrankenPHP** in both classic HTTP and **worker** mode, including when the kernel is **not** reset between requests (`services_resetter` / kernel reboot disabled — “scenario B”).
 
 - **Runtime (HTTP)**  
   Works like with PHP-FPM or any other SAPI: encryption/decryption runs on Doctrine lifecycle events (postLoad, preFlush, etc.). No request or session state is used; encryptors are stateless beyond loading the key (file or env) at first use.
 
-- **Worker mode**  
-  Also supported. The bundle does not rely on `$_GET`/`$_POST`/session or on per-request globals. The subscriber’s internal decryption cache is cleared on `postFlush`, so it does not grow across requests. Encryptors load the key once and keep it in memory, which is suitable for long-lived workers.
+- **Worker mode (including no kernel reset)**  
+  - Decryption cache is a `WeakMap` keyed by the entity object (entries disappear with the entity; plaintext is not used as array keys).
+  - The ORM listener implements `ResetInterface` and is tagged `kernel.reset` (clears cache and any encryptor override when the resetter runs).
+  - `ClosedEntityManagerRecoveryListener` resets **closed** entity managers at the start of each main request so a failed flush cannot poison later requests when the kernel is not rebooted.
+  - A single listener instance is registered (`nowo_doctrine_encrypt.orm_subscriber`; the class id is an alias).
+
+Full findings and recommendations: [FRANKENPHP-WORKER-AUDIT.md](FRANKENPHP-WORKER-AUDIT.md). Demo setup: [DEMO-FRANKENPHP.md](DEMO-FRANKENPHP.md).
 
 **Recommendations for worker mode:**
 
-- Follow Symfony/FrankenPHP good practice: limit the number of requests per worker (e.g. `frankenphp_loop_max` or `MAX_REQUESTS`) so workers are recycled and memory is released.
-- If you run Messenger (or other job consumers) in the same worker process, keep resetting or clearing the EntityManager between messages to avoid leaking entity state; the bundle does not add extra requirements beyond that.
+- Prefer keeping Symfony’s `services_resetter` enabled when possible; the bundle still supports the stricter no-reset case.
+- Limit requests per worker (e.g. FrankenPHP `max_requests` / loop max) as operational hygiene.
+- Restart workers after key rotation. Do not call `DoctrineEncryptSubscriber::setEncryptor()` from HTTP code.
+- Clearing the EntityManager identity map between requests remains the **application’s** responsibility if you keep long-lived managed entities.
 
-No extra configuration or code is required for FrankenPHP.
+No extra configuration is required beyond a normal bundle install.
+
 
 ## Next steps
 

@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.3.13] - 2026-09-24](#2313-2026-09-24)
+  - [Fixed](#fixed)
+  - [Added](#added)
+  - [Documentation](#documentation)
+- [[2.3.12] - 2026-08-24](#2312-2026-08-24)
 - [[2.3.11] - 2026-08-20](#2311-2026-08-20)
 - [[2.3.10] - 2026-08-20](#2310-2026-08-20)
 - [[2.3.9] - 2026-08-19](#239-2026-08-19)
@@ -87,6 +92,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [2.3.13] - 2026-09-24
+
+### Fixed
+
+- **FrankenPHP worker mode / long-running processes (kernel not reset):** the listener's decryption cache is now a `WeakMap` keyed by the entity object, so entries disappear with the entity instead of accumulating for the lifetime of the worker, and decrypted plaintext is no longer used as array keys. The cache is no longer keyed by `spl_object_id()` (which PHP reuses). See [FRANKENPHP-WORKER-AUDIT.md](FRANKENPHP-WORKER-AUDIT.md).
+- The listener was registered twice when DoctrineBundle autoconfigures `#[AsDoctrineListener]` (the `Subscribers\` resource import plus `nowo_doctrine_encrypt.orm_subscriber`). The class id is now an alias of `nowo_doctrine_encrypt.orm_subscriber`, so there is a single listener and console commands override the encryptor of the listener that actually runs.
+- `DoctrineEncryptSubscriber` implements `ResetInterface` (`kernel.reset`): `reset()` clears the decryption cache and any encryptor override.
+
+### Added
+
+- `ClosedEntityManagerRecoveryListener` (`kernel.request`, main request, priority 4096): resets entity managers left closed by a failed flush (whose identity map still holds re-encrypted entities) before the next request, when the kernel is not reset between requests. Open managers are not touched.
+- [FRANKENPHP-WORKER-AUDIT.md](FRANKENPHP-WORKER-AUDIT.md) — audit of every `src/` service under worker mode with no kernel reboot (scenario B).
+
+### Documentation
+
+- INSTALLATION / README / DEMO-FRANKENPHP updated for worker mode without kernel reset; link to the audit.
+
+No application YAML configuration changes required for typical Halite/Defuse setups. See [UPGRADING.md](UPGRADING.md#upgrading-to-2313).
 
 ## [2.3.12] - 2026-08-24
 

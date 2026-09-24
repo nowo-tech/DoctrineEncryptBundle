@@ -4,6 +4,7 @@
 
 - [Creating a new version (e.g. v1.1.0)](#creating-a-new-version-eg-v110)
 - [After releasing](#after-releasing)
+- [v2.3.13 (2026-09-24)](#v2313-2026-09-24)
 - [v2.3.6 (2026-07-29)](#v236-2026-07-29)
 - [v2.3.5 (2026-07-29)](#v235-2026-07-29)
 - [v2.3.4 (2026-07-28)](#v234-2026-07-28)
@@ -59,6 +60,13 @@
 
 - Keep `## [Unreleased]` at the top of [CHANGELOG.md](CHANGELOG.md) for the next version; add new changes there.
 - Optionally bump a dev version in `composer.json` for development.
+
+---
+
+## v2.3.13 (2026-09-24)
+
+- **Scope:** FrankenPHP worker / no kernel reset — `WeakMap` decryption cache, single ORM listener, `ResetInterface` + `kernel.reset`, `ClosedEntityManagerRecoveryListener`, audit doc + INSTALLATION/README/DEMO updates.
+- **Checklist:** CHANGELOG and UPGRADING updated; `make test` / `make phpstan` / `make cs-check`; open PRs = 0; commit; tag `v2.3.13`; push branch and tag.
 
 ---
 

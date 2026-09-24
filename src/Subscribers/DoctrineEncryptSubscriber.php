@@ -25,7 +25,9 @@ use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
 use Symfony\Component\PropertyAccess\PropertyAccess;
+use Symfony\Contracts\Service\ResetInterface;
 use Throwable;
+use WeakMap;
 
 use function assert;
 use function count;
@@ -46,7 +48,7 @@ use function strlen;
 #[AsDoctrineListener(event: Events::onFlush, priority: 500, connection: 'default')]
 #[AsDoctrineListener(event: Events::preFlush, priority: 500, connection: 'default')]
 #[AsDoctrineListener(event: Events::postFlush, priority: 500, connection: 'default')]
-class DoctrineEncryptSubscriber /* implements EventSubscriber */
+class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSubscriber */
 {
     /**
      * Appended to end of encrypted value.
@@ -80,14 +82,21 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
      */
     public int $encryptCounter = 0;
 
-    /** @var array<string, array<int, array<string, array<string, mixed>>>> */
-    private array $cachedDecryptions = [];
+    /**
+     * Ciphertext of each decrypted property, per entity, so an unchanged value is written back as-is on flush.
+     * Entries disappear with the entity object, so the cache never outlives the identity map.
+     *
+     * @var WeakMap<object, array<string, array{plaintext: string, ciphertext: mixed}>>
+     */
+    private WeakMap $cachedDecryptions;
 
     /**
      * @param EncryptorInterface|EncryptorRegistry|null $registryOrEncryptor Registry (normal DI), a single encryptor (BC/tests), or null
      */
     public function __construct(EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor = null)
     {
+        $this->cachedDecryptions = new WeakMap();
+
         if ($registryOrEncryptor instanceof EncryptorInterface) {
             $this->registry = new EncryptorRegistry(['default' => $registryOrEncryptor], 'default');
         } elseif ($registryOrEncryptor instanceof EncryptorRegistry) {
@@ -146,7 +155,16 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
      */
     public function clearDecryptionCache(): void
     {
-        $this->cachedDecryptions = [];
+        $this->cachedDecryptions = new WeakMap();
+    }
+
+    /**
+     * Clears the decryption cache and any encryptor override (kernel.reset).
+     */
+    public function reset(): void
+    {
+        $this->clearDecryptionCache();
+        $this->restoreEncryptor();
     }
 
     /**
@@ -188,15 +206,20 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
      */
     public function preFlush(PreFlushEventArgs $preFlushEventArgs): void
     {
+        $decryptedClasses = [];
+        foreach ($this->cachedDecryptions as $decryptedEntity => $unused) {
+            $decryptedClasses[$decryptedEntity::class] = true;
+        }
+
         $unitOfWOrk = $preFlushEventArgs->getObjectManager()->getUnitOfWork();
         foreach ($unitOfWOrk->getIdentityMap() as $entityName => $entityArray) {
-            if (isset($this->cachedDecryptions[$entityName])) {
+            if (isset($decryptedClasses[$entityName])) {
                 foreach ($entityArray as $instance) {
                     $this->processFields($instance);
                 }
             }
         }
-        $this->cachedDecryptions = [];
+        $this->clearDecryptionCache();
     }
 
     /**
@@ -286,11 +309,14 @@ class DoctrineEncryptSubscriber /* implements EventSubscriber */
                         $currentPropValue = $ciphertext;
                     }
                     $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
-                    $this->cachedDecryptions[$entity::class][spl_object_id($entity)][$refProperty->getName()][$currentPropValue] = $value;
+                    $cached                           = $this->cachedDecryptions[$entity] ?? [];
+                    $cached[$refProperty->getName()]  = ['plaintext' => (string) $currentPropValue, 'ciphertext' => $value];
+                    $this->cachedDecryptions[$entity] = $cached;
                 }
             } elseif ($value !== null && $value !== '') {
-                if (isset($this->cachedDecryptions[$entity::class][spl_object_id($entity)][$refProperty->getName()][$value])) {
-                    $pac->setValue($entity, $refProperty->getName(), $this->cachedDecryptions[$entity::class][spl_object_id($entity)][$refProperty->getName()][$value]);
+                $cached = $this->cachedDecryptions[$entity][$refProperty->getName()] ?? null;
+                if ($cached !== null && $cached['plaintext'] === (string) $value) {
+                    $pac->setValue($entity, $refProperty->getName(), $cached['ciphertext']);
                 } elseif (!str_ends_with((string) $value, self::ENCRYPTION_MARKER)) {
                     ++$this->encryptCounter;
                     $currentPropValue = $propertyEncryptor->encrypt($value) . self::ENCRYPTION_MARKER;

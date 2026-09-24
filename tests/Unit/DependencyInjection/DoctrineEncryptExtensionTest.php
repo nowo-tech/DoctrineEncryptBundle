@@ -15,6 +15,7 @@ use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
+use Nowo\DoctrineEncryptBundle\EventListener\ClosedEntityManagerRecoveryListener;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Twig\DecryptExtension;
@@ -329,6 +330,26 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->assertSame('nowo_doctrine_encrypt.encryptor_registry', (string) $args['$encryptorRegistry']);
         $this->assertSame('nowo_doctrine_encrypt.encryptor', (string) $args['$defaultEncryptor']);
         $this->assertSame('%nowo_doctrine_encrypt.batch_size%', $args['$defaultBatchSize']);
+    }
+
+    public function testSubscriberIsRegisteredOnceAndIsResettable(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([[]], $container);
+
+        $this->assertTrue($container->hasAlias(DoctrineEncryptSubscriber::class));
+        $this->assertSame('nowo_doctrine_encrypt.orm_subscriber', (string) $container->getAlias(DoctrineEncryptSubscriber::class));
+        $this->assertFalse($container->hasDefinition(DoctrineEncryptSubscriber::class));
+        $this->assertSame(
+            [['method' => 'reset']],
+            $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber')->getTag('kernel.reset'),
+        );
+
+        $listener = $container->getDefinition(ClosedEntityManagerRecoveryListener::class);
+        $registry = $listener->getArgument('$managerRegistry');
+        $this->assertInstanceOf(Reference::class, $registry);
+        $this->assertSame('doctrine', (string) $registry);
+        $this->assertTrue($listener->hasTag('kernel.event_subscriber'));
     }
 
     public function testSubscriberReceivesEncryptorRegistry(): void
