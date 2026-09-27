@@ -17,6 +17,7 @@ use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use RuntimeException;
 
 use function is_resource;
+use SortDirection;
 
 /**
  * Examples of MySQL AES_ENCRYPT / AES_DECRYPT in raw SQL (native path).
@@ -122,7 +123,7 @@ class MysqlAesNoteRepository extends ServiceEntityRepository
         ?string $secretNeedle,
         string $secretMode = 'plaintext',
     ): array {
-        $qb = $this->createQueryBuilder('n')->orderBy('n.id', 'DESC');
+        $qb = $this->createQueryBuilder('n')->orderBy('n.id', SortDirection::Descending);
 
         if ($titleLike !== null) {
             $qb->andWhere('n.title LIKE :titleLike')->setParameter('titleLike', $titleLike);
