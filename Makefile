@@ -7,7 +7,7 @@ COMPOSE_BIN := $(shell docker compose version >/dev/null 2>&1 && echo "docker co
 COMPOSE     := $(COMPOSE_BIN) -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
-.PHONY: help up down down-dev build shell install update validate test test-coverage coverage-php-percent cs-check cs-fix qa clean ensure-up assets release-check release-check-demos demo-smoke composer-sync rector rector-dry phpstan check-no-cursor-coauthor check-open-prs strip-cursor-coauthor-from-history setup-hooks
+.PHONY: help up down down-dev build shell install update validate test test-coverage coverage-php-percent cs-check cs-fix qa clean ensure-up assets release-check release-check-demos demo-smoke composer-sync rector rector-dry phpstan igor check-no-cursor-coauthor check-open-prs strip-cursor-coauthor-from-history setup-hooks
 
 help:
 	@echo "Doctrine Encrypt Bundle - Development Commands"
@@ -29,6 +29,7 @@ help:
 	@echo "  rector        Apply Rector refactoring"
 	@echo "  rector-dry    Run Rector in dry-run mode"
 	@echo "  phpstan       Run PHPStan static analysis"
+	@echo "  igor          Run Igor worker-state audit (REQ-CS-008)"
 	@echo "  qa            Run all QA checks (validate + cs-check + test)"
 	@echo "  release-check Pre-release: co-author + open-PRs + cs + phpstan + coverage + demos"
 	@echo "  demo-smoke    Boot demo/symfony8 and assert HTTP 200 (REQ-TEST-011)"
@@ -105,7 +106,11 @@ phpstan: ensure-up
 qa: ensure-up validate
 	$(COMPOSE) exec $(SERVICE_PHP) composer qa
 
-release-check: check-no-cursor-coauthor check-open-prs ensure-up composer-sync cs-fix cs-check rector-dry phpstan test-coverage release-check-demos
+
+# Run Igor worker-state audit (REQ-CS-008)
+igor: ensure-up
+	$(COMPOSE) exec -T php composer igor
+release-check: check-no-cursor-coauthor check-open-prs ensure-up composer-sync cs-fix cs-check rector-dry phpstan igor test-coverage release-check-demos
 
 # REQ-TEST-011 — boot demo stack and assert one HTTP 200
 demo-smoke:

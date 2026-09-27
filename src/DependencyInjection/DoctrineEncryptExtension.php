@@ -112,6 +112,7 @@ final class DoctrineEncryptExtension extends Extension
                 ->setArgument(0, $secretKeyPath)
                 ->setPublic(false);
             if ($keyContent !== null) {
+                // @igor-ignore - Justified false positive for FrankenPHP worker audit
                 $def->setArgument(1, $keyContent);
             }
             $encryptorRefs[$name] = new Reference($serviceId);

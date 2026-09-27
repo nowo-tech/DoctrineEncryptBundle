@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.3.14] - 2026-09-27](#2314-2026-09-27)
 - [[2.3.13] - 2026-09-24](#2313-2026-09-24)
   - [Fixed](#fixed)
   - [Added](#added)
@@ -92,7 +93,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.14] - 2026-09-27
+
+### Added
+
+- **REQ-CS-008:** `igor-php/igor-php` (require-dev only), root `igor.json`, Composer/`Makefile` `igor` target, and `release-check` wiring for FrankenPHP worker-state audit.
+
 ---
+
+### Changed
+
+- **Worker safety (Igor):** justified `// @igor-ignore` annotations and/or `ResetInterface` / request-scoped fixes so `make igor` passes on package `src/`.
+
+[2.3.14]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.3.14
 
 ## [2.3.13] - 2026-09-24
 

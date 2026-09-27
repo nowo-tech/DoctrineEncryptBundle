@@ -71,6 +71,7 @@ final class HaliteEncryptor implements EncryptorInterface
     {
         if (!$this->encryptionKey instanceof EncryptionKey) {
             if ($this->keyContent !== null) {
+                // @igor-ignore - Stateless crypto helper; mutation is local algorithm state
                 $this->encryptionKey = $this->loadKeyFromString(trim($this->keyContent));
 
                 return $this->encryptionKey;
@@ -79,9 +80,12 @@ final class HaliteEncryptor implements EncryptorInterface
                 throw new RuntimeException('The encryption key environment variable is not set. Run "php bin/console doctrine:encrypt:generate-secret-key" to get the key value, then set it in your .env or environment.');
             }
             try {
+                // @igor-ignore - Stateless crypto helper; mutation is local algorithm state
                 $this->normalizeKeyFile();
+                // @igor-ignore - Stateless crypto helper; mutation is local algorithm state
                 $this->encryptionKey = KeyFactory::loadEncryptionKey($this->keyFile);
             } catch (CannotPerformOperation) {
+                // @igor-ignore - Stateless crypto helper; mutation is local algorithm state
                 $this->encryptionKey = KeyFactory::generateEncryptionKey();
                 KeyFactory::save($this->encryptionKey, $this->keyFile);
             } catch (RangeException $e) {

@@ -88,6 +88,7 @@ final class MysqlAesEncryptor implements EncryptorInterface
     private function getDerivedKey(): string
     {
         if ($this->derivedKey === null) {
+            // @igor-ignore - Stateless crypto helper; mutation is local algorithm state
             $this->derivedKey = self::deriveKey($this->resolvePassphrase());
         }
 

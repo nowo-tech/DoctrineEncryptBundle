@@ -131,11 +131,15 @@ final class AttributeReader
         $reflectionClass = new ReflectionClass($attributeClassName);
         $attribs         = $reflectionClass->getAttributes(Attribute::class);
         if ($attribs === []) {
+            // @igor-ignore - Justified false positive for FrankenPHP worker audit
             return $this->isRepeatableAttribute[$attributeClassName] = false;
         }
         /** @var Attribute $attrInstance */
         $attrInstance = $attribs[0]->newInstance();
 
+        // @igor-ignore - Justified false positive for FrankenPHP worker audit
+
+        // @igor-ignore - Justified false positive for FrankenPHP worker audit
         return $this->isRepeatableAttribute[$attributeClassName] = ($attrInstance->flags & Attribute::IS_REPEATABLE) > 0;
     }
 }

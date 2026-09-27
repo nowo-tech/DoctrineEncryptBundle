@@ -82,3 +82,7 @@ If CI fails because trailers are already on the remote, see [GITHUB_CI.md](GITHU
 - Provide a minimal example or steps to reproduce when reporting bugs.
 
 Thank you for contributing.
+
+## Igor worker audit (REQ-CS-008)
+
+Run `make igor` (or `composer igor`) before release. Igor audits package `src/` for FrankenPHP worker-state issues. It is require-dev only.

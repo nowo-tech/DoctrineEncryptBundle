@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3af4aa75a946c51d699c77948e1ba63b",
+    "content-hash": "e5f3a0fce225ab335c76fbe17122079a",
     "packages": [
         {
             "name": "doctrine/collections",
@@ -4060,6 +4060,56 @@
                 }
             ],
             "time": "2026-09-22T09:54:55+00:00"
+        },
+        {
+            "name": "igor-php/igor-php",
+            "version": "v0.9.7",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/igor-php/igor-php.git",
+                "reference": "48935c8cf42d0764a9d54f22e9c290816c5caa91"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/igor-php/igor-php/zipball/48935c8cf42d0764a9d54f22e9c290816c5caa91",
+                "reference": "48935c8cf42d0764a9d54f22e9c290816c5caa91",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1"
+            },
+            "bin": [
+                "bin/igor-php"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "IgorPhp\\IgorBundle\\": "src/php/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Kevin MARTINS",
+                    "email": "kevin.martins@me.com"
+                }
+            ],
+            "description": "The faithful assistant for your FrankenPHP Workers.",
+            "keywords": [
+                "frankenphp",
+                "linter",
+                "static-analysis",
+                "symfony",
+                "worker"
+            ],
+            "support": {
+                "issues": "https://github.com/igor-php/igor-php/issues",
+                "source": "https://github.com/igor-php/igor-php/tree/v0.9.7"
+            },
+            "time": "2026-09-22T20:33:54+00:00"
         },
         {
             "name": "myclabs/deep-copy",
