@@ -15,9 +15,9 @@ use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use RuntimeException;
+use SortDirection;
 
 use function is_resource;
-use SortDirection;
 
 /**
  * Examples of MySQL AES_ENCRYPT / AES_DECRYPT in raw SQL (native path).
