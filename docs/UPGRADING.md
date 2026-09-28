@@ -3,6 +3,18 @@
 
 ## Unreleased
 
+## To 2.4.0
+
+From **2.3.14** — decrypt prod gate; Doctrine `SortDirection`.
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+- Running `doctrine:decrypt:database` in `prod` requires `--allow-prod`. Update ops runbooks/scripts.
+- Ensure `doctrine/orm` is `^3.7` (SortDirection).
+
 ## To 2.3.14
 
 From **2.3.13** — REQ-CS-008 Igor FrankenPHP worker audit (igor-php require-dev, igor.json, make igor).

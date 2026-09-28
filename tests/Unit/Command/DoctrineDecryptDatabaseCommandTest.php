@@ -104,6 +104,23 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $this->assertStringContainsString('config(s)', $tester->getDisplay());
     }
 
+    public function testExecuteRefusesInProdWithoutAllowProd(): void
+    {
+        $em         = $this->createMock(EntityManagerInterface::class);
+        $encryptor  = $this->createMock(EncryptorInterface::class);
+        $registry   = new EncryptorRegistry(['default' => $encryptor], 'default');
+        $subscriber = new DoctrineEncryptSubscriber($registry);
+
+        $command = new DoctrineDecryptDatabaseCommand($em, new AttributeReader(), $subscriber, null, $registry, 5, 'prod');
+        $this->createCommandWithApplication($command);
+        $tester = new CommandTester($command);
+
+        $tester->execute(['--force' => true]);
+
+        $this->assertSame(1, $tester->getStatusCode());
+        $this->assertStringContainsString('Refusing doctrine:decrypt:database in prod', $tester->getDisplay());
+    }
+
     public function testExecuteSkipsMappedSuperclassWhenCountingProperties(): void
     {
         $mappedSuper                     = new stdClass();

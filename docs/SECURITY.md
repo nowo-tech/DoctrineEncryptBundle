@@ -36,7 +36,7 @@ There is no separate HTTP API exposed by the bundle itself beyond what your app 
 | Key material | Disclosure of secret keys or env vars | Keys grant decrypt access to all data encrypted with that config. |
 | Database | Stolen DB without keys | Ciphertext remains confidential if keys are not leaked. |
 | Path / env | Misconfiguration | Wrong paths or env vars can point to world-readable key files or test keys in production. |
-| CLI | Privilege / operator error | Commands can mass-decrypt or re-encrypt; run only with appropriate access and backups. |
+| CLI | Privilege / operator error | Commands can mass-decrypt or re-encrypt; `doctrine:decrypt:database` refuses `prod` unless `--allow-prod` is set; run only with appropriate access and backups. |
 | Twig | XSS / information disclosure | `|decrypt` does **not** mark output as safe HTML — Twig auto-escaping applies. Still only decrypt what you must display. |
 | Dependencies | Vulnerable crypto or Symfony libs | Rely on audited Halite/Defuse and keep dependencies updated (`composer audit`). |
 

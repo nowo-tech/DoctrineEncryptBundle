@@ -18,6 +18,7 @@ services:
       $defaultEncryptor: '@nowo_doctrine_encrypt.encryptor'
       $encryptorRegistry: '@nowo_doctrine_encrypt.encryptor_registry'
       $defaultBatchSize: '%nowo_doctrine_encrypt.batch_size%'
+      $kernelEnvironment: '%kernel.environment%'
 
   Nowo\DoctrineEncryptBundle\Command\GenerateSecretKeyCommand:
     arguments:

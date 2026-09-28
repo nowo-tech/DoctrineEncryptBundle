@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.4.0] - 2026-09-28](#240-2026-09-28)
 - [[2.3.14] - 2026-09-27](#2314-2026-09-27)
 - [[2.3.13] - 2026-09-24](#2313-2026-09-24)
   - [Fixed](#fixed)
@@ -93,10 +94,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-09-28
+
+### Security
+
+- `doctrine:decrypt:database` refuses the `prod` environment unless `--allow-prod` is passed.
+
 ### Changed
 
 - **Doctrine ORM SortDirection:** replace string `'ASC'`/`'DESC'` in `#[ORM\OrderBy]` and QueryBuilder `orderBy`/`addOrderBy` with `SortDirection::Ascending`/`Descending` (doctrine/orm deprecation, https://github.com/doctrine/orm/issues/11313); require `doctrine/orm` `^3.7` where applicable.
-
 
 ## [2.3.14] - 2026-09-27
 
@@ -110,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Worker safety (Igor):** justified `// @igor-ignore` annotations and/or `ResetInterface` / request-scoped fixes so `make igor` passes on package `src/`.
 
+[2.4.0]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.4.0
 [2.3.14]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.3.14
 
 ## [2.3.13] - 2026-09-24

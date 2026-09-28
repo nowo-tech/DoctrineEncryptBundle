@@ -44,7 +44,8 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
         DoctrineEncryptSubscriber $subscriber,
         ?EncryptorInterface $defaultEncryptor,
         ?EncryptorRegistry $encryptorRegistry,
-        private readonly int $defaultBatchSize = 5
+        private readonly int $defaultBatchSize = 5,
+        private readonly string $kernelEnvironment = 'dev',
     ) {
         parent::__construct($entityManager, $attributeReader, $subscriber, $defaultEncryptor, $encryptorRegistry);
     }
@@ -61,10 +62,19 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
         if (!$def->hasOption('force')) {
             $this->addOption('force', null, InputOption::VALUE_NONE, 'Do not ask for confirmation (use with --no-interaction).');
         }
+        if (!$def->hasOption('allow-prod')) {
+            $this->addOption('allow-prod', null, InputOption::VALUE_NONE, 'Allow mass decrypt when kernel environment is prod (dangerous; prefer restoring from backup).');
+        }
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        if ($this->kernelEnvironment === 'prod' && !$input->getOption('allow-prod')) {
+            $output->writeln('<error>Refusing doctrine:decrypt:database in prod. Re-run with --allow-prod only after an explicit backup, or run in a non-prod environment.</error>');
+
+            return self::FAILURE;
+        }
+
         $question = $this->getHelper('question');
         $input->getArgument('batchSize');
         $configArg = $input->getArgument('config');
