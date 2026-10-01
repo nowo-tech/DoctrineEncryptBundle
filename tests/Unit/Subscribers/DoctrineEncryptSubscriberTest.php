@@ -44,12 +44,12 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->encryptor
             ->expects($this->any())
             ->method('encrypt')
-            ->willReturnCallback(static fn (string $arg) => 'encrypted-' . $arg)
+            ->willReturnCallback(static fn (string $arg): string => 'encrypted-' . $arg)
         ;
         $this->encryptor
             ->expects($this->any())
             ->method('decrypt')
-            ->willReturnCallback(static fn (string $arg) => preg_replace('/^encrypted-/', '', $arg))
+            ->willReturnCallback(static fn (string $arg): ?string => preg_replace('/^encrypted-/', '', $arg))
         ;
 
         $this->subscriber = new DoctrineEncryptSubscriber($this->encryptor);
@@ -432,12 +432,16 @@ class DoctrineEncryptSubscriberTest extends TestCase
     {
         $user = new User('encrypted-Alice<ENC>', 'encrypted-Madrid<ENC>');
         $this->subscriber->processFields($user, false);
-        $this->subscriber->setEncryptor(null);
+        $this->subscriber->setEncryptor();
+
+        $this->assertGreaterThan(0, $this->subscriber->decryptCounter);
 
         $this->subscriber->reset();
 
         $this->assertSame(0, $this->decryptionCacheSize());
         $this->assertSame($this->encryptor, $this->subscriber->getEncryptor());
+        $this->assertSame(0, $this->subscriber->decryptCounter);
+        $this->assertSame(0, $this->subscriber->encryptCounter);
     }
 
     public function testPreFlushSkipsClassesWithoutDecryptedEntities(): void

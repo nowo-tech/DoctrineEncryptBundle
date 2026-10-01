@@ -104,7 +104,7 @@ abstract class AbstractFunctionalTestCase extends TestCase
     /** @return array<string, mixed>|null */
     protected function getLatestInsertQuery(): ?array
     {
-        $insertQueries = array_values(array_filter($this->sqlLoggerStack->queries, static fn (array $queryData) => stripos($queryData['sql'], 'INSERT ') === 0));
+        $insertQueries = array_values(array_filter($this->sqlLoggerStack->queries, static fn (array $queryData): bool => stripos($queryData['sql'], 'INSERT ') === 0));
 
         return current(array_reverse($insertQueries)) ?: null;
     }
@@ -112,7 +112,7 @@ abstract class AbstractFunctionalTestCase extends TestCase
     /** @return array<string, mixed>|null */
     protected function getLatestUpdateQuery(): ?array
     {
-        $insertQueries = array_values(array_filter($this->sqlLoggerStack->queries, static fn (array $queryData) => stripos($queryData['sql'], 'UPDATE ') === 0));
+        $insertQueries = array_values(array_filter($this->sqlLoggerStack->queries, static fn (array $queryData): bool => stripos($queryData['sql'], 'UPDATE ') === 0));
 
         return current(array_reverse($insertQueries)) ?: null;
     }

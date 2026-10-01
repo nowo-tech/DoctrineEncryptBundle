@@ -1003,10 +1003,10 @@
             "dist": {
                 "type": "path",
                 "url": "/var/doctrine-encrypt-bundle",
-                "reference": "0c690dd854e63365357d42fefacbf2587a135573"
+                "reference": "fb0fdcb5849efb0096391e54ab59a18d1fb2d3f2"
             },
             "require": {
-                "doctrine/orm": "^2.15 || ^3.0",
+                "doctrine/orm": "^3.7",
                 "paragonie/halite": "^5.1",
                 "paragonie/sodium_compat": "^1.20 || ^2.0",
                 "php": ">=8.2 <8.6",
@@ -1021,6 +1021,7 @@
             "require-dev": {
                 "defuse/php-encryption": "^2.1",
                 "friendsofphp/php-cs-fixer": "^3.0",
+                "igor-php/igor-php": "^0.9.7",
                 "nowo-tech/phpstan-frankenphp": "^1.0",
                 "phpstan/extension-installer": "^1.4",
                 "phpstan/phpstan": "^2.0",
@@ -1076,6 +1077,9 @@
                 "qa": [
                     "@cs-check",
                     "@test"
+                ],
+                "igor": [
+                    "igor-php --no-agent ."
                 ]
             },
             "license": [
