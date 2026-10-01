@@ -19,10 +19,10 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * manager and its identity map of still-encrypted entities would be reused by later requests. Open managers
  * are never touched (their identity map is not cleared).
  */
-final class ClosedEntityManagerRecoveryListener implements EventSubscriberInterface
+final readonly class ClosedEntityManagerRecoveryListener implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly ?ManagerRegistry $managerRegistry = null,
+        private ?ManagerRegistry $managerRegistry = null,
     ) {
     }
 
@@ -38,7 +38,7 @@ final class ClosedEntityManagerRecoveryListener implements EventSubscriberInterf
 
     public function onKernelRequest(RequestEvent $event): void
     {
-        if (!$event->isMainRequest() || $this->managerRegistry === null) {
+        if (!$event->isMainRequest() || !$this->managerRegistry instanceof ManagerRegistry) {
             return;
         }
 

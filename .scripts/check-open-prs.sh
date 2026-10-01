@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fail if the GitHub repo has unresolved open pull requests (REQ-REL-003).
 # Allowed temporary exceptions: label hold|do-not-merge AND a future review-by ISO date
-# in the PR body (or first few comments are not fetched; body must carry the date).
+# in the PR body (body must carry the date).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
@@ -22,7 +22,26 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
-PRS_JSON="$(gh pr list --state open --limit 100 --json number,title,labels,body,url)"
+# Resolve owner/name for -R (works when SSH remotes confuse `gh` default repo detection).
+resolve_repo() {
+  local url owner_repo
+  if url="$(git remote get-url origin 2>/dev/null)"; then
+    # git@github.com:org/repo.git  |  https://github.com/org/repo.git
+    owner_repo="$(printf '%s\n' "${url}" | sed -E 's#^(git@github\.com:|https://github\.com/)##; s#\.git$##')"
+    if [[ "${owner_repo}" == */* ]]; then
+      printf '%s\n' "${owner_repo}"
+      return 0
+    fi
+  fi
+  return 1
+}
+
+REPO_ARGS=()
+if REPO="$(resolve_repo)"; then
+  REPO_ARGS=(-R "${REPO}")
+fi
+
+PRS_JSON="$(gh pr list "${REPO_ARGS[@]}" --state open --limit 100 --json number,title,labels,body,url)"
 
 export PRS_JSON
 python3 <<'PY'
@@ -38,7 +57,6 @@ if not prs:
     sys.exit(0)
 
 HOLD_LABELS = {"hold", "do-not-merge"}
-# review-by: 2026-09-01  |  review_by: 2026-09-01  |  review-by 2026-09-01
 REVIEW_BY_RE = re.compile(
     r"(?i)\breview[-_ ]?by\b\s*[:=]?\s*(\d{4}-\d{2}-\d{2})"
 )

@@ -159,12 +159,18 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     }
 
     /**
-     * Clears the decryption cache and any encryptor override (kernel.reset).
+     * Clears the decryption cache, encryptor override and counters (kernel.reset).
+     *
+     * Assignments must be visible in this method body for Igor IncompleteReset analysis
+     * (does not follow clearDecryptionCache() / restoreEncryptor() calls).
      */
     public function reset(): void
     {
-        $this->clearDecryptionCache();
-        $this->restoreEncryptor();
+        $this->cachedDecryptions    = new WeakMap();
+        $this->encryptorOverride    = null;
+        $this->encryptorOverrideSet = false;
+        $this->decryptCounter       = 0;
+        $this->encryptCounter       = 0;
     }
 
     /**
@@ -292,7 +298,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
                 }
             }
 
-            $propertyEncryptor = $this->encryptorOverride instanceof EncryptorInterface || $this->registry === null
+            $propertyEncryptor = $this->encryptorOverride instanceof EncryptorInterface || !$this->registry instanceof EncryptorRegistry
                 ? $encryptor
                 : $this->registry->get($encryptedAttr->config);
 
@@ -310,7 +316,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
                     }
                     $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
                     $cached                           = $this->cachedDecryptions[$entity] ?? [];
-                    $cached[$refProperty->getName()]  = ['plaintext' => (string) $currentPropValue, 'ciphertext' => $value];
+                    $cached[$refProperty->getName()]  = ['plaintext' => $currentPropValue, 'ciphertext' => $value];
                     $this->cachedDecryptions[$entity] = $cached;
                 }
             } elseif ($value !== null && $value !== '') {
