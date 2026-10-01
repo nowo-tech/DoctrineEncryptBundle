@@ -3,6 +3,14 @@
 
 ## Unreleased
 
+## To 2.4.1
+
+From **2.4.0** — Igor IncompleteReset inline clears in `DoctrineEncryptSubscriber::reset()` (including encrypt/decrypt counters). **No application upgrade steps.**
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
 ## To 2.4.0
 
 From **2.3.14** — decrypt prod gate; Doctrine `SortDirection`.

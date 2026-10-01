@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.4.1] - 2026-10-01](#241-2026-10-01)
 - [[2.4.0] - 2026-09-28](#240-2026-09-28)
 - [[2.3.14] - 2026-09-27](#2314-2026-09-27)
 - [[2.3.13] - 2026-09-24](#2313-2026-09-24)
@@ -94,6 +95,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-10-01
+
+### Fixed
+
+- **Igor IncompleteReset:** `DoctrineEncryptSubscriber::reset()` inlines clearing of `$cachedDecryptions`, encryptor override flags, and `$encryptCounter` / `$decryptCounter` (Igor does not follow helper calls from `reset()`).
+- **Release tooling:** `.scripts/check-open-prs.sh` resolves `owner/repo` from `origin` via `-R` so `gh` works with SSH remotes.
+- Rector: skip `AbstractCommandTest.php` (upstream ObjectShapeType mapper crash); apply pending code-quality rector fixes.
+
+[2.4.1]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.4.1
+[2.4.0]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.4.0
+
 ## [2.4.0] - 2026-09-28
 
 ### Security
@@ -116,7 +128,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Worker safety (Igor):** justified `// @igor-ignore` annotations and/or `ResetInterface` / request-scoped fixes so `make igor` passes on package `src/`.
 
-[2.4.0]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.4.0
 [2.3.14]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.3.14
 
 ## [2.3.13] - 2026-09-24
