@@ -3,9 +3,17 @@
 
 ## Unreleased
 
+## To 2.4.2
+
+From **2.4.0** / **2.4.1** — same Igor IncompleteReset inline clears as `2.4.1`; required if Packagist still resolved `2.4.1` to the pre-fix tree. **No application upgrade steps.**
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
 ## To 2.4.1
 
-From **2.4.0** — Igor IncompleteReset inline clears in `DoctrineEncryptSubscriber::reset()` (including encrypt/decrypt counters). **No application upgrade steps.**
+From **2.4.0** — Igor IncompleteReset inline clears in `DoctrineEncryptSubscriber::reset()` (including encrypt/decrypt counters). **No application upgrade steps.** Prefer **2.4.2** if Packagist still serves the stale `2.4.1` dist.
 
 ```bash
 composer update nowo-tech/doctrine-encrypt-bundle

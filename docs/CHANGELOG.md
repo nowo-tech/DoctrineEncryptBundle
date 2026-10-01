@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.4.2] - 2026-10-01](#242-2026-10-01)
 - [[2.4.1] - 2026-10-01](#241-2026-10-01)
 - [[2.4.0] - 2026-09-28](#240-2026-09-28)
 - [[2.3.14] - 2026-09-27](#2314-2026-09-27)
@@ -95,6 +96,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.2] - 2026-10-01
+
+### Fixed
+
+- **Packagist republish:** same Igor IncompleteReset inline clears as `v2.4.1` (`DoctrineEncryptSubscriber::reset()`). Packagist still served the pre-fix `v2.4.1` tree (`024e5cc`); consumers must take `2.4.2` to receive the worker-safe `reset()`.
+
+[2.4.2]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.4.2
+[2.4.1]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.4.1
+[2.4.0]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.4.0
+
 ## [2.4.1] - 2026-10-01
 
 ### Fixed
@@ -102,9 +113,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Igor IncompleteReset:** `DoctrineEncryptSubscriber::reset()` inlines clearing of `$cachedDecryptions`, encryptor override flags, and `$encryptCounter` / `$decryptCounter` (Igor does not follow helper calls from `reset()`).
 - **Release tooling:** `.scripts/check-open-prs.sh` resolves `owner/repo` from `origin` via `-R` so `gh` works with SSH remotes.
 - Rector: skip `AbstractCommandTest.php` (upstream ObjectShapeType mapper crash); apply pending code-quality rector fixes.
-
-[2.4.1]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.4.1
-[2.4.0]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.4.0
 
 ## [2.4.0] - 2026-09-28
 
