@@ -3,6 +3,16 @@
 
 ## Unreleased
 
+## To 2.4.3
+
+From **2.4.2** — dependency updates (doctrine/orm 3.7.4).
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
+No breaking changes. No application upgrade steps.
+
 ## To 2.4.2
 
 From **2.4.0** / **2.4.1** — same Igor IncompleteReset inline clears as `2.4.1`; required if Packagist still resolved `2.4.1` to the pre-fix tree. **No application upgrade steps.**
@@ -47,6 +57,7 @@ This guide explains how to upgrade the Doctrine Encrypt Bundle between versions.
 ## Table of contents
 
 
+- [To 2.4.3](#to-243)
 - [Upgrading to 2.3.13](#upgrading-to-2313)
 - [From 2.3.11 to 2.3.12](#from-2311-to-2312)
 - [General upgrade process](#general-upgrade-process)
