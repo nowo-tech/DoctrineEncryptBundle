@@ -11,6 +11,7 @@ The bundle is configured under the root key `nowo_doctrine_encrypt`. The only su
   - [Encryptor and query performance (overview)](#encryptor-and-query-performance-overview)
 - [Secret key: file or env](#secret-key-file-or-env)
 - [Secret key files (when using path)](#secret-key-files-when-using-path)
+- [secret_permissions (key file hardening)](#secret_permissions-key-file-hardening)
 - [Loading configuration](#loading-configuration)
 
 ## Options
@@ -19,6 +20,7 @@ The bundle is configured under the root key `nowo_doctrine_encrypt`. The only su
 |--------|------|---------|-------------|
 | `default_profile` | `string` | `default` | Which profile to use when the attribute has no alias or uses `"default"`. |
 | `batch_size` | `int` | `5` | Default batch size for `doctrine:decrypt:database` and `doctrine:encrypt:database` (raw SQL). Overridable per run via the `batchSize` argument. Minimum: 1. |
+| `secret_permissions` | `array` | see below | Filesystem hardening for file-based keys. See [secret_permissions](#secret_permissions-key-file-hardening). |
 | `profiles` | `array` | `[]` (normalized to one `default` profile) | Map of alias => options. Each alias has `encryptor_class` and either `secret_directory_path` or `secret_key_env_var`. Optional: `secret_key_filename`. |
 
 Per-profile options (under each entry in `profiles`):
@@ -113,6 +115,27 @@ Key file per profile: `.{encryptor_class}.{alias}.key` (or your `secret_key_file
 ```
 
 If no key file exists, the bundle can generate one (e.g. via the `doctrine:encrypt:generate-secret-key` command, if available). See [Commands](COMMANDS.md).
+
+## secret_permissions (key file hardening)
+
+Anyone who can read a key file can decrypt every column encrypted with it. The bundle hardens file-based keys (profiles using `secret_key_env_var` are skipped):
+
+- **Missing key directories** (`dirname` of each key path) are created with `directory_mode` (default `0770`). **Existing directories are never chmod-ed** — the default `secret_directory_path` is the project root.
+- **Key files** are chmod-ed to `file_mode` (default `0600`) when their mode differs.
+- **When:** on every console command (`console.command`, priority 1024) and on HTTP main requests **at most once per `http_check_interval` seconds per worker** (`kernel.request`, priority 1024). The throttle lives in the listener instance and is deliberately kept across requests, so FrankenPHP worker mode / long-running workers do not `stat()` key files on every request, while a key generated lazily by the first encryption still gets hardened within a minute.
+- `doctrine:encrypt:generate-secret-key`, the Halite auto-generated key, and the `rotate-keys` backups (`var/encrypt_rotation_backup_*`, now `0700` dirs / `0600` key copies) apply the same modes right after writing.
+
+```yaml
+# config/packages/nowo_doctrine_encrypt.yaml
+nowo_doctrine_encrypt:
+    secret_permissions:
+        enabled: true             # false = no listener (manage permissions yourself)
+        directory_mode: '0770'    # or '0700' when PHP and the CLI run as the same user
+        file_mode: '0600'
+        http_check_interval: 60   # seconds; 0 = every main request
+```
+
+Modes accept octal strings (`'0770'`, `'0o770'`, `'770'`) or integers (`0o770` in PHP config). If a missing key directory cannot be created, a `RuntimeException` is thrown (console and HTTP). Recommended layout: `secret_directory_path: '%kernel.project_dir%/var/secrets'` (outside the web root, ignored by Git).
 
 ## Loading configuration
 

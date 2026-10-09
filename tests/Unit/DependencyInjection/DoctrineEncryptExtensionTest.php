@@ -16,6 +16,7 @@ use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
 use Nowo\DoctrineEncryptBundle\EventListener\ClosedEntityManagerRecoveryListener;
+use Nowo\DoctrineEncryptBundle\EventListener\SecretKeyPermissionsListener;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Twig\DecryptExtension;
@@ -493,6 +494,28 @@ class DoctrineEncryptExtensionTest extends TestCase
         ], $container);
 
         $this->assertTrue($container->hasDefinition('nowo_doctrine_encrypt.encryptor.legacy'));
+    }
+
+    public function testSecretPermissionsListenerIsRegisteredWithConfiguredModes(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([['secret_permissions' => ['directory_mode' => '0700', 'file_mode' => '0600', 'http_check_interval' => 30]]], $container);
+
+        $definition = $container->getDefinition(SecretKeyPermissionsListener::class);
+        $this->assertSame(['%nowo_doctrine_encrypt.key_paths%', 0o700, 0o600, 30], $definition->getArguments());
+        $this->assertTrue($definition->hasTag('kernel.event_subscriber'));
+        $this->assertSame(0o700, $container->getParameter('nowo_doctrine_encrypt.secret_permissions.directory_mode'));
+        $this->assertSame(0o600, $container->getParameter('nowo_doctrine_encrypt.secret_permissions.file_mode'));
+        $this->assertSame('%nowo_doctrine_encrypt.secret_permissions.directory_mode%', $container->getDefinition(GenerateSecretKeyCommand::class)->getArgument('$directoryMode'));
+    }
+
+    public function testSecretPermissionsListenerCanBeDisabled(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([['secret_permissions' => ['enabled' => false]]], $container);
+
+        $this->assertFalse($container->hasDefinition(SecretKeyPermissionsListener::class));
+        $this->assertSame(0o770, $container->getParameter('nowo_doctrine_encrypt.secret_permissions.directory_mode'));
     }
 
     private function createContainer(string $environment = 'dev'): ContainerBuilder

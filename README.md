@@ -36,7 +36,8 @@ Looking for **Doctrine encryption**, **encrypt entity fields**, **Halite Symfony
 - ✅ **Halite**, **Defuse**, and **MysqlAes** (MySQL `AES_ENCRYPT` / `AES_DECRYPT` compatible) — audited or interoperable crypto; see [MYSQL_AES.md](docs/MYSQL_AES.md)
 - ✅ Transparent: encrypt on persist/update, decrypt on load
 - ✅ **EncryptUtil** — programmatic `encrypt()` / `decrypt()` with optional config name (default or e.g. `financial_data`)
-- ✅ **MaskUtil** — mask sensitive values in PHP (e.g. show only last N chars); usable in services
+- ✅ **MaskUtil** — mask sensitive values in PHP (e.g. show only last N chars); usable in services. `MaskUtil::secretHint()` / `|secret_hint` show that a secret is saved without revealing it (`•••• 1234`)
+- ✅ **Key file hardening** — key directories created `0770`, key files kept at `0600`; checked on every console command and at most once per minute per worker on HTTP (FrankenPHP worker-safe). See [Configuration → secret_permissions](docs/CONFIGURATION.md#secret_permissions-key-file-hardening)
 - ✅ **Twig filters** — `|decrypt` (decrypt in templates; optional config: `{{ value|decrypt }}` or `{{ value|decrypt('financial_data') }}`) and `|mask` (mask for display: `{{ value|mask(4) }}` or `{{ value|decrypt|mask(4) }}`)
 - ✅ Works with **embedded entities** and **inheritance**
 - ✅ Console commands: status, generate secret key, encrypt/decrypt database, **rotate keys** (backup, decrypt, change keys, re-encrypt with confirmations)

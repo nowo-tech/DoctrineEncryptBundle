@@ -24,6 +24,8 @@ services:
     arguments:
       $kernel: '@kernel'
       $keyPaths: '%nowo_doctrine_encrypt.key_paths%'
+      $directoryMode: '%nowo_doctrine_encrypt.secret_permissions.directory_mode%'
+      $fileMode: '%nowo_doctrine_encrypt.secret_permissions.file_mode%'
 
   Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptStatusCommand:
     arguments:
@@ -77,6 +79,12 @@ services:
   Nowo\DoctrineEncryptBundle\EventListener\ClosedEntityManagerRecoveryListener:
     arguments:
       $managerRegistry: '@?doctrine'
+    tags:
+      - { name: 'kernel.event_subscriber' }
+
+  # Arguments are set by DoctrineEncryptExtension (secret_permissions); removed when disabled.
+  Nowo\DoctrineEncryptBundle\EventListener\SecretKeyPermissionsListener:
+    arguments: [[]]
     tags:
       - { name: 'kernel.event_subscriber' }
 

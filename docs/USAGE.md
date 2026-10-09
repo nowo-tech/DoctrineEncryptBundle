@@ -8,6 +8,7 @@
 - [Twig filter `|decrypt`](#twig-filter-decrypt)
 - [Twig filter `|mask`](#twig-filter-mask)
 - [MaskUtil (masking in PHP)](#maskutil-masking-in-php)
+  - [Saved-secret hint](#saved-secret-hint-secrethint--secret_hint)
 - [Searching and performance](#searching-and-performance)
 - [Embedded entities](#embedded-entities)
 - [Console commands](#console-commands)
@@ -144,6 +145,23 @@ $masked = MaskUtil::mask('12345678', 2, '••••');  // '••••78'
 - **`MaskUtil::mask(?string $value, ?int $visibleLast = 4, ?string $replacement = '****'): ?string`** — returns the masked string, or `null` if `$value` is null. If `$visibleLast` is 0 or the value length is less than or equal to `$visibleLast`, returns only `$replacement`.
 
 You can inject the service by type-hinting `MaskUtil` (or the alias `nowo_doctrine_encrypt.mask_util`) where needed.
+
+### Saved-secret hint (`secretHint` / `|secret_hint`)
+
+For settings screens that store an API key, token or SMTP password: prove a value is saved **without sending it to the browser** (leave the password input empty and show a hint next to it).
+
+```php
+MaskUtil::secretHint('re_live_abcd1234');          // '•••• 1234'
+MaskUtil::secretHint(null);                        // null  (nothing saved)
+MaskUtil::secretHint('short');                     // '••••' (≤ 2 × visibleLast chars: nothing revealed)
+MaskUtil::secretHint('re_live_abcd1234', 2, '***'); // '*** 34'
+```
+
+```twig
+{{ settings.resendApiKey|secret_hint ?? 'Not set' }}
+```
+
+- **`MaskUtil::secretHint(?string $secret, int $visibleLast = 4, string $mask = '••••'): ?string`** — `null` for null/empty; multibyte-safe; secrets of at most `2 × $visibleLast` characters (or `$visibleLast <= 0`) return only the mask.
 
 ## Searching and performance
 

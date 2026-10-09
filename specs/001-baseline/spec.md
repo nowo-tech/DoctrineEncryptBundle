@@ -45,6 +45,8 @@ Encrypt and decrypt Doctrine entity field values at rest using pluggable encrypt
 - **FR-ENC-001–003**: Encryptor interface, registry, concrete backends, and util helpers.
 - **FR-TWIG-001**: `DecryptExtension` and `MaskExtension` for safe template output.
 - **FR-CLI-001–003**: Abstract command base plus encrypt/decrypt/status and key management commands.
+- **FR-SEC-001**: `SecretKeyPermissionsListener` + `SecretKeyPermissions` create missing key directories with `secret_permissions.directory_mode` (default `0770`, existing directories untouched) and enforce `file_mode` (default `0600`) on key files — every console command, at most once per `http_check_interval` per worker on HTTP main requests; key generation and rotation backups apply the same modes.
+- **FR-SEC-002**: `MaskUtil::secretHint()` / `|secret_hint` render a saved secret as `•••• last4` (null when empty, mask only when ≤ 2 × visible chars).
 - **FR-DI-001**: `services.yml` wires public services documented in [`docs/USAGE.md`](../../docs/USAGE.md).
 
 ---

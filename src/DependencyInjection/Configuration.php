@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\DependencyInjection;
 
+use InvalidArgumentException;
+use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
+
+use function sprintf;
 
 /**
  * Defines and validates the bundle configuration tree (default_profile, profiles per encryptor).
@@ -67,6 +71,30 @@ final class Configuration implements ConfigurationInterface
                     ->min(1)
                     ->info('Default batch size for doctrine:decrypt:database and doctrine:encrypt:database (raw SQL). Overridable per run via the batchSize argument.')
                 ->end()
+                ->arrayNode('secret_permissions')
+                    ->addDefaultsIfNotSet()
+                    ->info('Filesystem hardening for file-based keys: creates missing key directories with directory_mode and chmods key files to file_mode (console: every command; HTTP: at most once per http_check_interval seconds per worker).')
+                    ->children()
+                        ->booleanNode('enabled')->defaultTrue()->end()
+                        ->integerNode('directory_mode')
+                            ->defaultValue(SecretKeyPermissions::DEFAULT_DIRECTORY_MODE)
+                            ->min(0)->max(0o777)
+                            ->beforeNormalization()->ifString()->then(static fn (string $v): int => self::parseMode($v))->end()
+                            ->info('Mode for key directories created by the bundle (octal string "0770" or "0700", or integer). Existing directories are not changed.')
+                        ->end()
+                        ->integerNode('file_mode')
+                            ->defaultValue(SecretKeyPermissions::DEFAULT_FILE_MODE)
+                            ->min(0)->max(0o777)
+                            ->beforeNormalization()->ifString()->then(static fn (string $v): int => self::parseMode($v))->end()
+                            ->info('Mode enforced on key files (octal string "0600" or integer).')
+                        ->end()
+                        ->integerNode('http_check_interval')
+                            ->defaultValue(60)
+                            ->min(0)
+                            ->info('Seconds between HTTP checks per worker (0 = every main request).')
+                        ->end()
+                    ->end()
+                ->end()
                 ->arrayNode('profiles')
                     ->useAttributeAsKey('name')
                     ->arrayPrototype()
@@ -99,5 +127,21 @@ final class Configuration implements ConfigurationInterface
             ->end();
 
         return $treeBuilder;
+    }
+
+    /**
+     * Parses an octal permission string ("0770", "0o770", "770") into an integer mode.
+     */
+    private static function parseMode(string $value): int
+    {
+        $value = strtolower(trim($value));
+        if (str_starts_with($value, '0o')) {
+            $value = substr($value, 2);
+        }
+        if ($value === '' || preg_match('/^[0-7]{1,4}$/', $value) !== 1) {
+            throw new InvalidArgumentException(sprintf('Invalid permission mode "%s": use an octal string such as "0770" or "0600".', $value));
+        }
+
+        return (int) octdec($value);
     }
 }

@@ -1,7 +1,19 @@
 # Upgrade Guide
 
 
-## Unreleased
+## To 2.5.0
+
+From **2.4.3** — key file hardening (no breaking API change).
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+php bin/console cache:clear
+```
+
+- Key files of file-based profiles are chmod-ed to **`0600`** on the next console command / first HTTP request. If another OS user (e.g. a separate CLI or backup user) must read them, set `secret_permissions.file_mode: '0640'` and share a group, or `secret_permissions.enabled: false`.
+- Missing key directories are now created **`0770`** (was `0755`). Existing directories are untouched — tighten them yourself (`chmod 0770 var/secrets`).
+- If your app shipped its own listener for this (e.g. `EnsureHaliteSecretsDirectoryListener`), remove it or set `enabled: false` to avoid double work.
+- Optional: replace custom "saved secret" placeholders with `MaskUtil::secretHint()` / `|secret_hint`.
 
 ## To 2.4.3
 

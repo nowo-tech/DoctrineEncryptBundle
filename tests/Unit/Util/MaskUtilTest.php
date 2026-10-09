@@ -47,4 +47,29 @@ class MaskUtilTest extends TestCase
     {
         $this->assertSame('****', MaskUtil::mask('12345678', 0));
     }
+
+    public function testSecretHintReturnsNullWhenNothingSaved(): void
+    {
+        $this->assertNull(MaskUtil::secretHint(null));
+        $this->assertNull(MaskUtil::secretHint(''));
+    }
+
+    public function testSecretHintShowsBulletsAndLastFour(): void
+    {
+        $this->assertSame('•••• 1234', MaskUtil::secretHint('re_live_abcd1234'));
+        $this->assertSame('•••• 89', MaskUtil::secretHint('123456789', 2));
+        $this->assertSame('*** ñüé€', MaskUtil::secretHint('contraseñañüé€', 4, '***'));
+    }
+
+    public function testSecretHintNeverRevealsShortSecrets(): void
+    {
+        $this->assertSame('••••', MaskUtil::secretHint('12345678'));
+        $this->assertSame('••••', MaskUtil::secretHint('abc'));
+        $this->assertSame('••••', MaskUtil::secretHint('re_live_abcd1234', 0));
+    }
+
+    public function testSecretHintFallsBackToBytesForInvalidUtf8(): void
+    {
+        $this->assertSame('•••• ' . "\xFFabc", MaskUtil::secretHint("0123456789\xFFabc"));
+    }
 }

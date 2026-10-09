@@ -12,6 +12,7 @@ use Twig\Attribute\AsTwigFilter;
  *
  * Provides filter:
  * - mask – masks a plain value (e.g. **** + last N chars).
+ * - secret_hint – hint for a saved secret (e.g. •••• 1234), null when empty.
  *
  * Usage: {{ value|mask }} or {{ value|mask(4, '****') }}
  */
@@ -32,5 +33,20 @@ final class MaskExtension
         $str = $value === null ? null : (string) $value;
 
         return MaskUtil::mask($str, $visibleLast, $replacement);
+    }
+
+    /**
+     * Hint for a saved secret without revealing it, e.g. "•••• 1234" (null when nothing is saved).
+     *
+     * Usage: {{ settings.apiKey|secret_hint ?? 'Not set' }} or {{ value|secret_hint(4, '****') }}
+     */
+    #[AsTwigFilter('secret_hint')]
+    public function secretHint(mixed $value, int $visibleLast = 4, string $mask = '••••'): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        return MaskUtil::secretHint((string) $value, $visibleLast, $mask);
     }
 }

@@ -44,6 +44,7 @@ Worker demo: `demo/symfony8/docker/frankenphp/Caddyfile` declares a `worker` blo
 | `nowo_doctrine_encrypt.orm_subscriber` (`Subscribers\DoctrineEncryptSubscriber`) | yes | `$cachedDecryptions` (`WeakMap`, bounded by live entities), `$encryptCounter` / `$decryptCounter` (ints, cleared in `reset()`), `$encryptorOverride` / `$encryptorOverrideSet` (CLI only; cleared in `reset()`); `ResetInterface` | ✅ | ✅ |
 | `Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber` | alias of `nowo_doctrine_encrypt.orm_subscriber` (no second instance) | — | ✅ | ✅ |
 | `Nowo\DoctrineEncryptBundle\EventListener\ClosedEntityManagerRecoveryListener` | yes | none (optional `ManagerRegistry`) | ✅ | ✅ |
+| `Nowo\DoctrineEncryptBundle\EventListener\SecretKeyPermissionsListener` | yes | `int $lastHttpCheck` — **intentional** per-worker throttle timestamp (no request data; never reset so HTTP checks stay ≤ 1 per `http_check_interval`) | ✅ | ✅ |
 | `nowo_doctrine_encrypt.encryptor.<profile>` (`HaliteEncryptor`, `DefuseEncryptor`, `MysqlAesEncryptor`) | yes | lazily loaded key (`$encryptionKey` / `$derivedKey`), request-independent | ✅ | ✅ |
 | `nowo_doctrine_encrypt.encryptor_registry` (`Encryptors\EncryptorRegistry`) | yes | map of encryptors set at compile time, never written | ✅ | ✅ |
 | `nowo_doctrine_attribute_reader` (`Mapping\AttributeReader`) | yes | `$isRepeatableAttribute` cache keyed by attribute class (bounded) | ✅ | ✅ |

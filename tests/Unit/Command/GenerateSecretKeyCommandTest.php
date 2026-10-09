@@ -325,8 +325,37 @@ class GenerateSecretKeyCommandTest extends TestCase
         $this->assertStringContainsString('Created', $tester->getDisplay());
         $content = (string) file_get_contents($keyPath);
         $this->assertMatchesRegularExpression('/^[a-f0-9]+$/i', trim($content));
+        clearstatcache();
+        $this->assertSame(0o600, fileperms($keyPath) & 0o777, 'key file must be owner-only');
+        $this->assertSame(0o770, fileperms($baseDir . '/subdir') & 0o777, 'created key directory must not be world-accessible');
         unlink($keyPath);
         rmdir($baseDir . '/subdir');
+        rmdir($baseDir);
+    }
+
+    public function testCreatedHaliteKeyUsesConfiguredModes(): void
+    {
+        $baseDir = sys_get_temp_dir() . '/nowo-encrypt-modes-' . uniqid();
+        $keyPath = $baseDir . '/secrets/.Halite.default.key';
+        $command = new GenerateSecretKeyCommand(
+            $this->createStub(EntityManagerInterface::class),
+            new AttributeReader(),
+            $this->createStub(DoctrineEncryptSubscriber::class),
+            $this->createStub(KernelInterface::class),
+            ['default' => ['path' => $keyPath, 'encryptor_class' => 'Halite']],
+            0o700,
+            0o640,
+        );
+        $tester = new CommandTester($command);
+
+        $tester->execute([]);
+
+        clearstatcache();
+        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertSame(0o640, fileperms($keyPath) & 0o777);
+        $this->assertSame(0o700, fileperms($baseDir . '/secrets') & 0o777);
+        unlink($keyPath);
+        rmdir($baseDir . '/secrets');
         rmdir($baseDir);
     }
 }

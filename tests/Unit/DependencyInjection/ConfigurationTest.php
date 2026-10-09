@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\DependencyInjection;
 
+use InvalidArgumentException;
 use Nowo\DoctrineEncryptBundle\DependencyInjection\Configuration;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
@@ -199,5 +200,42 @@ class ConfigurationTest extends TestCase
         $processor     = new Processor();
 
         return $processor->processConfiguration($configuration, [$config]);
+    }
+
+    public function testSecretPermissionsDefaults(): void
+    {
+        $config = $this->process([]);
+
+        $this->assertSame([
+            'enabled'             => true,
+            'directory_mode'      => 0o770,
+            'file_mode'           => 0o600,
+            'http_check_interval' => 60,
+        ], $config['secret_permissions']);
+    }
+
+    public function testSecretPermissionsAcceptOctalStrings(): void
+    {
+        $config = $this->process(['secret_permissions' => [
+            'enabled'             => false,
+            'directory_mode'      => '0700',
+            'file_mode'           => '0o640',
+            'http_check_interval' => 0,
+        ]]);
+
+        $this->assertFalse($config['secret_permissions']['enabled']);
+        $this->assertSame(0o700, $config['secret_permissions']['directory_mode']);
+        $this->assertSame(0o640, $config['secret_permissions']['file_mode']);
+        $this->assertSame(0, $config['secret_permissions']['http_check_interval']);
+
+        $config = $this->process(['secret_permissions' => ['file_mode' => 0o600]]);
+        $this->assertSame(0o600, $config['secret_permissions']['file_mode']);
+    }
+
+    public function testSecretPermissionsRejectInvalidMode(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid permission mode');
+        $this->process(['secret_permissions' => ['file_mode' => 'rw-------']]);
     }
 }

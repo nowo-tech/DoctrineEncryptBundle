@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
+use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -224,11 +225,11 @@ final class RotateKeysCommand extends AbstractCommand
     {
         $varDir = $projectDir . '/var';
         if (!is_dir($varDir)) {
-            @mkdir($varDir, 0o755, true);
+            @mkdir($varDir, 0o755, true); // project var/ (not key material)
         }
         $timestamp = date('Y-m-d_His');
         $backupDir = $varDir . '/' . self::BACKUP_DIR_PREFIX . $timestamp;
-        if (!@mkdir($backupDir, 0o755, true) && !is_dir($backupDir)) {
+        if (!@mkdir($backupDir, 0o700, true) && !is_dir($backupDir)) {
             return null;
         }
 
@@ -266,7 +267,7 @@ final class RotateKeysCommand extends AbstractCommand
 
         // 2) Key files backup
         $keysDir = $backupDir . '/' . self::BACKUP_KEYS_SUBDIR;
-        if (!@mkdir($keysDir, 0o755, true) && !is_dir($keysDir)) {
+        if (!@mkdir($keysDir, 0o700, true) && !is_dir($keysDir)) {
             return $hasBackup ? $backupDir : null;
         }
         $copied = 0;
@@ -278,6 +279,7 @@ final class RotateKeysCommand extends AbstractCommand
             $basename = basename($path);
             $dest     = $keysDir . '/' . $name . '_' . $basename;
             if (@copy($path, $dest)) {
+                SecretKeyPermissions::hardenFile($dest);
                 ++$copied;
             }
         }

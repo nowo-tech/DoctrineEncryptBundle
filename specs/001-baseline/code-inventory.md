@@ -23,9 +23,11 @@ Every production artifact under `src/` is listed below (including `src/.gitignor
 | `Encryptors/HaliteEncryptor.php` | Halite implementation | FR-ENC-002 |
 | `Encryptors/MysqlAesEncryptor.php` | MySQL AES implementation | FR-ENC-002 |
 | `Util/EncryptUtil.php` | Encryption helpers | FR-ENC-003 |
-| `Util/MaskUtil.php` | Masking helpers | FR-ENC-003 |
+| `Util/MaskUtil.php` | Masking helpers, saved-secret hint | FR-ENC-003, FR-SEC-002 |
 | `Twig/DecryptExtension.php` | Twig decrypt filter | FR-TWIG-001 |
-| `Twig/MaskExtension.php` | Twig mask filter | FR-TWIG-001 |
+| `Twig/MaskExtension.php` | Twig mask / secret_hint filters | FR-TWIG-001, FR-SEC-002 |
+| `Security/SecretKeyPermissions.php` | Key dir/file mode helpers | FR-SEC-001 |
+| `EventListener/SecretKeyPermissionsListener.php` | Key permission hardening (console + throttled HTTP) | FR-SEC-001 |
 | `Command/AbstractCommand.php` | CLI base | FR-CLI-001 |
 | `Command/DoctrineEncryptDatabaseCommand.php` | Bulk encrypt CLI | FR-CLI-002 |
 | `Command/DoctrineDecryptDatabaseCommand.php` | Bulk decrypt CLI | FR-CLI-002 |

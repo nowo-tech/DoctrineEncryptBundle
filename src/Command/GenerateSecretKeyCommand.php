@@ -9,6 +9,7 @@ use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
+use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use ParagonIE\Halite\KeyFactory;
 use RuntimeException;
@@ -43,7 +44,9 @@ final class GenerateSecretKeyCommand extends AbstractCommand
         AttributeReader $attributeReader,
         DoctrineEncryptSubscriber $subscriber,
         private readonly KernelInterface $kernel,
-        private readonly array $keyPaths
+        private readonly array $keyPaths,
+        private readonly int $directoryMode = SecretKeyPermissions::DEFAULT_DIRECTORY_MODE,
+        private readonly int $fileMode = SecretKeyPermissions::DEFAULT_FILE_MODE,
     ) {
         parent::__construct($entityManager, $attributeReader, $subscriber);
     }
@@ -172,24 +175,16 @@ final class GenerateSecretKeyCommand extends AbstractCommand
     {
         $isHalite   = $encryptorClass === 'Halite' || $encryptorClass === HaliteEncryptor::class;
         $isMysqlAes = $encryptorClass === 'MysqlAes' || $encryptorClass === MysqlAesEncryptor::class;
+        SecretKeyPermissions::ensureDirectory(dirname($path), $this->directoryMode);
         if ($isHalite) {
             $encryptionKey = KeyFactory::generateEncryptionKey();
             KeyFactory::save($encryptionKey, $path);
         } elseif ($isMysqlAes) {
-            $passphrase = bin2hex(random_bytes(16));
-            $dir        = dirname($path);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0o755, true);
-            }
-            file_put_contents($path, $passphrase . "\n");
+            file_put_contents($path, bin2hex(random_bytes(16)) . "\n");
         } else {
-            $key = bin2hex(random_bytes(255));
-            $dir = dirname($path);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0o755, true);
-            }
-            file_put_contents($path, $key);
+            file_put_contents($path, bin2hex(random_bytes(255)));
         }
+        SecretKeyPermissions::hardenFile($path, $this->fileMode);
     }
 
     /**

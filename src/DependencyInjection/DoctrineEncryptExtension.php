@@ -8,6 +8,8 @@ use InvalidArgumentException;
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
+use Nowo\DoctrineEncryptBundle\EventListener\SecretKeyPermissionsListener;
+use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -59,6 +61,34 @@ final class DoctrineEncryptExtension extends Extension
 
         $this->assertNoMysqlAesInProduction($container, $profiles);
         $this->registerProfiles($container, $config);
+        $this->registerSecretPermissions($container, $config['secret_permissions'] ?? []);
+    }
+
+    /**
+     * Configures (or removes) the key file permission listener.
+     *
+     * @param array<string, mixed> $options Processed secret_permissions node
+     */
+    private function registerSecretPermissions(ContainerBuilder $container, array $options): void
+    {
+        $directoryMode = (int) ($options['directory_mode'] ?? SecretKeyPermissions::DEFAULT_DIRECTORY_MODE);
+        $fileMode      = (int) ($options['file_mode'] ?? SecretKeyPermissions::DEFAULT_FILE_MODE);
+        $container->setParameter('nowo_doctrine_encrypt.secret_permissions.directory_mode', $directoryMode);
+        $container->setParameter('nowo_doctrine_encrypt.secret_permissions.file_mode', $fileMode);
+
+        if (!($options['enabled'] ?? true)) {
+            $container->removeDefinition(SecretKeyPermissionsListener::class);
+
+            return;
+        }
+
+        $container->getDefinition(SecretKeyPermissionsListener::class)
+            ->setArguments([
+                '%nowo_doctrine_encrypt.key_paths%',
+                $directoryMode,
+                $fileMode,
+                (int) ($options['http_check_interval'] ?? 60),
+            ]);
     }
 
     /**
