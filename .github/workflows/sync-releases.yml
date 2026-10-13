@@ -1,35 +1,262 @@
-# Backfill or create GitHub Releases for existing v* tags that have no release, or refresh notes when needed.
 name: Sync releases
+
+# Idempotent backfill of GitHub Releases from v* tags.
+# - Creates a release for every v* tag that has none (release.yml handles the tag push itself;
+#   this workflow does not run on tag pushes to avoid racing it and creating duplicate releases).
+# - Updates the body of an existing release only when docs/CHANGELOG.md has a section for that
+#   version that the body does not already contain (or when the body is empty).
+# - Never changes make_latest/prerelease/name of existing releases; never fails on `already_exists`.
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only report what would change'
+        type: boolean
+        default: false
   schedule:
     - cron: '0 6 * * 1'
 
 permissions:
   contents: write
 
+concurrency:
+  group: sync-releases-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
-  sync:
+  sync-releases:
+    name: Sync releases from tags
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Create missing releases for v* tags
+      - name: Fetch all tags
+        run: git fetch --tags --force
+
+      - name: Create missing releases and refresh changelog bodies
+        uses: actions/github-script@v9
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          for tag in $(git tag -l 'v*' | sort -V); do
-            if ! gh release view "$tag" --repo "${{ github.repository }}" &>/dev/null; then
-              echo "Creating release for $tag"
-              gh release create "$tag" --repo "${{ github.repository }}" \
-                --title "Release $tag" \
-                --notes "Release $tag (synced from tag; see docs/CHANGELOG.md for details)."
-            else
-              echo "Release exists for $tag — skip"
-            fi
-          done
+          CHANGELOG_PATH: docs/CHANGELOG.md
+          DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+        with:
+          retries: 3
+          script: |
+            const fs = require('fs');
+            const { execFileSync } = require('child_process');
+            const { owner, repo } = context.repo;
+            const dryRun = process.env.DRY_RUN === 'true';
+            const MAX_BODY = 120000;
+
+            const git = (...args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+            const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+            const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const normalize = (s) => String(s || '')
+              .replace(/\r\n?/g, '\n')
+              .split('\n').map((l) => l.replace(/\s+$/, '')).join('\n')
+              .replace(/\n{3,}/g, '\n\n')
+              .trim();
+            const isAlreadyExists = (e) => {
+              const data = (e && e.response && e.response.data) || {};
+              const errors = Array.isArray(data.errors) ? data.errors : [];
+              return (e && e.status) === 422 && (
+                errors.some((x) => x && x.code === 'already_exists') ||
+                String(data.message || e.message || '').includes('already_exists')
+              );
+            };
+
+            // ---- version helpers -------------------------------------------------------
+            const parse = (tag) => {
+              const m = /^v?(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/.exec(tag);
+              if (!m) return null;
+              return { nums: [m[1], m[2], m[3], m[4] || '0'].map(Number), pre: m[5] || null };
+            };
+            const compare = (a, b) => {
+              const pa = parse(a), pb = parse(b);
+              if (!pa || !pb) return pa ? 1 : pb ? -1 : a.localeCompare(b);
+              for (let i = 0; i < 4; i++) if (pa.nums[i] !== pb.nums[i]) return pa.nums[i] - pb.nums[i];
+              if (pa.pre === pb.pre) return 0;
+              if (!pa.pre) return 1;
+              if (!pb.pre) return -1;
+              return pa.pre.localeCompare(pb.pre, undefined, { numeric: true });
+            };
+            const isPrerelease = (tag) => {
+              const p = parse(tag);
+              return p ? p.pre !== null : /-(alpha|beta|rc|dev|pre)/i.test(tag);
+            };
+
+            // ---- inputs: tags, changelog, releases ----------------------------------------
+            const tags = git('tag', '-l', 'v*').split('\n').map((t) => t.trim()).filter(Boolean).sort(compare);
+            const stableTags = tags.filter((t) => parse(t) && !isPrerelease(t));
+            const newestStable = stableTags.length ? stableTags[stableTags.length - 1] : null;
+
+            const changelogPath = [process.env.CHANGELOG_PATH, 'CHANGELOG.md'].find((p) => p && fs.existsSync(p));
+            const changelogLines = changelogPath ? fs.readFileSync(changelogPath, 'utf8').replace(/\r\n?/g, '\n').split('\n') : [];
+            core.info(`Tags: ${tags.length}; changelog: ${changelogPath || 'none'}; newest stable: ${newestStable || 'none'}; dry run: ${dryRun}`);
+
+            // Accepts "## [1.2.3] - 2026-01-01", "## [1.2.3] — date", "## 1.2.3 — date", "## v1.2.3", "## [1.2.3]".
+            const changelogSection = (version) => {
+              if (!changelogLines.length) return '';
+              const head = new RegExp('^##\\s+\\[?v?' + escapeRe(version) + '\\]?(?=[\\s:]|$)');
+              const start = changelogLines.findIndex((l) => head.test(l));
+              if (start === -1) return '';
+              let end = changelogLines.length;
+              let inFence = false;
+              for (let i = start + 1; i < changelogLines.length; i++) {
+                if (/^\s*(```|~~~)/.test(changelogLines[i])) inFence = !inFence;
+                if (!inFence && /^##\s/.test(changelogLines[i])) { end = i; break; }
+              }
+              // Drop Markdown link reference definitions ("[1.2.3]: https://…"): they render nothing in a release.
+              return changelogLines.slice(start + 1, end)
+                .filter((l) => !/^\[[^\]]+\]:\s+\S+/.test(l))
+                .join('\n').trim();
+            };
+
+            const tagMessage = (tag) => {
+              let msg = '';
+              try {
+                msg = git('tag', '-l', '--format=%(contents)', tag);
+              } catch (e) {
+                msg = '';
+              }
+              msg = msg.replace(/-----BEGIN (PGP|SSH) SIGNATURE-----[\s\S]*?-----END \1 SIGNATURE-----/g, '').trim();
+              return msg || `Release ${tag}`;
+            };
+
+            const desiredBody = (tag) => {
+              const section = changelogSection(tag.replace(/^v/, ''));
+              let body = section ? `${tagMessage(tag)}\n\n## Changelog\n\n${section}` : tagMessage(tag);
+              if (body.length > MAX_BODY) body = body.slice(0, MAX_BODY) + '\n\n… (truncated, see docs/CHANGELOG.md)';
+              return { body, section };
+            };
+
+            const releases = await github.paginate(github.rest.repos.listReleases, { owner, repo, per_page: 100 });
+            const byTag = new Map();
+            for (const r of releases) {
+              if (!byTag.has(r.tag_name)) byTag.set(r.tag_name, []);
+              byTag.get(r.tag_name).push(r);
+            }
+            core.info(`Existing releases: ${releases.length}`);
+
+            // ---- actions ------------------------------------------------------------------
+            const result = { created: [], updated: [], unchanged: [], duplicates: [], drafts: [], warnings: [], failed: [] };
+
+            const maybeUpdate = async (tag, release) => {
+              const { body, section } = desiredBody(tag);
+              const current = normalize(release.body);
+              // Up to date when the body already carries the current CHANGELOG section (extra text such as
+              // generated notes is preserved); otherwise rewrite. Empty bodies always get the tag message.
+              const needs = section ? !current.includes(normalize(`## Changelog\n\n${section}`)) : !current;
+              if (!needs) { result.unchanged.push(tag); return; }
+              if (dryRun) { core.info(`[dry-run] would update ${tag}`); result.updated.push(tag); return; }
+              try {
+                await github.rest.repos.updateRelease({ owner, repo, release_id: release.id, body });
+                core.info(`Updated ${tag} (release ${release.id})`);
+                result.updated.push(tag);
+              } catch (e) {
+                if (isAlreadyExists(e)) {
+                  // GitHub rejects any update while another release holds the same tag_name.
+                  core.warning(`${tag}: update rejected with already_exists (duplicate release for this tag?); skipped.`);
+                  result.warnings.push(tag);
+                } else {
+                  core.error(`${tag}: update failed: ${e.message}`);
+                  result.failed.push(tag);
+                }
+              }
+            };
+
+            const findByTag = async (tag) => {
+              for (let attempt = 1; attempt <= 5; attempt++) {
+                try {
+                  const { data } = await github.rest.repos.getReleaseByTag({ owner, repo, tag });
+                  return data;
+                } catch (e) {
+                  if (e.status !== 404) throw e;
+                  await sleep(2000 * attempt);
+                }
+              }
+              return null;
+            };
+
+            const create = async (tag) => {
+              const { body } = desiredBody(tag);
+              const prerelease = isPrerelease(tag);
+              if (dryRun) { core.info(`[dry-run] would create ${tag}`); result.created.push(tag); return; }
+              try {
+                await github.rest.repos.createRelease({
+                  owner, repo,
+                  tag_name: tag,
+                  name: `Release ${tag}`,
+                  body,
+                  draft: false,
+                  prerelease,
+                  generate_release_notes: false,
+                  // Backfilled old tags must never steal "Latest" from the newest release.
+                  make_latest: !prerelease && tag === newestStable ? 'true' : 'false',
+                });
+                core.info(`Created ${tag}`);
+                result.created.push(tag);
+              } catch (e) {
+                if (!isAlreadyExists(e)) {
+                  core.error(`${tag}: create failed: ${e.message}`);
+                  result.failed.push(tag);
+                  return;
+                }
+                // Someone else (release.yml) created it meanwhile: adopt it.
+                const existing = await findByTag(tag);
+                if (existing) {
+                  await maybeUpdate(tag, existing);
+                } else {
+                  core.warning(`${tag}: already_exists but not readable by tag (draft?); skipped.`);
+                  result.warnings.push(tag);
+                }
+              }
+            };
+
+            for (const tag of tags) {
+              const all = byTag.get(tag) || [];
+              const published = all.filter((r) => !r.draft);
+              const drafts = all.filter((r) => r.draft);
+              try {
+                if (published.length > 1) {
+                  core.warning(`${tag}: ${published.length} published releases (ids ${published.map((r) => r.id).join(', ')}); GitHub refuses updates until the duplicate is deleted. Skipped.`);
+                  result.duplicates.push(tag);
+                } else if (published.length === 1) {
+                  await maybeUpdate(tag, published[0]);
+                } else if (drafts.length > 0) {
+                  core.notice(`${tag}: only a draft release exists (id ${drafts[0].id}); left untouched.`);
+                  result.drafts.push(tag);
+                } else {
+                  await create(tag);
+                }
+              } catch (e) {
+                core.error(`${tag}: ${e.message}`);
+                result.failed.push(tag);
+              }
+            }
+
+            // ---- summary ------------------------------------------------------------------
+            const line = (label, list) => `| ${label} | ${list.length} | ${list.slice(0, 50).join(', ')}${list.length > 50 ? ', …' : ''} |`;
+            await core.summary
+              .addRaw(`## Release sync${dryRun ? ' (dry run)' : ''}\n\n`)
+              .addRaw('| Result | Count | Tags |\n|---|---|---|\n')
+              .addRaw([
+                line('Created', result.created),
+                line('Updated', result.updated),
+                line('Unchanged', result.unchanged),
+                line('Duplicate releases (skipped)', result.duplicates),
+                line('Draft only (skipped)', result.drafts),
+                line('Warnings', result.warnings),
+                line('Failed', result.failed),
+              ].join('\n') + '\n')
+              .write();
+
+            if (result.failed.length) {
+              core.setFailed(`Release sync failed for: ${result.failed.join(', ')}`);
+            }
