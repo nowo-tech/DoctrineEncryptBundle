@@ -100,6 +100,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Twig `|mask` no longer marks its output as HTML-safe: the visible tail and the replacement are auto-escaped (XSS when masking user-controlled values).
+- Auto-generated Defuse key files are now created `0600` (missing key directories `0770`), like Halite keys, instead of following the process umask.
+- Halite keys given as content (env var) are imported in memory with `KeyFactory::importEncryptionKey()`; they are no longer written to a temporary file.
+
+### Fixed
+
+- `doctrine:encrypt:database` / `doctrine:decrypt:database` now honour `batch_size` / the `batchSize` argument: the table is read in chunks ordered by primary key (never fully loaded in memory) and each chunk is committed in its own transaction. A non-positive or non-numeric `batchSize` is rejected.
+- Twig filters `|decrypt`, `|mask` and `|secret_hint` are registered with `getFilters()` instead of `#[AsTwigFilter]`, which needs Twig 3.21+ and TwigBundle 7.3+ and left the filters silently missing on older supported versions.
+- `MaskUtil::mask()` / `|mask` count characters instead of bytes (no broken UTF-8 tail).
+- Values that cannot be decrypted on load are now logged (warning, with entity, property and config) instead of being swallowed silently; inject a PSR-3 logger (autowired `logger` service when available).
+
+### Changed
+
+- `composer.json` now requires the packages the bundle actually uses: `doctrine/doctrine-bundle` (^2.13 || ^3.0), `symfony/console`, `symfony/filesystem` and `psr/log`.
+
 ## [2.5.1] - 2026-10-13
 
 ### Dependencies

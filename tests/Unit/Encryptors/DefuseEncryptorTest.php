@@ -54,6 +54,24 @@ class DefuseEncryptorTest extends TestCase
         unlink($keyfile);
     }
 
+    public function testGeneratedKeyFileIsOwnerOnly(): void
+    {
+        $dir     = sys_get_temp_dir() . '/defuse-perm-' . uniqid('', true);
+        $keyfile = $dir . '/nested/defuse.key';
+        try {
+            (new DefuseEncryptor($keyfile))->encrypt(self::DATA);
+
+            clearstatcache();
+            $this->assertFileExists($keyfile);
+            $this->assertSame(0o600, fileperms($keyfile) & 0o777, 'Auto-generated key must not be group/world readable');
+            $this->assertSame(0o770, fileperms($dir . '/nested') & 0o777, 'Created key directory must not be world-accessible');
+        } finally {
+            @unlink($keyfile);
+            @rmdir($dir . '/nested');
+            @rmdir($dir);
+        }
+    }
+
     public function testEncryptDecryptEmptyString(): void
     {
         $keyfile = sys_get_temp_dir() . '/defuse-test-' . uniqid('', true) . '.key';

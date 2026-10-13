@@ -20,7 +20,9 @@ The bundle is **compatible with Symfony 7.4+ and 8** (PHP 8.2+).
 
 - **PHP** >= 8.2
 - **Symfony** ^7.0 || ^8.0 (minimum minors tested in CI: **7.4**, **8.0**, **8.1**)
-- **Doctrine ORM** ^2.15 || ^3.0
+- **Doctrine ORM** ^3.7 and **DoctrineBundle** ^2.13 || ^3.0
+- **symfony/console**, **symfony/filesystem** ^7.0 || ^8.0 (required: console commands and key file handling)
+- **Twig** ^3.2 — the `|decrypt`, `|mask` and `|secret_hint` filters are registered with `getFilters()`, so they work on every supported Twig / TwigBundle version.
 - **paragonie/halite** (included) and **paragonie/sodium_compat** (included); for Defuse, you must require `defuse/php-encryption` yourself.
 - **ext-sodium** is recommended for Halite (performance); **paragonie/sodium_compat** is required by Halite and provides a fallback when the extension is missing.
 

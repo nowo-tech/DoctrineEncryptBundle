@@ -72,4 +72,18 @@ class MaskUtilTest extends TestCase
     {
         $this->assertSame('•••• ' . "\xFFabc", MaskUtil::secretHint("0123456789\xFFabc"));
     }
+
+    public function testMaskCountsCharactersNotBytes(): void
+    {
+        // 'ñ', 'é' and '€' are multibyte: a byte-based tail would cut a character in half (invalid UTF-8).
+        $this->assertSame('****ñé€x', MaskUtil::mask('añoñé€x', 4));
+        $this->assertSame('****', MaskUtil::mask('ñé€x', 4));
+        $this->assertTrue(mb_check_encoding((string) MaskUtil::mask('€€€€€€', 1), 'UTF-8'));
+        $this->assertSame('****€', MaskUtil::mask('€€€€€€', 1));
+    }
+
+    public function testMaskFallsBackToBytesForInvalidUtf8(): void
+    {
+        $this->assertSame('****' . "\xB2", MaskUtil::mask("ab\xFF\xB2", 1));
+    }
 }

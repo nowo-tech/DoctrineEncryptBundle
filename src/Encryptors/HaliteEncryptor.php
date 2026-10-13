@@ -101,24 +101,13 @@ final class HaliteEncryptor implements EncryptorInterface
     }
 
     /**
-     * Loads the encryption key from string content (e.g. from env).
-     * Halite only supports loading from file, so a temporary file is used.
+     * Loads the encryption key from string content (e.g. from env), in memory: the key is never written to disk.
      *
      * @param string $content Hex-encoded key content
      */
     private function loadKeyFromString(string $content): EncryptionKey
     {
-        $tmp = tempnam(sys_get_temp_dir(), 'halite_key_');
-        if ($tmp === false) {
-            throw new RuntimeException('Could not create temp file for key.');
-        }
-        try {
-            file_put_contents($tmp, $content);
-
-            return KeyFactory::loadEncryptionKey($tmp);
-        } finally {
-            @unlink($tmp);
-        }
+        return KeyFactory::importEncryptionKey(new HiddenString($content));
     }
 
     /**

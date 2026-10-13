@@ -7,6 +7,8 @@ namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Encryptors;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
 use ParagonIE\Halite\Alerts\InvalidMessage;
 use ParagonIE\Halite\KeyFactory;
+use ParagonIE\Halite\Symmetric\Crypto;
+use ParagonIE\HiddenString\HiddenString;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SodiumException;
@@ -142,6 +144,27 @@ class HaliteEncryptorTest extends TestCase
         $this->assertNotSame(self::DATA, $encrypted);
         $this->assertSame(self::DATA, $halite->decrypt($encrypted));
         $this->assertFileDoesNotExist($keyfile);
+    }
+
+    public function testKeyContentIsImportedInMemoryWithChecksumVerification(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        $keyObj = KeyFactory::generateEncryptionKey();
+        $tmp    = tempnam(sys_get_temp_dir(), 'halite_');
+        KeyFactory::save($keyObj, $tmp);
+        $keyContent = trim((string) file_get_contents($tmp));
+        @unlink($tmp);
+
+        $before = glob(sys_get_temp_dir() . '/halite_key_*') ?: [];
+        $this->assertSame(self::DATA, (new HaliteEncryptor('', $keyContent))->decrypt(Crypto::encrypt(new HiddenString(self::DATA), $keyObj)));
+        $this->assertSame($before, glob(sys_get_temp_dir() . '/halite_key_*') ?: []);
+
+        // Tampered key (checksum mismatch) is still rejected, as with KeyFactory::loadEncryptionKey().
+        $tampered = substr($keyContent, 0, -2) . (str_ends_with($keyContent, '00') ? '11' : '00');
+        $this->expectException(Throwable::class);
+        (new HaliteEncryptor('', $tampered))->encrypt(self::DATA);
     }
 
     public function testConstructorWithEmptyKeyContentUsesKeyFile(): void

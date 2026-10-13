@@ -63,7 +63,7 @@ services:
 
   nowo_doctrine_encrypt.orm_subscriber:
     class: Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber
-    arguments: ["@nowo_doctrine_encrypt.encryptor_registry"]
+    arguments: ["@nowo_doctrine_encrypt.encryptor_registry", "@?logger"]
     tags:
       - { name: 'kernel.reset', method: 'reset' }
       - { name: 'doctrine.event_listener', event: 'postUpdate', priority: 500, connection: 'default' }

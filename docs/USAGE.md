@@ -124,6 +124,8 @@ The bundle provides a **`mask`** Twig filter (**MaskExtension**) to mask sensiti
 - **`|mask(visibleLast)`** — number of characters to leave visible at the end (e.g. `4` → `****5678`).
 - **`|mask(visibleLast, replacement)`** — custom replacement string (e.g. `|mask(2, '••••')`).
 
+The output is **not** marked HTML-safe: Twig auto-escaping applies to both the visible tail and the replacement. Characters are counted multibyte-safe (UTF-8), so a tail is never cut in the middle of a character.
+
 To **decrypt and then mask** in one go, chain the filters:
 
 ```twig

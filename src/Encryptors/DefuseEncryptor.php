@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Encryptors;
 
 use Defuse\Crypto\Crypto;
+use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
 use RuntimeException;
 use Symfony\Component\Filesystem\Filesystem;
+
+use function dirname;
 
 /**
  * Encryptor implementation using defuse/php-encryption (password-based encryption).
@@ -81,7 +84,10 @@ final class DefuseEncryptor implements EncryptorInterface
                 $string = random_bytes(255);
                 // @igor-ignore - Stateless crypto helper; mutation is local algorithm state
                 $this->encryptionKey = bin2hex($string);
+                // Same hardening as Halite: no world-accessible directory, key file owner-only (0600).
+                SecretKeyPermissions::ensureDirectory(dirname($this->keyFile));
                 $this->fs->dumpFile($this->keyFile, $this->encryptionKey);
+                SecretKeyPermissions::hardenFile($this->keyFile);
             }
         }
 

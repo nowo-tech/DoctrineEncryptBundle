@@ -8,7 +8,6 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 
 use function array_slice;
 use function count;
-use function strlen;
 
 use const PREG_SPLIT_NO_EMPTY;
 
@@ -40,12 +39,13 @@ final class MaskUtil
         if ($value === '') {
             return '';
         }
-        $len = strlen($value);
-        if ($visibleLast <= 0 || $len <= $visibleLast) {
+        // Multibyte-safe: counts characters, not bytes (a UTF-8 tail is never cut in the middle of a character).
+        $chars = self::splitCharacters($value);
+        if ($visibleLast <= 0 || count($chars) <= $visibleLast) {
             return $replacement;
         }
 
-        return $replacement . substr($value, -$visibleLast);
+        return $replacement . implode('', array_slice($chars, -$visibleLast));
     }
 
     /**
@@ -68,16 +68,28 @@ final class MaskUtil
             return null;
         }
 
-        $chars = preg_split('//u', $secret, -1, PREG_SPLIT_NO_EMPTY);
-        if ($chars === false) {
-            // Not valid UTF-8: fall back to bytes.
-            $chars = str_split($secret);
-        }
+        $chars = self::splitCharacters($secret);
 
         if ($visibleLast <= 0 || count($chars) <= 2 * $visibleLast) {
             return $mask;
         }
 
         return $mask . ' ' . implode('', array_slice($chars, -$visibleLast));
+    }
+
+    /**
+     * Splits a string into UTF-8 characters (falls back to bytes when the string is not valid UTF-8).
+     *
+     * @return list<string>
+     */
+    private static function splitCharacters(string $value): array
+    {
+        $chars = preg_split('//u', $value, -1, PREG_SPLIT_NO_EMPTY);
+        if ($chars === false) {
+            // Not valid UTF-8: fall back to bytes.
+            $chars = str_split($value);
+        }
+
+        return $chars;
     }
 }

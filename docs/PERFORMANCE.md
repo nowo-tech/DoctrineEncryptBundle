@@ -30,7 +30,7 @@ See also [MYSQL_AES.md](MYSQL_AES.md) (MySQL-native encryption and LIKE demos) a
 
 ## Console batch commands
 
-`doctrine:encrypt:database` and `doctrine:decrypt:database` process rows in batches (`batch_size` in config, default `5`). Performance is dominated by:
+`doctrine:encrypt:database` and `doctrine:decrypt:database` read the table in chunks of `batch_size` rows (config default `5`, or the `batchSize` argument), ordered by primary key, and commit one transaction per chunk — memory stays bounded and an interrupted run keeps the chunks already committed. Performance is dominated by:
 
 1. **Round-trips** to the database (raise `batch_size` cautiously if memory allows).
 2. **Per-row, per-field** encrypt/decrypt in PHP for every `#[Encrypted]` column.

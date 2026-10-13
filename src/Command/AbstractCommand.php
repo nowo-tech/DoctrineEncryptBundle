@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Command;
 
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
@@ -14,9 +15,14 @@ use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use ReflectionClass;
 use ReflectionProperty;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Throwable;
 
 use function array_key_exists;
 use function count;
+use function ctype_digit;
+use function is_int;
+use function is_string;
 use function sprintf;
 
 /**
@@ -270,5 +276,70 @@ abstract class AbstractCommand extends Command
         }
 
         return null;
+    }
+
+    /**
+     * Reads the batchSize argument (falls back to $default when absent) and validates it.
+     *
+     * @return int|null Positive batch size, or null when the argument is not a positive integer
+     */
+    protected function resolveBatchSize(InputInterface $input, int $default): ?int
+    {
+        $raw = $input->getArgument('batchSize') ?? $default;
+        if (is_string($raw) && ctype_digit($raw)) {
+            $raw = (int) $raw;
+        }
+
+        return is_int($raw) && $raw > 0 ? $raw : null;
+    }
+
+    /**
+     * Counts the rows of a table (used to size progress bars without loading the table).
+     */
+    protected function countTableRows(Connection $conn, string $quotedTable): int
+    {
+        return (int) $conn->fetchOne('SELECT COUNT(*) FROM ' . $quotedTable);
+    }
+
+    /**
+     * Processes a table in chunks of $batchSize rows, ordered by the identifier columns (offset pagination),
+     * so the whole table is never loaded in memory. Each chunk runs inside its own transaction: it is
+     * committed once $processRow has been called for every row of the chunk, and rolled back on error.
+     *
+     * Identifier columns are never modified by the callers, so the ordering stays stable across chunks.
+     *
+     * @param array<int, string> $selectCols Quoted columns to select
+     * @param array<int, string> $quotedIdCols Quoted identifier columns (ORDER BY)
+     * @param callable(array<string, mixed>): void $processRow Called for each row
+     */
+    protected function processTableInBatches(Connection $conn, string $quotedTable, array $selectCols, array $quotedIdCols, int $batchSize, callable $processRow): void
+    {
+        $sqlSelect = 'SELECT ' . implode(', ', $selectCols) . ' FROM ' . $quotedTable;
+        if ($quotedIdCols !== []) {
+            $sqlSelect .= ' ORDER BY ' . implode(', ', $quotedIdCols);
+        }
+        $platform = $conn->getDatabasePlatform();
+        $offset   = 0;
+
+        do {
+            $rows = $conn->executeQuery($platform->modifyLimitQuery($sqlSelect, $batchSize, $offset))->fetchAllAssociative();
+            if ($rows === []) {
+                break;
+            }
+
+            $conn->beginTransaction();
+            try {
+                foreach ($rows as $row) {
+                    $processRow($row);
+                }
+                $conn->commit();
+            } catch (Throwable $e) {
+                $conn->rollBack();
+
+                throw $e;
+            }
+
+            $offset += $batchSize;
+        } while (count($rows) >= $batchSize);
     }
 }

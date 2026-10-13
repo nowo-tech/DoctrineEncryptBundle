@@ -37,7 +37,7 @@ There is no separate HTTP API exposed by the bundle itself beyond what your app 
 | Database | Stolen DB without keys | Ciphertext remains confidential if keys are not leaked. |
 | Path / env | Misconfiguration | Wrong paths or env vars can point to world-readable key files or test keys in production. |
 | CLI | Privilege / operator error | Commands can mass-decrypt or re-encrypt; `doctrine:decrypt:database` refuses `prod` unless `--allow-prod` is set; run only with appropriate access and backups. |
-| Twig | XSS / information disclosure | `|decrypt` does **not** mark output as safe HTML — Twig auto-escaping applies. Still only decrypt what you must display. |
+| Twig | XSS / information disclosure | `|decrypt`, `|mask` and `|secret_hint` do **not** mark output as safe HTML — Twig auto-escaping applies. Still only decrypt what you must display. |
 | Dependencies | Vulnerable crypto or Symfony libs | Rely on audited Halite/Defuse and keep dependencies updated (`composer audit`). |
 
 ## Mitigations
@@ -47,7 +47,7 @@ There is no separate HTTP API exposed by the bundle itself beyond what your app 
 - Show saved secrets with **`MaskUtil::secretHint()`** / **`|secret_hint`** (`•••• 1234`) instead of echoing them back into forms or HTML.
 - Keep **`secret_directory_path`** and env-based keys out of version control; use `.gitignore` for key files.
 - Run **key rotation** during maintenance windows with backups; use `doctrine:encrypt:rotate-keys` or the documented manual flow.
-- In Twig, only decrypt what you must display; `|decrypt` is subject to auto-escaping (no `is_safe: html`). Escape explicitly when rendering outside HTML contexts if needed.
+- In Twig, only decrypt what you must display; `|decrypt`, `|mask` and `|secret_hint` are subject to auto-escaping (no `is_safe: html`). Escape explicitly when rendering outside HTML contexts if needed.
 - Prefer **Halite** or **Defuse** for new data. **Do not use MysqlAes for production.** Treat **MysqlAes** as legacy MySQL interop only (`@deprecated` since 2.1.0). Since **2.3.9**, container compilation **hard-fails** in `prod` if any profile selects MysqlAes — migrate to Halite/Defuse before deploying.
 - Run **`composer audit`** before releases and apply security updates promptly.
 

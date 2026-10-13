@@ -24,7 +24,10 @@ use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\WithOptionalUser;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\WithUser;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\AbstractLogger;
 use ReflectionProperty;
+use RuntimeException;
+use Stringable;
 use WeakMap;
 
 use function count;
@@ -151,6 +154,44 @@ class DoctrineEncryptSubscriberTest extends TestCase
 
         $this->assertSame('David', $user->name);
         $this->assertSame('Switzerland', $user->getAddress());
+    }
+
+    public function testProcessFieldsDecryptFailureIsLoggedAndRawValueKept(): void
+    {
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $encryptor->method('decrypt')->willThrowException(new RuntimeException('Invalid version tag'));
+        $logger = new class extends AbstractLogger {
+            /** @var list<array{level: mixed, message: string, context: array<mixed>}> */
+            public array $records = [];
+
+            public function log($level, string|Stringable $message, array $context = []): void
+            {
+                $this->records[] = ['level' => $level, 'message' => (string) $message, 'context' => $context];
+            }
+        };
+        $subscriber = new DoctrineEncryptSubscriber($encryptor, $logger);
+        $user       = new User('corrupted<ENC>', null);
+
+        $subscriber->processFields($user, false);
+
+        $this->assertSame('corrupted', $user->name);
+        $this->assertCount(1, $logger->records);
+        $this->assertSame('warning', $logger->records[0]['level']);
+        $this->assertSame(User::class, $logger->records[0]['context']['entity']);
+        $this->assertSame('name', $logger->records[0]['context']['property']);
+        $this->assertSame('Invalid version tag', $logger->records[0]['context']['reason']);
+        $this->assertStringNotContainsString('corrupted', $logger->records[0]['message'] . json_encode(array_diff_key($logger->records[0]['context'], ['exception' => true])));
+    }
+
+    public function testProcessFieldsDecryptFailureWithoutLoggerKeepsRawValue(): void
+    {
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $encryptor->method('decrypt')->willThrowException(new RuntimeException('bad key'));
+        $user = new User('corrupted<ENC>', null);
+
+        (new DoctrineEncryptSubscriber($encryptor))->processFields($user, false);
+
+        $this->assertSame('corrupted', $user->name);
     }
 
     public function testProcessFieldsDecryptExtended(): void

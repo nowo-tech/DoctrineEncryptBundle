@@ -48,7 +48,7 @@ php bin/console doctrine:encrypt:database
 Optional arguments:
 
 - **config** — Config alias to use (e.g. `default`, `personal_data`, `financial_data`). If omitted, all configs are processed in turn.
-- **batchSize** — Number of entities to flush per batch (default from config: 5; see [Configuration](CONFIGURATION.md)).
+- **batchSize** — Number of rows read and updated per chunk; each chunk is committed in its own transaction and the table is never loaded in memory at once (positive integer; default from config: 5; see [Configuration](CONFIGURATION.md)).
 
 Options:
 
@@ -73,7 +73,7 @@ php bin/console doctrine:decrypt:database
 Optional arguments:
 
 - **config** — Config alias to use (e.g. `default`, `personal_data`). If omitted, all configs are processed in turn.
-- **batchSize** — Number of entities to flush per batch (default from config: 5; see [Configuration](CONFIGURATION.md)).
+- **batchSize** — Number of rows read and updated per chunk; each chunk is committed in its own transaction and the table is never loaded in memory at once (positive integer; default from config: 5; see [Configuration](CONFIGURATION.md)).
 
 Options:
 

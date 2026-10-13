@@ -7,7 +7,8 @@ namespace Nowo\DoctrineEncryptBundle\Twig;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
-use Twig\Attribute\AsTwigFilter;
+use Twig\Extension\AbstractExtension;
+use Twig\TwigFilter;
 
 use function strlen;
 
@@ -25,11 +26,23 @@ use function strlen;
  *
  * To decrypt then mask: {{ value|decrypt('personal_data')|mask(4) }} (mask from MaskExtension).
  */
-final readonly class DecryptExtension
+final class DecryptExtension extends AbstractExtension
 {
     public function __construct(
-        private EncryptorRegistry $registry
+        private readonly EncryptorRegistry $registry
     ) {
+    }
+
+    /**
+     * Registered with getFilters() (not #[AsTwigFilter]) so the filter works on every supported Twig / TwigBundle version.
+     *
+     * @return list<TwigFilter>
+     */
+    public function getFilters(): array
+    {
+        return [
+            new TwigFilter('decrypt', $this->decrypt(...)),
+        ];
     }
 
     /**
@@ -38,7 +51,6 @@ final readonly class DecryptExtension
      * @param mixed $value The value to decrypt
      * @param string|null $config Encryptor config name (e.g. 'financial_data'). Null = default config
      */
-    #[AsTwigFilter('decrypt')]
     public function decrypt(mixed $value, ?string $config = null): mixed
     {
         if ($value === null) {

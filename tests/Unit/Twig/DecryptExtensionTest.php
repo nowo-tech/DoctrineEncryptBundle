@@ -11,6 +11,8 @@ use Nowo\DoctrineEncryptBundle\Twig\DecryptExtension;
 use Nowo\DoctrineEncryptBundle\Twig\MaskExtension;
 use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use PHPUnit\Framework\TestCase;
+use Twig\Environment;
+use Twig\Loader\ArrayLoader;
 
 class DecryptExtensionTest extends TestCase
 {
@@ -129,5 +131,18 @@ class DecryptExtensionTest extends TestCase
     {
         $ext = new MaskExtension();
         $this->assertSame('••••78', $ext->mask('12345678', 2, '••••'));
+    }
+
+    public function testDecryptFilterIsRegisteredClassicallyAndAutoEscaped(): void
+    {
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $encryptor->method('decrypt')->willReturn('<b>x</b>');
+        $ext = new DecryptExtension(new EncryptorRegistry(['default' => $encryptor], 'default'));
+
+        $this->assertSame(['decrypt'], array_map(static fn ($filter): string => $filter->getName(), $ext->getFilters()));
+
+        $twig = new Environment(new ArrayLoader(['t' => '{{ value|decrypt }}']), ['autoescape' => 'html']);
+        $twig->addExtension($ext);
+        $this->assertSame('&lt;b&gt;x&lt;/b&gt;', $twig->render('t', ['value' => 'cipher' . EncryptUtil::ENCRYPTION_MARKER]));
     }
 }

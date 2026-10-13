@@ -20,6 +20,8 @@ use Doctrine\Persistence\Mapping\ClassUtils;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 // attributes
 use ReflectionAttribute;
 use ReflectionClass;
@@ -90,12 +92,16 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      */
     private WeakMap $cachedDecryptions;
 
+    private readonly LoggerInterface $logger;
+
     /**
      * @param EncryptorInterface|EncryptorRegistry|null $registryOrEncryptor Registry (normal DI), a single encryptor (BC/tests), or null
+     * @param LoggerInterface|null $logger Receives a warning for every value that cannot be decrypted (wrong key, corrupted ciphertext)
      */
-    public function __construct(EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor = null)
+    public function __construct(EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor = null, ?LoggerInterface $logger = null)
     {
         $this->cachedDecryptions = new WeakMap();
+        $this->logger            = $logger ?? new NullLogger();
 
         if ($registryOrEncryptor instanceof EncryptorInterface) {
             $this->registry = new EncryptorRegistry(['default' => $registryOrEncryptor], 'default');
@@ -310,8 +316,16 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
                     try {
                         $currentPropValue = $propertyEncryptor->decrypt($ciphertext);
                         ++$this->decryptCounter;
-                    } catch (Throwable) {
+                    } catch (Throwable $e) {
                         // Ciphertext not valid (e.g. Halite "Invalid version tag", wrong key, or value was plain with <ENC> appended)
+                        $this->logger->warning('Could not decrypt {entity}::${property} (config "{config}"): {exception_class}: {reason}. The raw value is kept.', [
+                            'entity'          => $entity::class,
+                            'property'        => $refProperty->getName(),
+                            'config'          => $encryptedAttr->config,
+                            'exception_class' => $e::class,
+                            'reason'          => $e->getMessage(),
+                            'exception'       => $e,
+                        ]);
                         $currentPropValue = $ciphertext;
                     }
                     $pac->setValue($entity, $refProperty->getName(), $currentPropValue);

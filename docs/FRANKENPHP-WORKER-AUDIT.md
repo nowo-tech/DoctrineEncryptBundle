@@ -29,7 +29,7 @@ A bundle that is safe under **B** is safe under **A** and under classic mode / P
 | Superglobals, `$_ENV`, `putenv`, `ini_set`, `setlocale`, timezone | ✅ | None; env keys come through container `%env()%` arguments |
 | Doctrine / EntityManager | ✅ Resolved | A manager closed by a failed flush is reset by `ClosedEntityManagerRecoveryListener` at the next main request (W-02); the bundle never calls `clear()` on an open manager |
 | Output, headers, `exit`, shutdown functions | ✅ | None in runtime code |
-| Resources (files, sockets, cURL) held open | ✅ | Key files read once; the Halite env-key temp file is removed in `finally` |
+| Resources (files, sockets, cURL) held open | ✅ | Key files read once; env keys are imported in memory (no temp file) |
 | Memory growth across requests | ✅ Resolved | Cache entries are released with the entity objects (W-01) |
 | Blocking I/O and timeouts | ✅ | Only local file reads for keys; crypto is CPU-bound |
 | Third-party static state | ✅ | Halite / Defuse / OpenSSL used per call; no global state |

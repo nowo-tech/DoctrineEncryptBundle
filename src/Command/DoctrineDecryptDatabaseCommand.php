@@ -75,9 +75,14 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
             return self::FAILURE;
         }
 
-        $question = $this->getHelper('question');
-        $input->getArgument('batchSize');
+        $question  = $this->getHelper('question');
         $configArg = $input->getArgument('config');
+        $batchSize = $this->resolveBatchSize($input, $this->defaultBatchSize);
+        if ($batchSize === null) {
+            $output->writeln('<error>The batchSize argument must be a positive integer.</error>');
+
+            return self::FAILURE;
+        }
 
         $registry          = $this->encryptorRegistry;
         $defaultConfigName = $registry?->getDefaultName();
@@ -168,24 +173,23 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
                 $quotedIdCols  = array_map($platform->quoteIdentifier(...), $idColumns);
                 $quotedEncCols = array_map($platform->quoteIdentifier(...), $encColumns);
 
-                // Select only ID columns + encrypted columns for this config (each config is independent)
+                // Select only ID columns + encrypted columns for this config (each config is independent),
+                // in chunks of batchSize rows, one transaction per chunk.
                 $selectCols = array_merge($quotedIdCols, $quotedEncCols);
-                $sqlSelect  = 'SELECT ' . implode(', ', $selectCols) . ' FROM ' . $quotedTable;
-                $result     = $conn->executeQuery($sqlSelect);
-                $rows       = $result->fetchAllAssociative();
-                $totalCount = count($rows);
+                $totalCount = $this->countTableRows($conn, $quotedTable);
 
                 $output->writeln(sprintf('  Processing <comment>%s</comment> (%s)', $metaData->name, $table));
                 $progressBar = new ProgressBar($output, $totalCount);
 
-                foreach ($rows as $row) {
+                $this->processTableInBatches($conn, $quotedTable, $selectCols, $quotedIdCols, $batchSize, function (array $row) use ($idColumns, $tableInfo, $encryptorForConfig, $conn, $platform, $quotedTable, $progressBar, &$valueCounter): void {
                     $idValues = [];
                     foreach ($idColumns as $idCol) {
                         $idValues[$idCol] = $this->getRowValue($row, $idCol);
                     }
                     if (in_array(null, $idValues, true)) {
                         $progressBar->advance(1);
-                        continue;
+
+                        return;
                     }
                     $updates = [];
                     $params  = [];
@@ -222,7 +226,7 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
                         $conn->executeStatement($sqlUpdate, $params, $types);
                     }
                     $progressBar->advance(1);
-                }
+                });
 
                 $progressBar->finish();
                 $output->writeln('');
