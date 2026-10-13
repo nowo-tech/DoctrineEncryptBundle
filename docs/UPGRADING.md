@@ -1,5 +1,18 @@
 # Upgrade Guide
 
+## To 2.6.0
+
+From **2.5.1** — security - escaped mask output, batched database commands, hardened key handling, safe decrypt failures.
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
+- `|mask` output is now HTML-escaped; templates relying on markup in the replacement must use `|raw` deliberately.
+- `doctrine:encrypt:database` / `doctrine:decrypt:database` honour `batch_size` (chunked, one transaction per chunk); `batchSize` must be a positive integer.
+- `doctrine:decrypt:database` now leaves non-decryptable values untouched (with their `<ENC>` marker), lists them and exits 1; before, it silently wrote back stripped ciphertext.
+- The bundle now hard-requires `doctrine/doctrine-bundle`, `symfony/console`, `symfony/filesystem` and `psr/log`; Twig filters are registered classically and work on every supported Twig version.
+
 ## To 2.5.1
 
 From **2.5.0** — dependency refresh and repository maintenance.
