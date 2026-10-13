@@ -5,6 +5,7 @@ The bundle provides a **`MysqlAes`** encryptor that uses **AES-128-ECB** with th
 ## Table of contents
 
 - [Configuration](#configuration)
+  - [Column type for ORM-managed fields (utf8mb4 limitation)](#column-type-for-orm-managed-fields-utf8mb4-limitation)
 - [The `<ENC>` marker — when you need it (and when you must not add it)](#the-enc-marker-when-you-need-it-and-when-you-must-not-add-it)
   - [“I used `AES_ENCRYPT` and Doctrine / Twig does not decrypt”](#i-used-aes_encrypt-and-doctrine-twig-does-not-decrypt)
   - [Insert encrypted data **for Doctrine** (you do not build `<ENC>` yourself)](#insert-encrypted-data-for-doctrine-you-do-not-build-enc-yourself)
@@ -50,6 +51,36 @@ private ?string $secret = null;
 ```
 
 Doctrine will encrypt/decrypt in PHP (same algorithm as MySQL). The subscriber still appends the `<ENC>` marker for ORM-managed fields.
+
+### Column type for ORM-managed fields (utf8mb4 limitation)
+
+`MysqlAes` stores the **raw binary** output of AES (plus the ASCII `<ENC>` marker). Unlike Halite and Defuse, whose ciphertext is plain ASCII, these bytes are almost never valid UTF-8, so a normal `string` / `text` mapping (`VARCHAR` / `LONGTEXT` in a `utf8mb4` table) does **not** work:
+
+- With the default strict `sql_mode` (MySQL 8), the write fails with `SQLSTATE[HY000]: General error: 1366 Incorrect string value: '\xAE%\x87...' for column ...`.
+- With a non-strict `sql_mode`, MySQL replaces or truncates the invalid bytes **silently** and the stored ciphertext can no longer be decrypted.
+
+The column must be **binary**. Pick one:
+
+1. **Use another profile (recommended).** `MysqlAes` is deprecated (and rejected in `prod`); Halite or Defuse output is text-safe and works with any `string` / `text` column. Migrate existing data with the same decrypt → switch → re-encrypt flow used for key rotation ([KEY_ROTATION.md](KEY_ROTATION.md)): decrypt with `mysql_aes`, point the property at the new profile, change the column to a regular `utf8mb4` `text`, then encrypt again.
+2. **`VARBINARY`** via the DBAL `binary` type, sized for the ciphertext: `16 * (intdiv(plaintext_bytes, 16) + 1) + 5` bytes (AES-128 block padding + `<ENC>`). DBAL 4 returns it to PHP as a string:
+
+   ```php
+   #[ORM\Column(type: 'binary', length: 261, nullable: true)] // plaintext up to 255 bytes
+   #[Encrypted('mysql_aes')]
+   private ?string $secret = null;
+   ```
+
+3. **`TEXT` with a binary charset** (what the demo's `MysqlAesNote::$secretOrm` uses). MySQL stores it as `LONGBLOB` and DBAL still hydrates a string:
+
+   ```php
+   #[ORM\Column(type: 'text', nullable: true, options: ['charset' => 'binary', 'collation' => 'binary'])]
+   #[Encrypted('mysql_aes')]
+   private ?string $secret = null;
+   ```
+
+   Known side effect: MySQL reports the column back as `LONGBLOB`, so `doctrine:schema:update --dump-sql` / `doctrine:migrations:diff` keep proposing the same no-op change on every run, e.g. `` ALTER TABLE mysql_aes_note CHANGE secret_orm secret_orm LONGTEXT CHARACTER SET binary DEFAULT NULL COLLATE `binary`; ``. Running it changes nothing; drop it from generated migrations (or use option 2).
+
+Do **not** map the ORM field as DBAL `blob`: that type hydrates a PHP stream resource, not a string, so the subscriber cannot decrypt it. `BLOB` is fine for columns you only read and write in SQL (`secret_native`, see below).
 
 ## The `<ENC>` marker — when you need it (and when you must not add it)
 
@@ -134,7 +165,7 @@ VALUES (
 );
 ```
 
-Prefer **VARBINARY/BLOB** for binary-safe storage; the demo uses `TEXT` for `secret_orm` (works for typical UTF-8 secrets but binary in `TEXT` can be charset-sensitive).
+The target column must be binary: the demo maps `secret_orm` as `TEXT` with `charset: binary` (stored as `LONGBLOB`). A plain `utf8mb4` `TEXT`/`VARCHAR` column rejects the ciphertext — see [Column type for ORM-managed fields](#column-type-for-orm-managed-fields-utf8mb4-limitation).
 
 After insert, `$em->find(MysqlAesNote::class, $id)` should decrypt on load.  
 **Do not** use this on `secret_native` if you also use `AES_DECRYPT` there — choose one format per column.

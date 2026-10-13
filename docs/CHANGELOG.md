@@ -52,6 +52,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Docs (`MysqlAes`):** documented that the deprecated `mysql_aes` profile stores raw binary ciphertext, which `utf8mb4` `string`/`text` columns reject (MySQL error 1366) or silently corrupt in non-strict mode. The column must be `VARBINARY` (`type: 'binary'`) or `TEXT` with `charset: binary` (with its permanent no-op schema diff), or the field should move to Halite/Defuse. See MYSQL_AES.md, CONFIGURATION.md and USAGE.md. No code change.
+
 ## [2.7.1] - 2026-10-13
 
 ### Changed

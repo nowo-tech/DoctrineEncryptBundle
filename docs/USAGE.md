@@ -45,6 +45,8 @@ The bundle will:
 
 An `<ENC>` marker is appended to stored values so the bundle can tell encrypted from plain text; existing unencrypted data can still be read and will be encrypted on the next update.
 
+**Column type:** Halite and Defuse produce ASCII ciphertext, so any `string` / `text` column works (size it for the ciphertext, which is longer than the plaintext). The deprecated **`MysqlAes`** profile produces **raw binary**: a `utf8mb4` `string` / `text` column rejects it (MySQL error 1366 *Incorrect string value*), so map the field as `binary` (`VARBINARY`) or `text` with `charset: binary`, or move to another profile. Details and the resulting schema diff: [MYSQL_AES.md › Column type](MYSQL_AES.md#column-type-for-orm-managed-fields-utf8mb4-limitation).
+
 ## Multiple encryptors
 
 When you define [multiple profiles](CONFIGURATION.md#example-multiple-encryptors) (e.g. `personal_data`, `financial_data`), specify which profile to use per property with the attribute’s alias parameter:
