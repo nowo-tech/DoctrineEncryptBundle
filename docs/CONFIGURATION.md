@@ -13,6 +13,7 @@ The bundle is configured under the root key `nowo_doctrine_encrypt`. The only su
 - [Secret key files (when using path)](#secret-key-files-when-using-path)
 - [secret_permissions (key file hardening)](#secret_permissions-key-file-hardening)
 - [Loading configuration](#loading-configuration)
+- [SecretType form options](#secrettype-form-options)
 
 ## Options
 
@@ -157,3 +158,18 @@ Symfony loads configuration from:
 - `config/packages/{env}/nowo_doctrine_encrypt.yaml` (per environment)
 
 If no config file exists, the bundle uses one default config (Halite, `%kernel.project_dir%`).
+
+## SecretType form options
+
+`Nowo\DoctrineEncryptBundle\Form\Type\SecretType` (since 2.8.0, requires `symfony/form`) needs no bundle configuration; it is configured per field. See [USAGE.md](USAGE.md#leave-blank-to-keep-secret-fields-secrettype--secretfieldapplier).
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `current_value` | `?string` | `null` | Stored plain secret. Only used to build the `MaskUtil::secretHint()` hint (help + placeholder); never rendered. `null` / `''` = nothing stored. |
+| `hint_visible_last` | `int` | `4` | Trailing characters revealed by the hint (`<= 0` shows only the mask). |
+| `allow_clear` | `?bool` | `null` | Add the `clear` checkbox: `null` = only when `current_value` is set, `true` = always, `false` = never. |
+| `value_options` | `array` | `[]` | Merged (recursively) over the `value` child options (`PasswordType`: `always_empty`, `trim: true`, `required: false`, label/help in the bundle domain). Use it for `constraints`, `label`, `attr`. |
+| `clear_options` | `array` | `[]` | Merged over the `clear` child options (`CheckboxType`). |
+| `mapped` | `bool` | `false` | Symfony option; kept `false` so the stored secret is only changed through `SecretFieldApplier`. |
+
+Submitted data: `['value' => ?string, 'clear' => bool]` (`clear` absent when the checkbox is not rendered). Translation domain of the default labels: `NowoDoctrineEncryptBundle` (`en`, `es`).

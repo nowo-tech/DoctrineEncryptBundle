@@ -1001,7 +1001,7 @@
             "dist": {
                 "type": "path",
                 "url": "/var/doctrine-encrypt-bundle",
-                "reference": "5efd9bfffb239a51abc49478347ba5be812c710b"
+                "reference": "d5472d44bef524b935dce8a675de497bb88dca30"
             },
             "require": {
                 "doctrine/doctrine-bundle": "^2.13 || ^3.0",
@@ -1031,11 +1031,13 @@
                 "phpstan/phpstan-symfony": "^2.0",
                 "phpunit/phpunit": "^10.0 || ^11.0",
                 "rector/rector": "^2.0",
-                "symfony/cache": "^7.4 || ^8.0"
+                "symfony/cache": "^7.4 || ^8.0",
+                "symfony/form": "^7.4 || ^8.0"
             },
             "suggest": {
                 "defuse/php-encryption": "Alternative to Halite for encryption",
-                "ext-sodium": "Required to use Halite encryption library"
+                "ext-sodium": "Required to use Halite encryption library",
+                "symfony/form": "Required for Form\\Type\\SecretType (\"leave blank to keep\" secret field)"
             },
             "type": "symfony-bundle",
             "autoload": {

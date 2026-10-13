@@ -1,0 +1,7 @@
+secret:
+    value:
+        label: 'New value'
+        help_saved: 'Saved: %hint%. Leave blank to keep it.'
+        help_empty: 'Not set.'
+    clear:
+        label: 'Remove the saved value'

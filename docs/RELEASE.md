@@ -4,6 +4,7 @@
 
 - [Creating a new version (e.g. v1.1.0)](#creating-a-new-version-eg-v110)
 - [After releasing](#after-releasing)
+- [v2.8.0 (2026-10-13)](#v280-2026-10-13)
 - [v2.3.13 (2026-09-24)](#v2313-2026-09-24)
 - [v2.3.6 (2026-07-29)](#v236-2026-07-29)
 - [v2.3.5 (2026-07-29)](#v235-2026-07-29)
@@ -60,6 +61,14 @@
 
 - Keep `## [Unreleased]` at the top of [CHANGELOG.md](CHANGELOG.md) for the next version; add new changes there.
 - Optionally bump a dev version in `composer.json` for development.
+
+---
+
+## v2.8.0 (2026-10-13)
+
+- **Current stable:** `v2.8.0` (previous: `v2.7.2`).
+- **Scope:** spec 002 — `Form\SecretFieldApplier` and optional `Form\Type\SecretType` ("leave blank to keep" secrets), `NowoDoctrineEncryptBundle` translations (en, es), `symfony/form` in `suggest` / `require-dev`.
+- **Checklist:** CHANGELOG and UPGRADING updated; `make release-check`; open PRs = 0; commit; tag `v2.8.0`; push branch and tag; Packagist shows `v2.8.0`.
 
 ---
 

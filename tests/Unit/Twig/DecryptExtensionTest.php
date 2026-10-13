@@ -13,6 +13,7 @@ use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use PHPUnit\Framework\TestCase;
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;
+use Twig\TwigFilter;
 
 class DecryptExtensionTest extends TestCase
 {
@@ -139,7 +140,7 @@ class DecryptExtensionTest extends TestCase
         $encryptor->method('decrypt')->willReturn('<b>x</b>');
         $ext = new DecryptExtension(new EncryptorRegistry(['default' => $encryptor], 'default'));
 
-        $this->assertSame(['decrypt'], array_map(static fn ($filter): string => $filter->getName(), $ext->getFilters()));
+        $this->assertSame(['decrypt'], array_map(static fn (TwigFilter $filter): string => $filter->getName(), $ext->getFilters()));
 
         $twig = new Environment(new ArrayLoader(['t' => '{{ value|decrypt }}']), ['autoescape' => 'html']);
         $twig->addExtension($ext);

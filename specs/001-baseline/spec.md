@@ -47,13 +47,14 @@ Encrypt and decrypt Doctrine entity field values at rest using pluggable encrypt
 - **FR-CLI-001–003**: Abstract command base plus encrypt/decrypt/status and key management commands.
 - **FR-SEC-001**: `SecretKeyPermissionsListener` + `SecretKeyPermissions` create missing key directories with `secret_permissions.directory_mode` (default `0770`, existing directories untouched) and enforce `file_mode` (default `0600`) on key files — every console command, at most once per `http_check_interval` per worker on HTTP main requests; key generation and rotation backups apply the same modes.
 - **FR-SEC-002**: `MaskUtil::secretHint()` / `|secret_hint` render a saved secret as `•••• last4` (null when empty, mask only when ≤ 2 × visible chars).
+- **FR-FORM-001–006**: "Leave blank to keep" secrets — `Form\SecretFieldApplier` and optional `Form\Type\SecretType`; see [spec 002](../002-secret-field-applier/spec.md).
 - **FR-DI-001**: `services.yml` wires public services documented in [`docs/USAGE.md`](../../docs/USAGE.md).
 
 ---
 
 ## Success Criteria
 
-- **SC-001**: **24/24** production files mapped in inventory.
+- **SC-001**: **29/29** production files mapped in inventory.
 - **SC-002**: Config keys in [`docs/CONFIGURATION.md`](../../docs/CONFIGURATION.md) match `Configuration.php`.
 - **SC-003**: `composer qa` passes; PHPUnit covers subscriber and encryptors.
 

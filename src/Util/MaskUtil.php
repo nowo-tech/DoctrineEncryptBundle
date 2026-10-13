@@ -87,7 +87,7 @@ final class MaskUtil
         $chars = preg_split('//u', $value, -1, PREG_SPLIT_NO_EMPTY);
         if ($chars === false) {
             // Not valid UTF-8: fall back to bytes.
-            $chars = str_split($value);
+            return str_split($value);
         }
 
         return $chars;

@@ -1,0 +1,7 @@
+secret:
+    value:
+        label: 'Nuevo valor'
+        help_saved: 'Guardado: %hint%. Déjalo en blanco para conservarlo.'
+        help_empty: 'Sin configurar.'
+    clear:
+        label: 'Eliminar el valor guardado'

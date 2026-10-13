@@ -9,6 +9,9 @@
 - [Twig filter `|mask`](#twig-filter-mask)
 - [MaskUtil (masking in PHP)](#maskutil-masking-in-php)
   - [Saved-secret hint](#saved-secret-hint-secrethint--secret_hint)
+- ["Leave blank to keep" secret fields (`SecretType` / `SecretFieldApplier`)](#leave-blank-to-keep-secret-fields-secrettype--secretfieldapplier)
+  - [SecretFieldApplier (no symfony/form needed)](#secretfieldapplier-no-symfonyform-needed)
+  - [SecretType form field](#secrettype-form-field)
 - [Searching and performance](#searching-and-performance)
 - [Embedded entities](#embedded-entities)
 - [Console commands](#console-commands)
@@ -166,6 +169,55 @@ MaskUtil::secretHint('re_live_abcd1234', 2, '***'); // '*** 34'
 ```
 
 - **`MaskUtil::secretHint(?string $secret, int $visibleLast = 4, string $mask = '••••'): ?string`** — `null` for null/empty; multibyte-safe; secrets of at most `2 × $visibleLast` characters (or `$visibleLast <= 0`) return only the mask.
+
+## "Leave blank to keep" secret fields (`SecretType` / `SecretFieldApplier`)
+
+Settings screens that edit a stored secret (API key, webhook signing secret, SMTP password) usually follow the same rules: the input is **never pre-filled**, a **blank submission keeps** the stored value, a **new value replaces** it and an optional **"clear" checkbox removes** it. Since 2.8.0 the bundle ships both halves.
+
+### SecretFieldApplier (no symfony/form needed)
+
+```php
+use Nowo\DoctrineEncryptBundle\Form\SecretFieldApplier;
+
+SecretFieldApplier::apply(
+    $form->get('clearApiKey')->getData() === true, // clear wins
+    trim((string) $form->get('plainApiKey')->getData()),
+    $settings->setResendApiKey(...),                // receives the new value, or null
+);
+```
+
+| `$clear` | `$plain` | Result |
+| --- | --- | --- |
+| `true` | anything | `$setter(null)` |
+| `false` | non-empty string | `$setter($plain)` |
+| `false` | `null` or `''` | no call (stored value kept) |
+
+`SecretFieldApplier::applyData(mixed $data, callable $setter)` does the same for the data of a `SecretType` field (`['value' => ?string, 'clear' => bool]`; keys also available as `SecretFieldApplier::KEY_VALUE` / `KEY_CLEAR`). A null or non-array payload, a missing or non-string `value` and a `clear` that is not exactly `true` keep the stored value.
+
+### SecretType form field
+
+Requires `symfony/form` (suggested dependency).
+
+```php
+use Nowo\DoctrineEncryptBundle\Form\Type\SecretType;
+use Symfony\Component\Validator\Constraints\Regex;
+
+$builder->add('apiKey', SecretType::class, [
+    'label'         => 'resend_settings.api_key.label',
+    'current_value' => $settings->getResendApiKey(), // plain stored value, only used for the hint
+    'value_options' => ['constraints' => [new Regex('/^re_[A-Za-z0-9_-]+$/')]],
+]);
+
+// Controller, after $form->isSubmitted() && $form->isValid():
+SecretFieldApplier::applyData($form->get('apiKey')->getData(), $settings->setResendApiKey(...));
+```
+
+What it renders:
+
+- **`value`** — `PasswordType` with `always_empty: true`, `required: false`, `trim: true`, `autocomplete="new-password"`. With a stored value the help reads *"Saved: •••• 1234. Leave blank to keep it."* (`MaskUtil::secretHint()`, also used as placeholder); otherwise *"Not set."*.
+- **`clear`** — `CheckboxType` *"Remove the saved value"*, added when a value is stored (or always/never, see `allow_clear`).
+
+The field is **not mapped** by default (`mapped: false`), so the form component never writes the array into your entity; the stored plaintext is never sent to the browser (only the hint). Child labels and help use the `NowoDoctrineEncryptBundle` translation domain (English and Spanish shipped); override them with `value_options` / `clear_options`. Options are listed in [CONFIGURATION.md → SecretType options](CONFIGURATION.md#secrettype-form-options).
 
 ## Searching and performance
 

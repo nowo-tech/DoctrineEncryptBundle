@@ -8,6 +8,7 @@ use Nowo\DoctrineEncryptBundle\Twig\MaskExtension;
 use PHPUnit\Framework\TestCase;
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;
+use Twig\TwigFilter;
 
 final class MaskExtensionTest extends TestCase
 {
@@ -29,7 +30,7 @@ final class MaskExtensionTest extends TestCase
 
     public function testFiltersAreRegisteredWithoutAttributes(): void
     {
-        $names = array_map(static fn ($filter): string => $filter->getName(), (new MaskExtension())->getFilters());
+        $names = array_map(static fn (TwigFilter $filter): string => $filter->getName(), (new MaskExtension())->getFilters());
 
         self::assertSame(['mask', 'secret_hint'], $names);
     }

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.8.0] - 2026-10-13](#280---2026-10-13)
 - [[2.7.2] - 2026-10-13](#272---2026-10-13)
 - [[2.7.1] - 2026-10-13](#271---2026-10-13)
 - [[2.7.0] - 2026-10-13](#270---2026-10-13)
@@ -52,6 +53,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-02-19](#100---2026-02-19)
 
 ## [Unreleased]
+
+## [2.8.0] - 2026-10-13
+
+### Added
+
+- **`Form\SecretFieldApplier`** — `apply(bool $clear, ?string $plain, callable $setter)` for "leave blank to keep" secrets: clear → `$setter(null)`, non-empty plain → `$setter($plain)`, otherwise no call. `applyData(mixed $data, callable $setter)` takes the `['value' => ?string, 'clear' => bool]` data of `SecretType`. No dependency on symfony/form.
+- **`Form\Type\SecretType`** (optional, needs `symfony/form`, now in `suggest` / `require-dev`) — compound field with a never pre-filled password input (`value`, help and placeholder show `MaskUtil::secretHint()` of `current_value`) and an optional `clear` checkbox (`allow_clear`: auto / always / never). Options `current_value`, `hint_visible_last`, `allow_clear`, `value_options`, `clear_options`; not mapped by default.
+- Translations for the default labels in the `NowoDoctrineEncryptBundle` domain (`en`, `es`).
+- Spec [`specs/002-secret-field-applier`](../specs/002-secret-field-applier/spec.md).
+
+### Unchanged
+
+- `MaskUtil` (no API change).
 
 ## [2.7.2] - 2026-10-13
 

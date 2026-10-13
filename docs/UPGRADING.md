@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 2.8.0](#to-280)
 - [To 2.7.2](#to-272)
 - [To 2.7.1](#to-271)
 - [To 2.7.0](#to-270)
@@ -58,6 +59,20 @@
 - [Upgrading from ambta/doctrine-encrypt-bundle or hec-franco/doctrine-encrypt-bundle](#upgrading-from-ambtadoctrine-encrypt-bundle-or-hec-francodoctrine-encrypt-bundle)
 
 ## Unreleased
+
+## To 2.8.0
+
+From **2.7.2** — "leave blank to keep" secret fields (`SecretFieldApplier`, optional `SecretType`).
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+# only for SecretType:
+composer require symfony/form
+```
+
+- No breaking changes. `MaskUtil` is unchanged.
+- Optional adoption: replace a hand-written "clear checkbox + plain override" helper with `Nowo\DoctrineEncryptBundle\Form\SecretFieldApplier::apply()` (same signature and semantics), or replace the `PasswordType` + `CheckboxType` pair with one `SecretType` field and call `SecretFieldApplier::applyData($form->get('field')->getData(), $setter)`. See [USAGE.md](USAGE.md#leave-blank-to-keep-secret-fields-secrettype--secretfieldapplier).
+- Default labels use the new `NowoDoctrineEncryptBundle` translation domain (`en`, `es`); override them through `value_options` / `clear_options` if you prefer your own keys.
 
 ## To 2.7.2
 
