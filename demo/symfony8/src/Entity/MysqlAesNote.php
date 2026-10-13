@@ -26,7 +26,7 @@ class MysqlAesNote
     private string $title = '';
 
     /** Encrypted by Doctrine subscriber (MysqlAes + &lt;ENC&gt; marker). */
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(type: 'text', nullable: true, options: ['charset' => 'binary', 'collation' => 'binary'])]
     #[Encrypted('mysql_aes')]
     private ?string $secretOrm = null;
 

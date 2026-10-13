@@ -21,15 +21,15 @@ class SensitiveRecord
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[ORM\Column(type: 'text', nullable: true)]
     #[Encrypted('personal_data')]
     private ?string $personalNote = null;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[ORM\Column(type: 'text', nullable: true)]
     #[Encrypted('financial_data')]
     private ?string $financialNote = null;
 
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[ORM\Column(type: 'text', nullable: true)]
     #[Encrypted('env_var')]
     private ?string $envVarNote = null;
 
