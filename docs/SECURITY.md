@@ -43,6 +43,7 @@ There is no separate HTTP API exposed by the bundle itself beyond what your app 
 ## Mitigations
 
 - Use **Halite** or **Defuse** as provided; for custom encryptors, use authenticated encryption and secure key handling.
+- With several Doctrine connections, keep the encrypt listener on every connection that stores `#[Encrypted]` entities. Since **2.7.0** it is attached to all connections by default (up to 2.6.x it ran on `default` only and other connections stored plaintext); if you restrict it with `connections`, entities on an unlisted connection are stored **unencrypted**.
 - Store keys **outside the web root**, restrict filesystem permissions, and prefer **secrets management** in production. The bundle creates missing key directories `0770` and keeps key files at `0600` (`secret_permissions`, see [CONFIGURATION.md](CONFIGURATION.md#secret_permissions-key-file-hardening)); existing directories (e.g. the project root) are not changed.
 - Show saved secrets with **`MaskUtil::secretHint()`** / **`|secret_hint`** (`•••• 1234`) instead of echoing them back into forms or HTML.
 - Keep **`secret_directory_path`** and env-based keys out of version control; use `.gitignore` for key files.

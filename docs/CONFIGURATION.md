@@ -37,7 +37,7 @@ If `profiles` is empty, the bundle behaves as if you had defined a single profil
 
 ### Several connections / entity managers
 
-Up to 2.6.x the listener was tagged for the `default` connection only, so `#[Encrypted]` properties of entities managed through another connection were stored in **plaintext** without any warning. Since the next release the listener is attached to every connection unless you restrict it:
+Up to 2.6.x the listener was tagged for the `default` connection only, so `#[Encrypted]` properties of entities managed through another connection were stored in **plaintext** without any warning. Since 2.7.0 the listener is attached to every connection unless you restrict it:
 
 ```yaml
 nowo_doctrine_encrypt:

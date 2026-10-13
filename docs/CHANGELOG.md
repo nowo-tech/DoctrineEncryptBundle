@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Docs: `docs/SECURITY.md` documents the multi-connection risk fixed in 2.7.0 (and the effect of restricting `connections`); `docs/CONFIGURATION.md` no longer says "next release" for the 2.7.0 listener change.
+
 ## [2.7.0] - 2026-10-13
 
 ### Security
