@@ -101,6 +101,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- The ORM listener was tagged for the `default` connection only: entities on any other connection had their `#[Encrypted]` properties written in plaintext, silently. It is now registered on every connection by default; the new `connections` option restricts it to a list of connection names.
+
+### Fixed
+
+- Shared listener: a flush on one entity manager no longer clears the decryption cache of the others (unchanged secrets of another manager were re-encrypted and rewritten on its next flush).
+
+### Changed
+
+- Minimum Symfony version raised from 7.0 to 7.4 (`^7.4 || ^8.0`), matching the CI matrix.
+
 ## [2.6.0] - 2026-10-13
 
 ### Security

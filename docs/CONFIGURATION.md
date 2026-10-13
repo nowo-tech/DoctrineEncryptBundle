@@ -18,6 +18,7 @@ The bundle is configured under the root key `nowo_doctrine_encrypt`. The only su
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
+| `connections` | `list<string>` | `[]` (every connection) | Doctrine DBAL connections whose entity managers get the encrypt/decrypt listener. Empty = all connections (DoctrineBundle registers an untagged listener on each one). List names (e.g. `[default, customer]`) to restrict it; entities on a connection that is **not** listed are neither encrypted nor decrypted. A single string is accepted. |
 | `default_profile` | `string` | `default` | Which profile to use when the attribute has no alias or uses `"default"`. |
 | `batch_size` | `int` | `5` | Default batch size for `doctrine:decrypt:database` and `doctrine:encrypt:database` (raw SQL). Overridable per run via the `batchSize` argument. Minimum: 1. |
 | `secret_permissions` | `array` | see below | Filesystem hardening for file-based keys. See [secret_permissions](#secret_permissions-key-file-hardening). |
@@ -33,6 +34,17 @@ Per-profile options (under each entry in `profiles`):
 | `secret_key_env_var` | `string` | `null` | Use `%env(APP_ENCRYPT_KEY)%`. Symfony resolves it at config load and the bundle receives the key value. When set, **must not** set `secret_directory_path` or `secret_key_filename`. |
 
 If `profiles` is empty, the bundle behaves as if you had defined a single profile named `default` with Halite and `%kernel.project_dir%`.
+
+### Several connections / entity managers
+
+Up to 2.6.x the listener was tagged for the `default` connection only, so `#[Encrypted]` properties of entities managed through another connection were stored in **plaintext** without any warning. Since the next release the listener is attached to every connection unless you restrict it:
+
+```yaml
+nowo_doctrine_encrypt:
+    connections: [default, customer]   # omit (or []) for all connections
+```
+
+One listener instance serves all listed connections; its per-entity decryption cache is scoped to the entity manager being flushed.
 
 ## Example: single encryptor (default)
 

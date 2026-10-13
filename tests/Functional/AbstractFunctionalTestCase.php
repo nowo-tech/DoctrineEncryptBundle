@@ -28,6 +28,9 @@ abstract class AbstractFunctionalTestCase extends TestCase
     protected EncryptorInterface $encryptor;
     protected string $dbFile;
     protected EntityManager $entityManager;
+
+    /** @var list<array{EntityManager, string}> extra entity managers (own SQLite file) sharing the subscriber */
+    private array $extraEntityManagers = [];
     protected SqlQueryCollector $sqlLoggerStack;
 
     abstract protected function getEncryptor(): EncryptorInterface;
@@ -44,17 +47,7 @@ abstract class AbstractFunctionalTestCase extends TestCase
 
     protected function setUp(): void
     {
-        $paths = [__DIR__ . '/fixtures/Entity'];
-        if (class_exists(ORMSetup::class)) {
-            $config = ORMSetup::createAttributeMetadataConfiguration($paths, true);
-            $this->configureOrmLazyObjects($config);
-        } else {
-            $config = new Configuration();
-            $config->setMetadataDriverImpl(new AttributeDriver($paths));
-            $config->setProxyDir(sys_get_temp_dir() . '/doctrine_orm_proxies');
-            $config->setProxyNamespace('Doctrine\Tests\Proxies');
-            $config->setAutoGenerateProxyClasses(true);
-        }
+        $config = $this->createOrmConfiguration();
 
         $dbFile       = tempnam(sys_get_temp_dir(), 'nowo_encrypt_db');
         $this->dbFile = $dbFile !== false ? $dbFile : sys_get_temp_dir() . '/nowo_encrypt_db_' . uniqid('', true);
@@ -93,8 +86,56 @@ abstract class AbstractFunctionalTestCase extends TestCase
         );
     }
 
+    /**
+     * Second entity manager on its own connection/database, with the same subscriber instance
+     * registered (as DoctrineBundle does when the listener is tagged for several connections).
+     */
+    protected function createSecondEntityManager(): EntityManager
+    {
+        $dbFile = tempnam(sys_get_temp_dir(), 'nowo_encrypt_db2');
+        self::assertIsString($dbFile);
+
+        $entityManager = new EntityManager(
+            DriverManager::getConnection(['driver' => 'pdo_sqlite', 'path' => $dbFile]),
+            $this->createOrmConfiguration(),
+        );
+        $schemaTool = new SchemaTool($entityManager);
+        $schemaTool->createSchema($entityManager->getMetadataFactory()->getAllMetadata());
+        $entityManager->getEventManager()->addEventListener(
+            [Events::postUpdate, Events::preUpdate, Events::postLoad, Events::onFlush, Events::preFlush, Events::postFlush],
+            $this->subscriber,
+        );
+        $this->extraEntityManagers[] = [$entityManager, $dbFile];
+
+        return $entityManager;
+    }
+
+    private function createOrmConfiguration(): Configuration
+    {
+        $paths = [__DIR__ . '/fixtures/Entity'];
+        if (class_exists(ORMSetup::class)) {
+            $config = ORMSetup::createAttributeMetadataConfiguration($paths, true);
+            $this->configureOrmLazyObjects($config);
+
+            return $config;
+        }
+
+        $config = new Configuration();
+        $config->setMetadataDriverImpl(new AttributeDriver($paths));
+        $config->setProxyDir(sys_get_temp_dir() . '/doctrine_orm_proxies');
+        $config->setProxyNamespace('Doctrine\Tests\Proxies');
+        $config->setAutoGenerateProxyClasses(true);
+
+        return $config;
+    }
+
     protected function tearDown(): void
     {
+        foreach ($this->extraEntityManagers as [$entityManager, $file]) {
+            $entityManager->getConnection()->close();
+            unlink($file);
+        }
+        $this->extraEntityManagers = [];
         $this->entityManager->getConnection()->close();
         if ($this->dbFile !== '') {
             unlink($this->dbFile);

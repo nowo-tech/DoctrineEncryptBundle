@@ -1,5 +1,10 @@
 # Upgrade Guide
 
+## Unreleased
+
+- Requires Symfony 7.4+ (or 8.x). Stay on 2.6.x for Symfony 7.0–7.3.
+- The encrypt/decrypt listener now runs on **every** Doctrine connection (it was `default` only). If entities with `#[Encrypted]` live on another connection, their existing rows are plaintext: values without the `<ENC>` suffix are read as-is and encrypted on their next write (the `doctrine:*:database` commands only work on the default entity manager, so re-save those entities yourself if you need them encrypted at once). To keep the old behaviour, set `connections: [default]`.
+
 ## To 2.6.0
 
 From **2.5.1** — security - escaped mask output, batched database commands, hardened key handling, safe decrypt failures.

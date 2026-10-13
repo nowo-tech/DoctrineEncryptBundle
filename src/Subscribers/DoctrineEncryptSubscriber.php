@@ -223,15 +223,18 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
             $decryptedClasses[$decryptedEntity::class] = true;
         }
 
+        // Only forget the entities of the entity manager being flushed: the listener instance is shared
+        // by every connection it is registered on, and another manager's decrypted entities still need
+        // their cached ciphertext (otherwise unchanged secrets are re-encrypted and rewritten).
         $unitOfWOrk = $preFlushEventArgs->getObjectManager()->getUnitOfWork();
         foreach ($unitOfWOrk->getIdentityMap() as $entityName => $entityArray) {
             if (isset($decryptedClasses[$entityName])) {
                 foreach ($entityArray as $instance) {
                     $this->processFields($instance);
+                    unset($this->cachedDecryptions[$instance]);
                 }
             }
         }
-        $this->clearDecryptionCache();
     }
 
     /**

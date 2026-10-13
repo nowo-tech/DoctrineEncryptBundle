@@ -40,6 +40,40 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
         $this->assertEquals($secret, $decrypted);
     }
 
+    public function testFlushOnAnotherEntityManagerKeepsTheSharedListenerStateOfThisOne(): void
+    {
+        $secret = 'shared listener secret';
+        $other  = $this->createSecondEntityManager();
+
+        $owner = new Owner();
+        $owner->setSecret($secret);
+        $owner->setNotSecret('before');
+        $other->persist($owner);
+        $other->flush();
+        $id = $owner->getId();
+        $other->clear();
+        $stored = $other->getConnection()->fetchOne('SELECT secret FROM owner WHERE id = ?', [$id]);
+
+        $loaded = $other->find(Owner::class, $id);
+        $this->assertInstanceOf(Owner::class, $loaded);
+        $this->assertSame($secret, $loaded->getSecret());
+
+        // A flush on the first entity manager must not drop the second one's decryption state...
+        $this->entityManager->flush();
+
+        // ...so an unchanged secret is written back as the same ciphertext (no re-encryption, no UPDATE).
+        $encryptionsBefore = $this->subscriber->encryptCounter;
+        $loaded->setNotSecret('after');
+        $other->flush();
+
+        $this->assertSame($encryptionsBefore, $this->subscriber->encryptCounter);
+        $row = $other->getConnection()->fetchAssociative('SELECT * FROM owner WHERE id = ?', [$id]);
+        $this->assertIsArray($row);
+        $this->assertSame('after', $row['notSecret']);
+        $this->assertSame($stored, $row['secret']);
+        $this->assertSame($secret, $loaded->getSecret());
+    }
+
     public function testEncryptionCascades(): void
     {
         $secret    = "It's a secret";

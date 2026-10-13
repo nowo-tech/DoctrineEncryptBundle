@@ -353,6 +353,46 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->assertTrue($listener->hasTag('kernel.event_subscriber'));
     }
 
+    public function testListenerIsRegisteredOnEveryConnectionByDefault(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([[]], $container);
+
+        $tags = $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber')->getTag('doctrine.event_listener');
+
+        $this->assertCount(6, $tags);
+        foreach ($tags as $tag) {
+            $this->assertArrayNotHasKey('connection', $tag);
+            $this->assertSame(500, $tag['priority']);
+        }
+        $this->assertSame(
+            ['postUpdate', 'preUpdate', 'postLoad', 'onFlush', 'preFlush', 'postFlush'],
+            array_column($tags, 'event'),
+        );
+    }
+
+    public function testListenerIsRegisteredOnlyOnTheConfiguredConnections(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([['connections' => ['default', 'customer', 'customer']]], $container);
+
+        $tags = $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber')->getTag('doctrine.event_listener');
+
+        $this->assertCount(12, $tags);
+        $this->assertSame(['default' => 6, 'customer' => 6], array_count_values(array_column($tags, 'connection')));
+        $this->assertContains(['event' => 'postLoad', 'priority' => 500, 'connection' => 'customer'], $tags);
+    }
+
+    public function testSingleConnectionStringIsAccepted(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([['connections' => 'legacy']], $container);
+
+        $tags = $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber')->getTag('doctrine.event_listener');
+
+        $this->assertSame(array_fill(0, 6, 'legacy'), array_column($tags, 'connection'));
+    }
+
     public function testSubscriberReceivesEncryptorRegistry(): void
     {
         $container = $this->createContainer();

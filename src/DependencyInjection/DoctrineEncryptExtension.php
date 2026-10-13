@@ -17,6 +17,8 @@ use Symfony\Component\DependencyInjection\Loader;
 use Symfony\Component\DependencyInjection\Reference;
 
 use function array_key_exists;
+use function array_unique;
+use function array_values;
 use function count;
 use function sprintf;
 
@@ -59,9 +61,35 @@ final class DoctrineEncryptExtension extends Extension
         }
         $config['profiles'] = $profiles;
 
+        $this->configureListenerConnections($container, $config['connections'] ?? []);
         $this->assertNoMysqlAesInProduction($container, $profiles);
         $this->registerProfiles($container, $config);
         $this->registerSecretPermissions($container, $config['secret_permissions'] ?? []);
+    }
+
+    /**
+     * Tags the ORM listener for the configured connections (none listed = every connection, which is
+     * what DoctrineBundle does for a doctrine.event_listener tag without a "connection" attribute).
+     *
+     * @param list<string> $connections
+     */
+    private function configureListenerConnections(ContainerBuilder $container, array $connections): void
+    {
+        $definition = $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber');
+        $tags       = $definition->getTag('doctrine.event_listener');
+        $definition->clearTag('doctrine.event_listener');
+
+        foreach ($tags as $attributes) {
+            unset($attributes['connection']);
+            if ($connections === []) {
+                $definition->addTag('doctrine.event_listener', $attributes);
+                continue;
+            }
+
+            foreach (array_values(array_unique($connections)) as $connection) {
+                $definition->addTag('doctrine.event_listener', $attributes + ['connection' => $connection]);
+            }
+        }
     }
 
     /**
