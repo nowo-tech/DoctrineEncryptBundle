@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [[Unreleased]](#unreleased)
 
+- [[2.5.1] - 2026-10-13](#251---2026-10-13)
 - [[2.5.0] - 2026-10-09](#250---2026-10-09)
 - [[2.4.3] - 2026-10-09](#243-2026-10-09)
 - [[2.4.2] - 2026-10-01](#242-2026-10-01)
@@ -99,6 +100,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-10-13
+
+### Dependencies
+
+- `doctrine/orm` 3.7.4 → 3.7.5 (development lock; #64).
+
 ## [2.5.0] - 2026-10-09
 
 ### Security
@@ -121,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dev tooling: `igor-php/igor-php` ^0.10 (v0.10.1, Dependabot #62), `phpstan/phpstan-phpunit` 2.1.1 (#61), `phpstan/phpstan` 2.3.1, `phpstan/phpstan-symfony` 2.1.0, `rector/rector` 2.7.0, `phpunit/phpunit` 11.5.57, `nowo-tech/phpstan-frankenphp` v1.2.3.
 - Demo (Symfony 8): `doctrine/orm` 3.7.4, `doctrine/dbal` 4.5.0, Symfony v8.1.8, `twig/twig` v3.30.0, `twig/extra-bundle` v3.29.0, `nowo-tech/hot-reload-bundle` v1.5.4, `nowo-tech/twig-inspector-bundle` v1.1.7.
 
+[2.5.1]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.5.1
 [2.5.0]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.5.0
 [2.4.3]: https://github.com/nowo-tech/DoctrineEncryptBundle/releases/tag/v2.4.3
 

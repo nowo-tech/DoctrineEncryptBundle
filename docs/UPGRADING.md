@@ -1,5 +1,14 @@
 # Upgrade Guide
 
+## To 2.5.1
+
+From **2.5.0** — dependency refresh and repository maintenance.
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
+- No breaking changes. No application upgrade steps.
 
 ## To 2.5.0
 
@@ -67,7 +76,6 @@ php bin/console cache:clear
 This guide explains how to upgrade the Doctrine Encrypt Bundle between versions. For a list of changes in each version, see [CHANGELOG.md](CHANGELOG.md).
 
 ## Table of contents
-
 
 - [To 2.4.3](#to-243)
 - [Upgrading to 2.3.13](#upgrading-to-2313)
