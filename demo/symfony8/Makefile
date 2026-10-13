@@ -7,6 +7,7 @@ COMPOSE_BIN := $(shell docker compose version >/dev/null 2>&1 && echo "docker co
 COMPOSE     := $(COMPOSE_BIN) -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
+.PHONY: test-e2e demo-screenshots
 .PHONY: help up down build install shell logs setup db-create db-schema key fixtures cache-clear update-bundle test test-coverage encrypt-status encrypt-database decrypt-database ensure-up
 .PHONY: encrypt-database-all decrypt-database-all encrypt-database-personal_data decrypt-database-personal_data encrypt-database-financial_data decrypt-database-financial_data encrypt-database-env_var decrypt-database-env_var
 .PHONY: rotate-keys rotate-keys-backup
@@ -42,6 +43,8 @@ help:
 	@echo "  make update-bundle      Update bundle from path repo"
 	@echo "  make test               Run tests"
 	@echo "  make test-coverage      Run tests with coverage (console output)"
+	@echo "  make test-e2e           Playwright e2e (Docker image)"
+	@echo "  make demo-screenshots   Recapture docs screenshots (docs/assets/*.webp)"
 	@echo ""
 
 up:
@@ -181,3 +184,28 @@ test-coverage: ensure-up
 BUNDLE_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../..)
 # Optional: monorepo helper absent on standalone GitHub Actions checkout (REQ-MAKE-009).
 -include $(BUNDLE_ROOT)/../.scripts/Makefile.demo-update-deps.mk
+
+# REQ-DEMO-013: Playwright e2e + docs screenshots (official Playwright image).
+PLAYWRIGHT_IMAGE ?= mcr.microsoft.com/playwright:v1.63.0-jammy
+
+test-e2e: ensure-up
+	@mkdir -p e2e/node_modules
+	@PORT=$$(grep -E '^PORT=' .env 2>/dev/null | cut -d= -f2); PORT=$${PORT:-8008}; \
+	docker run --rm --network host \
+		-v "$(CURDIR)/e2e:/e2e" -w /e2e \
+		-e DEMO_BASE_URL=http://127.0.0.1:$$PORT \
+		$(PLAYWRIGHT_IMAGE) \
+		bash -lc 'npm install --no-fund --no-audit && npx playwright test --project=chromium'
+
+demo-screenshots: ensure-up
+	@mkdir -p ../../docs/assets e2e/node_modules
+	@PORT=$$(grep -E '^PORT=' .env 2>/dev/null | cut -d= -f2); PORT=$${PORT:-8008}; \
+	docker run --rm --network host \
+		-v "$(CURDIR)/e2e:/e2e" \
+		-v "$(CURDIR)/../../docs/assets:/screenshots" \
+		-w /e2e \
+		-e DEMO_BASE_URL=http://127.0.0.1:$$PORT \
+		-e SCREENSHOT_DIR=/screenshots \
+		$(PLAYWRIGHT_IMAGE) \
+		bash -lc 'npm install --no-fund --no-audit && npx playwright test --project=screenshots && node scripts/to-webp.mjs /screenshots'
+	@echo "Screenshots written under docs/assets/ (WebP)"

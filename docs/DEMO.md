@@ -16,11 +16,11 @@ The bundle includes a **dockerized** demo project (**Symfony 8**). It runs on **
 
 **Demo home** – Overview, CRUD link and console commands:
 
-![Doctrine Encrypt Bundle Demo – home](assets/demo-home.png)
+![Doctrine Encrypt Bundle Demo – home](assets/demo-home.webp)
 
 **Secret messages (CRUD)** – List of messages (encrypted in DB with Halite), create/edit/delete:
 
-![Secret messages CRUD](assets/demo-crud.png)
+![Secret messages CRUD](assets/demo-crud.webp)
 
 | Demo      | Path            | Default port | PHP | Notes |
 |-----------|-----------------|--------------|-----|-------|
