@@ -75,6 +75,8 @@ Optional arguments:
 - **config** — Config alias to use (e.g. `default`, `personal_data`). If omitted, all configs are processed in turn.
 - **batchSize** — Number of rows read and updated per chunk; each chunk is committed in its own transaction and the table is never loaded in memory at once (positive integer; default from config: 5; see [Configuration](CONFIGURATION.md)).
 
+Values that cannot be decrypted (wrong key, corrupted data) are **left unchanged** (still encrypted, `<ENC>` marker kept) and listed at the end (table, column, id, exception class); the command then exits with code `1`.
+
 Options:
 
 - **`--force`** — Do not ask for confirmation (useful with `--no-interaction` or when called from scripts).

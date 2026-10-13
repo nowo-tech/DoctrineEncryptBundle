@@ -108,6 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `doctrine:decrypt:database` no longer writes the ciphertext (without its `<ENC>` marker) back as plain text when a value cannot be decrypted (wrong key, corrupted data) — a later `doctrine:encrypt:database` would then have encrypted the ciphertext. Such values are now left unchanged, listed in the output (table, column, id, exception class — never the value) and the command exits with code 1.
 - `doctrine:encrypt:database` / `doctrine:decrypt:database` now honour `batch_size` / the `batchSize` argument: the table is read in chunks ordered by primary key (never fully loaded in memory) and each chunk is committed in its own transaction. A non-positive or non-numeric `batchSize` is rejected.
 - Twig filters `|decrypt`, `|mask` and `|secret_hint` are registered with `getFilters()` instead of `#[AsTwigFilter]`, which needs Twig 3.21+ and TwigBundle 7.3+ and left the filters silently missing on older supported versions.
 - `MaskUtil::mask()` / `|mask` count characters instead of bytes (no broken UTF-8 tail).

@@ -20,9 +20,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Throwable;
 
+use function array_slice;
 use function assert;
 use function count;
 use function in_array;
+use function is_scalar;
 use function sprintf;
 use function strlen;
 
@@ -37,6 +39,9 @@ use const PHP_EOL;
 final class DoctrineDecryptDatabaseCommand extends AbstractCommand
 {
     private const ENCRYPTION_MARKER = DoctrineEncryptSubscriber::ENCRYPTION_MARKER;
+
+    /** Maximum number of non-decryptable values listed individually in the output. */
+    private const MAX_REPORTED_FAILURES = 50;
 
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -149,6 +154,8 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
         $conn         = $this->entityManager->getConnection();
         $platform     = $conn->getDatabasePlatform();
         $valueCounter = 0;
+        /** @var list<string> $failures One entry per value that could not be decrypted (no value content) */
+        $failures = [];
 
         foreach ($configsToProcess as $configName) {
             $encryptorForConfig = $registry instanceof EncryptorRegistry ? $registry->get($configName) : $this->defaultEncryptor;
@@ -181,7 +188,7 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
                 $output->writeln(sprintf('  Processing <comment>%s</comment> (%s)', $metaData->name, $table));
                 $progressBar = new ProgressBar($output, $totalCount);
 
-                $this->processTableInBatches($conn, $quotedTable, $selectCols, $quotedIdCols, $batchSize, function (array $row) use ($idColumns, $tableInfo, $encryptorForConfig, $conn, $platform, $quotedTable, $progressBar, &$valueCounter): void {
+                $this->processTableInBatches($conn, $quotedTable, $selectCols, $quotedIdCols, $batchSize, function (array $row) use ($idColumns, $tableInfo, $encryptorForConfig, $conn, $platform, $quotedTable, $progressBar, $table, &$valueCounter, &$failures): void {
                     $idValues = [];
                     foreach ($idColumns as $idCol) {
                         $idValues[$idCol] = $this->getRowValue($row, $idCol);
@@ -206,8 +213,12 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
                         $ciphertext = substr((string) $value, 0, -strlen(self::ENCRYPTION_MARKER));
                         try {
                             $plain = $encryptorForConfig->decrypt($ciphertext);
-                        } catch (Throwable) {
-                            $plain = $ciphertext;
+                        } catch (Throwable $e) {
+                            // Never write the stripped ciphertext back as "plain" (a later encrypt run would
+                            // encrypt the ciphertext): keep the stored value, <ENC> marker included, and report it.
+                            $failures[] = sprintf('%s.%s (%s) [%s]', $table, $col, $this->formatIdValues($idValues), $e::class);
+
+                            continue;
                         }
                         $updates[] = $platform->quoteIdentifier($col) . ' = ?';
                         $params[]  = $plain;
@@ -233,8 +244,34 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
             }
         }
 
+        if ($failures !== []) {
+            $output->writeln('' . PHP_EOL . '<error>' . count($failures) . ' value(s) could not be decrypted and were left unchanged (still encrypted):</error>');
+            foreach (array_slice($failures, 0, self::MAX_REPORTED_FAILURES) as $failure) {
+                $output->writeln('  - ' . $failure);
+            }
+            if (count($failures) > self::MAX_REPORTED_FAILURES) {
+                $output->writeln(sprintf('  ... and %d more', count($failures) - self::MAX_REPORTED_FAILURES));
+            }
+            $output->writeln('Decryption finished with errors. Values decrypted: <info>' . $valueCounter . '</info>, failed: <error>' . count($failures) . '</error>. Check the encryptor / key of the listed values.');
+
+            return self::FAILURE;
+        }
+
         $output->writeln('' . PHP_EOL . 'Decryption finished. Values decrypted: <info>' . $valueCounter . '</info>.' . PHP_EOL . 'All values are now decrypted (raw SQL, no Doctrine events).');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param array<string, mixed> $idValues
+     */
+    private function formatIdValues(array $idValues): string
+    {
+        $parts = [];
+        foreach ($idValues as $column => $value) {
+            $parts[] = $column . '=' . (is_scalar($value) ? (string) $value : get_debug_type($value));
+        }
+
+        return implode(', ', $parts);
     }
 }

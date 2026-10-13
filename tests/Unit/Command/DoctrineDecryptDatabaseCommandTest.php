@@ -398,7 +398,7 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $this->assertStringContainsString('Values decrypted: 0', $tester->getDisplay());
     }
 
-    public function testExecuteDecryptLoopUsesCiphertextAsPlainWhenDecryptThrows(): void
+    public function testExecuteDecryptLoopLeavesValueUntouchedAndFailsWhenDecryptThrows(): void
     {
         $metadata        = $this->createMetadataForUser();
         $metadataFactory = $this->createMock(ClassMetadataFactory::class);
@@ -407,11 +407,7 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
         $encryptedValue = 'badcipher' . DoctrineEncryptSubscriber::ENCRYPTION_MARKER;
         $rows           = [['id' => 2, 'name' => $encryptedValue, 'address' => null]];
         $conn           = $this->createConnectionMock($rows);
-        $conn->expects($this->once())->method('executeStatement')->with(
-            $this->stringContains('UPDATE'),
-            $this->callback(static fn (array $params): bool => count($params) >= 2 && $params[0] === 'badcipher'),
-            $this->anything(),
-        );
+        $conn->expects($this->never())->method('executeStatement');
 
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('getMetadataFactory')->willReturn($metadataFactory);
@@ -429,6 +425,9 @@ class DoctrineDecryptDatabaseCommandTest extends TestCase
 
         $tester->execute(['config' => 'default'], ['interactive' => true]);
 
-        $this->assertSame(0, $tester->getStatusCode());
+        $this->assertSame(1, $tester->getStatusCode());
+        $this->assertStringContainsString('1 value(s) could not be decrypted', $tester->getDisplay());
+        $this->assertStringContainsString('user.name (id=2) [RuntimeException]', $tester->getDisplay());
+        $this->assertStringNotContainsString('badcipher', $tester->getDisplay());
     }
 }

@@ -120,6 +120,40 @@ final class DatabaseCommandBatchingTest extends TestCase
         $this->assertFalse($this->conn->isTransactionActive());
     }
 
+    public function testNonDecryptableValueIsPreservedReportedAndNotDoubleEncrypted(): void
+    {
+        $this->insertRows(3, static fn (int $i): string => ($i === 2 ? 'other-key:plain2' : 'enc:plain' . $i) . self::MARKER);
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $encryptor->method('encrypt')->willReturnCallback(static fn (string $d): string => 'enc:' . $d);
+        $encryptor->method('decrypt')->willReturnCallback(static function (string $d): string {
+            if (!str_starts_with($d, 'enc:')) {
+                throw new RuntimeException('Invalid version tag');
+            }
+
+            return substr($d, 4);
+        });
+
+        $tester = $this->runCommand($this->createDecryptCommand($encryptor), ['config' => 'default', 'batchSize' => '2']);
+
+        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
+        $this->assertStringContainsString('1 value(s) could not be decrypted and were left unchanged', $tester->getDisplay());
+        $this->assertStringContainsString('user.name (id=2) [RuntimeException]', $tester->getDisplay());
+        $this->assertStringContainsString('Values decrypted: 2', $tester->getDisplay());
+        $names = $this->names();
+        $this->assertSame('plain1', $names[1]);
+        $this->assertSame('other-key:plain2' . self::MARKER, $names[2], 'Non-decryptable value must be stored unchanged, marker included');
+        $this->assertSame('plain3', $names[3]);
+
+        // A later encrypt run must not encrypt the (still marked) ciphertext again.
+        $tester = $this->runCommand($this->createEncryptCommand($encryptor), ['config' => 'default']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $names = $this->names();
+        $this->assertSame('other-key:plain2' . self::MARKER, $names[2]);
+        $this->assertSame('enc:plain1' . self::MARKER, $names[1]);
+        $this->assertSame('enc:plain3' . self::MARKER, $names[3]);
+    }
+
     /**
      * @return iterable<string, array{string}>
      */
