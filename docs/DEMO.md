@@ -60,7 +60,7 @@ For production or long‑running workers, see the recommendations in [Installati
 
 ## What each demo includes
 
-- **Dockerfile** – FrankenPHP (Alpine), extensions: zip, intl, sodium, pdo_sqlite; custom Caddyfile.
+- **Dockerfile** – FrankenPHP (Alpine), extensions: zip, intl, sodium, pdo_sqlite, pdo_mysql; custom Caddyfile (the demo database is MySQL 8, service `db`).
 - **docker/frankenphp/Caddyfile** – Root `/app/public`, worker `index.php` (2 workers), encoding (zstd, br, gzip).
 - **docker-compose.yml** – Service `php`, volumes: demo dir + bundle root as `/var/doctrine-encrypt-bundle`.
 - **Makefile** – Targets above.

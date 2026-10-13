@@ -22,7 +22,7 @@ help:
 	@echo "  make setup              install + db-create + db-schema + key + fixtures"
 	@echo "  make shell              Open shell in PHP container"
 	@echo "  make logs               Show container logs"
-	@echo "  make db-create          Create SQLite DB"
+	@echo "  make db-create          Prepare var/ (the MySQL DB is created by db-schema)"
 	@echo "  make db-schema          Update schema"
 	@echo "  make key                Generate encryption secret key"
 	@echo "  make fixtures           Load data fixtures (SecretMessage + SensitiveRecord + MysqlAesNote)"
@@ -101,7 +101,7 @@ shell: ensure-up
 logs:
 	$(COMPOSE) logs -f
 
-# SQLite: doctrine:database:create is not supported (getListDatabasesSQL). Ensure var/ and DB file exist.
+# Ensure var/ exists (legacy SQLite file kept harmless; the MySQL database is created in db-schema).
 db-create: ensure-up
 	$(COMPOSE) exec -T $(SERVICE_PHP) sh -c 'mkdir -p var && touch var/data.db'
 
@@ -161,7 +161,7 @@ decrypt-database-env_var: ensure-up
 rotate-keys: ensure-up
 	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:encrypt:rotate-keys
 
-# Same with backup of DB (SQLite → var/encrypt_rotation_backup_*/database.sqlite.gz) and key files.
+# Same with backup of key files (MySQL is not dumped automatically; pass --backup-db-cmd or back up the db service manually).
 rotate-keys-backup: ensure-up
 	$(COMPOSE) exec $(SERVICE_PHP) php bin/console doctrine:encrypt:rotate-keys --backup
 

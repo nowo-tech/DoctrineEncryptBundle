@@ -34,7 +34,7 @@ Then open the URL printed by `make up` (e.g. `http://localhost:8008`).
 - **setup** – install + `doctrine:database:create` + `doctrine:schema:update` + `doctrine:encrypt:generate-secret-key` (creates key files and adds `APP_ENCRYPT_KEY` to `.env` when missing).
 - **shell** – Open a shell in the PHP container.
 - **logs** – Show container logs.
-- **db-create** – Create the SQLite database.
+- **db-create** – Prepare `var/` (the MySQL database in the `db` service is created by `db-schema`).
 - **db-schema** – Update the Doctrine schema.
 - **key** – Generate keys: `personal_data` uses `APP_ENCRYPT_KEY` (printed; add it to `.env`); `financial_data` uses `.demo_financial.key`.
 - **cache-clear** – Clear the Symfony cache.
@@ -51,7 +51,7 @@ PORT=9008 make up   # Symfony 8 at http://localhost:9008
 
 ## Demo layout
 
-- **Dockerfile** – FrankenPHP (Alpine), extensions `zip`, `intl`, `sodium`, `pdo_sqlite`, custom Caddyfile.
+- **Dockerfile** – FrankenPHP (Alpine), extensions `zip`, `intl`, `sodium`, `pdo_sqlite`, `pdo_mysql`, custom Caddyfile.
 - **docker/frankenphp/Caddyfile** – Production: worker on `index.php`. **Caddyfile.dev** – classic mode (no worker).
 - **docker-compose.yml** – `php` service, mounts demo code and the bundle (`../..` → `/var/doctrine-encrypt-bundle`), plus `Caddyfile.dev` / `php-dev.ini` for development.
 - **Makefile** – Targets listed above.
