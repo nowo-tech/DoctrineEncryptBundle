@@ -70,7 +70,7 @@ return [
 ## Requirements
 
 - PHP >= 8.2
-- **Symfony 7.4+ or 8** (^7.0 \|\| ^8.0; tested on **7.4**, **8.0**, **8.1**). See `composer.json`.
+- **Symfony 7.4+ or 8** (^7.4 \|\| ^8.0; tested on **7.4**, **8.0**, **8.1**). See `composer.json`.
 - Doctrine ORM ^3.7 and DoctrineBundle ^2.13 \|\| ^3.0
 - Twig ^3.2 (filters are registered via `getFilters()`, no `#[AsTwigFilter]` / TwigBundle 7.3 requirement)
 - paragonie/halite (included); for Defuse: `defuse/php-encryption ^2.1`
