@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 2.7.2](#to-272)
 - [To 2.7.1](#to-271)
 - [To 2.7.0](#to-270)
 - [To 2.6.0](#to-260)
@@ -57,6 +58,16 @@
 - [Upgrading from ambta/doctrine-encrypt-bundle or hec-franco/doctrine-encrypt-bundle](#upgrading-from-ambtadoctrine-encrypt-bundle-or-hec-francodoctrine-encrypt-bundle)
 
 ## Unreleased
+
+## To 2.7.2
+
+From **2.7.1** — document mysql_aes binary column requirement
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
+- No breaking changes. No application upgrade steps.
 
 ## To 2.7.1
 
