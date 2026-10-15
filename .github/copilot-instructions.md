@@ -23,3 +23,7 @@ Use this when suggesting code, tests, documentation, or CI changes for this repo
 ### Tests
 
 - Add or update tests for new behaviour; keep coverage in line with README and CI.
+
+## Commits
+
+- Never add AI co-author trailers: no `Co-authored-by: Cursor` / `cursoragent@cursor.com`, no `Co-Authored-By: Claude …` / `noreply@anthropic.com` (REQ-GIT-001).
