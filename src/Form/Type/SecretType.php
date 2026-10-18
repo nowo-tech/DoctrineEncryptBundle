@@ -54,10 +54,13 @@ final class SecretType extends AbstractType
             'translation_domain'          => self::TRANSLATION_DOMAIN,
             'help'                        => $hint === null ? 'secret.value.help_empty' : 'secret.value.help_saved',
             'help_translation_parameters' => $hint === null ? [] : ['%hint%' => $hint],
-            'attr'                        => array_replace(
+            // The form theme translates the placeholder in the field domain: the hint is a parameter of a message, not
+            // a message id (looked up as one, it was a "missing message" in the profiler).
+            'attr' => array_replace(
                 ['autocomplete' => 'new-password'],
-                $hint === null ? [] : ['placeholder' => $hint],
+                $hint === null ? [] : ['placeholder' => 'secret.value.placeholder_saved'],
             ),
+            'attr_translation_parameters' => $hint === null ? [] : ['%hint%' => $hint],
         ];
         /** @var array<string, mixed> $valueOptions */
         $valueOptions = $options['value_options'];

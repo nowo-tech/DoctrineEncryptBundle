@@ -3,5 +3,6 @@ secret:
         label: 'Nuevo valor'
         help_saved: 'Guardado: %hint%. Déjalo en blanco para conservarlo.'
         help_empty: 'Sin configurar.'
+        placeholder_saved: '%hint%'
     clear:
         label: 'Eliminar el valor guardado'

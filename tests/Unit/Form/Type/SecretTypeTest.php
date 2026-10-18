@@ -43,7 +43,7 @@ final class SecretTypeTest extends TypeTestCase
         $value = $form->get('value')->getConfig();
         self::assertSame('secret.value.help_saved', $value->getOption('help'));
         self::assertSame(['%hint%' => '•••• 1234'], $value->getOption('help_translation_parameters'));
-        self::assertSame(['autocomplete' => 'new-password', 'placeholder' => '•••• 1234'], $value->getOption('attr'));
+        self::assertSame(['autocomplete' => 'new-password', 'placeholder' => 'secret.value.placeholder_saved'], $value->getOption('attr'));
 
         self::assertTrue($form->has('clear'));
         $clear = $form->get('clear')->getConfig();
@@ -93,7 +93,7 @@ final class SecretTypeTest extends TypeTestCase
         $value = $form->get('value')->getConfig();
         self::assertSame('API key', $value->getOption('label'));
         self::assertFalse($value->getOption('trim'));
-        self::assertSame(['autocomplete' => 'new-password', 'placeholder' => '•••• 1234', 'class' => 'wide'], $value->getOption('attr'));
+        self::assertSame(['autocomplete' => 'new-password', 'placeholder' => 'secret.value.placeholder_saved', 'class' => 'wide'], $value->getOption('attr'));
         self::assertSame('Remove key', $form->get('clear')->getConfig()->getOption('label'));
         self::assertSame('form', $form->get('clear')->getConfig()->getOption('translation_domain'));
     }
@@ -153,7 +153,7 @@ final class SecretTypeTest extends TypeTestCase
         $english = $this->flatten(Yaml::parseFile($dir . '/NowoDoctrineEncryptBundle.en.yaml'));
         $spanish = $this->flatten(Yaml::parseFile($dir . '/NowoDoctrineEncryptBundle.es.yaml'));
 
-        $expected = ['secret.clear.label', 'secret.value.help_empty', 'secret.value.help_saved', 'secret.value.label'];
+        $expected = ['secret.clear.label', 'secret.value.help_empty', 'secret.value.help_saved', 'secret.value.label', 'secret.value.placeholder_saved'];
         self::assertSame($expected, $english);
         self::assertSame($expected, $spanish);
     }

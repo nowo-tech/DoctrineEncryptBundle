@@ -54,6 +54,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Missing message (profiler):** `SecretType` used the stored-secret hint ("•••• 1234") as the `placeholder` of the
+  value input, and the form theme looked it up as a message of `NowoDoctrineEncryptBundle`. The placeholder is now
+  the message `secret.value.placeholder_saved` (`%hint%`, en / es) with the hint in `attr_translation_parameters`,
+  so the input shows the same text and nothing is looked up as a message id. Test rendering the field with a
+  `DataCollectorTranslator` (en / es) asserting no missing message; `symfony/translation` and `symfony/twig-bridge`
+  added to require-dev.
+
 ## [2.8.0] - 2026-10-13
 
 ### Added
