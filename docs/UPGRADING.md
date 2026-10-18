@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 2.8.1](#to-281)
 - [To 2.8.0](#to-280)
 - [To 2.7.2](#to-272)
 - [To 2.7.1](#to-271)
@@ -59,6 +60,14 @@
 - [Upgrading from ambta/doctrine-encrypt-bundle or hec-franco/doctrine-encrypt-bundle](#upgrading-from-ambtadoctrine-encrypt-bundle-or-hec-francodoctrine-encrypt-bundle)
 
 ## Unreleased
+
+## To 2.8.1
+
+From **2.8.0**:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
 
 ## To 2.8.0
 

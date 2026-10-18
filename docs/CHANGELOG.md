@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.8.1] - 2026-10-18](#281---2026-10-18)
 - [[2.8.0] - 2026-10-13](#280---2026-10-13)
 - [[2.7.2] - 2026-10-13](#272---2026-10-13)
 - [[2.7.1] - 2026-10-13](#271---2026-10-13)
@@ -53,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-02-19](#100---2026-02-19)
 
 ## [Unreleased]
+
+## [2.8.1] - 2026-10-18
+
+Stored-secret hint placeholder is a translated message (no missing message). See [UPGRADING](UPGRADING.md#to-281).
 
 ### Fixed
 
