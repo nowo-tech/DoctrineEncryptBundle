@@ -55,6 +55,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Dependencies refreshed (Composer and pnpm/npm lock files of the bundle and its demos, campaign 2026-10-19).
+- `.php-cs-fixer.dist.php`: `new ParallelConfig(2)` (REQ-CS-001).
+
 ### Documentation
 
 - Documentation: wave-1 REQ compliance — README documentation list order and canonical FrankenPHP worker claim, CONTRIBUTING Cursor Agent queue settings and post-commit co-author check, TOCs for long docs.
