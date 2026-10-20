@@ -8,10 +8,10 @@ declare(strict_types=1);
  */
 use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
-use PhpCsFixer\Runner\Parallel\ParallelConfigFactory;
+use PhpCsFixer\Runner\Parallel\ParallelConfig;
 
 return (new Config())
-    ->setParallelConfig(ParallelConfigFactory::detect())
+    ->setParallelConfig(new ParallelConfig(2))
     ->setRiskyAllowed(true)
     ->setRules([
         // Base: PSR-12 + Symfony convention
