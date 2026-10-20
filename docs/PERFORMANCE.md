@@ -6,10 +6,10 @@ See also [MYSQL_AES.md](MYSQL_AES.md) (MySQL-native encryption and LIKE demos) a
 
 ## Table of contents
 
-- [Summary table (at rest: persist / load)](#summary-table-at-rest-persist-load)
+- [Summary table (at rest: persist / load)](#summary-table-at-rest-persist--load)
 - [Console batch commands](#console-batch-commands)
 - [Search, `LIKE`, and filtering](#search-like-and-filtering)
-  - [Relative cost (typical ordering, worst → best for large tables)](#relative-cost-typical-ordering-worst-best-for-large-tables)
+  - [Relative cost (typical ordering, worst → best for large tables)](#relative-cost-typical-ordering-worst--best-for-large-tables)
 - [Encryptor choice vs performance](#encryptor-choice-vs-performance)
 - [Practical recommendations](#practical-recommendations)
 - [Related documentation](#related-documentation)

@@ -7,6 +7,7 @@
 - [Threat model and risks](#threat-model-and-risks)
 - [Mitigations](#mitigations)
 - [Cryptography and secrets](#cryptography-and-secrets)
+  - [MysqlAes (legacy — do not use in new production)](#mysqlaes-legacy--do-not-use-in-new-production)
 - [Logging](#logging)
 - [Dependencies and updates](#dependencies-and-updates)
 - [Reporting a vulnerability](#reporting-a-vulnerability)

@@ -6,6 +6,12 @@ This document records which [PHP-FIG PSRs](https://www.php-fig.org/psr/) apply t
 Only contracts that add clear interoperability or maintainability value are **Adopted**.
 Others are **N/A** (or already covered by Symfony) so the decision stays auditable.
 
+## Table of contents
+
+- [Baseline (always)](#baseline-always)
+- [Interface / contract PSRs](#interface--contract-psrs)
+- [Summary](#summary)
+
 ## Baseline (always)
 
 | PSR | Decision | How |

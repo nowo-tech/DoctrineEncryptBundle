@@ -55,6 +55,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- Documentation: wave-1 REQ compliance — README documentation list order and canonical FrankenPHP worker claim, CONTRIBUTING Cursor Agent queue settings and post-commit co-author check, TOCs for long docs.
+
 ## [2.8.1] - 2026-10-18
 
 Stored-secret hint placeholder is a translated message (no missing message). See [UPGRADING](UPGRADING.md#to-281).

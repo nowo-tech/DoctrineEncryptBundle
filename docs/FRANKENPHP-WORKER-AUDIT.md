@@ -9,6 +9,19 @@
 | **Verdict** | ✅ **Viable under scenario B** — the decryption cache lives only as long as the entities it describes (`WeakMap`), no longer uses plaintext as keys, the listener is registered once and is resettable, and a manager closed by a failed flush is reset at the start of the next main request. Clearing the identity map between requests remains the application's responsibility |
 | Remediation (2026-09-24) | W-01, W-02 and W-03 resolved (W-03 confirmed in `demo/symfony8` with `debug:container --tag=doctrine.event_listener` before the fix); W-04 accepted. Regression tests in `tests/Unit/Subscribers/DoctrineEncryptSubscriberTest.php`, `tests/Unit/EventListener/ClosedEntityManagerRecoveryListenerTest.php`, `tests/Unit/DependencyInjection/DoctrineEncryptExtensionTest.php` |
 
+## Table of contents
+
+- [Execution model assumed](#execution-model-assumed)
+- [Summary](#summary)
+- [Services reviewed](#services-reviewed)
+- [Findings](#findings)
+  - [W-01 — Decryption cache keeps plaintext values and grows across requests (Medium)](#w-01--decryption-cache-keeps-plaintext-values-and-grows-across-requests-medium)
+  - [W-02 — Failed flush leaves managed entities encrypted and the EntityManager closed (Medium)](#w-02--failed-flush-leaves-managed-entities-encrypted-and-the-entitymanager-closed-medium)
+  - [W-03 — The listener class appears to be registered twice (Low)](#w-03--the-listener-class-appears-to-be-registered-twice-low)
+  - [W-04 — Encryption keys are cached for the worker lifetime; missing key files are generated at request time (Info)](#w-04--encryption-keys-are-cached-for-the-worker-lifetime-missing-key-files-are-generated-at-request-time-info)
+- [Usage recommendations in worker mode](#usage-recommendations-in-worker-mode)
+- [Re-audit triggers](#re-audit-triggers)
+
 ## Execution model assumed
 
 FrankenPHP worker mode boots the Symfony kernel once per worker and serves many requests with the same container. This audit assumes the **strict** variant: the kernel is **not** rebooted between requests, so every shared service, static property and PHP global survives from one request to the next. Two scenarios are evaluated:

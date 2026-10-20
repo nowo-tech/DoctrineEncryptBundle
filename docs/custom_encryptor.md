@@ -2,6 +2,12 @@
 
 You can use a custom encryption class instead of Halite or Defuse.
 
+## Table of contents
+
+- [Implement the interface](#implement-the-interface)
+- [Register and configure](#register-and-configure)
+- [Security](#security)
+
 ## Implement the interface
 
 Your class must implement `Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface`:

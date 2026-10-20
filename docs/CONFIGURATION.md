@@ -5,6 +5,7 @@ The bundle is configured under the root key `nowo_doctrine_encrypt`. The only su
 ## Table of contents
 
 - [Options](#options)
+  - [Several connections / entity managers](#several-connections--entity-managers)
 - [Example: single encryptor (default)](#example-single-encryptor-default)
 - [Example: multiple encryptors](#example-multiple-encryptors)
 - [Encryptors](#encryptors)

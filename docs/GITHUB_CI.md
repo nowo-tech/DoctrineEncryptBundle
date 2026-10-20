@@ -5,7 +5,7 @@ Canonical per-repo doc for **REQ-GIT-001** (no Cursor co-author trailers). Copy 
 ## Table of contents
 
 - [Scope](#scope)
-- [REQ-GIT-001 — History without Cursor co-author](#req-git-001-history-without-cursor-co-author)
+- [REQ-GIT-001 — History without Cursor co-author](#req-git-001--history-without-cursor-co-author)
   - [Normative rule](#normative-rule)
   - [Why CI enforces it](#why-ci-enforces-it)
 - [Mandatory artifacts (adoption checklist)](#mandatory-artifacts-adoption-checklist)

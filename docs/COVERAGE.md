@@ -2,6 +2,12 @@
 
 This document lists justified PHPUnit coverage exclusions for **REQ-TEST-003** (line coverage **≥ 99%** of includable `src/`).
 
+## Table of contents
+
+- [Included surface](#included-surface)
+- [Exclusions (`phpunit.xml.dist`)](#exclusions-phpunitxmldist)
+- [How to verify](#how-to-verify)
+
 ## Included surface
 
 `phpunit.xml.dist` includes all `src/**/*.php` except `src/Resources` and the files below.
