@@ -1,6 +1,6 @@
 {
     "name": "nowo-tech/doctrine-encrypt-bundle",
-    "description": "Symfony 7.4+|8 bundle to encrypt Doctrine entity fields at rest with Halite, Defuse, or MySQL-compatible MysqlAes (GDPR-friendly, multiple keys, key rotation).",
+    "description": "Symfony bundle (Symfony 7.4 and 8.x) that encrypts Doctrine entity fields at rest with Halite, Defuse or MySQL-compatible MysqlAes, with multiple keys and key rotation for GDPR-friendly storage.",
     "type": "symfony-bundle",
     "license": "MIT",
     "keywords": [
@@ -19,7 +19,7 @@
     "support": {
         "issues": "https://github.com/nowo-tech/DoctrineEncryptBundle/issues",
         "source": "https://github.com/nowo-tech/DoctrineEncryptBundle",
-        "docs": "https://github.com/nowo-tech/DoctrineEncryptBundle/blob/master/docs/INSTALLATION.md"
+        "docs": "https://github.com/nowo-tech/DoctrineEncryptBundle/blob/master/README.md"
     },
     "authors": [
         {

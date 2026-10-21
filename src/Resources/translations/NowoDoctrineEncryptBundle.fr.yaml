@@ -1,0 +1,8 @@
+secret:
+    value:
+        label: 'Nouvelle valeur'
+        help_saved: 'Enregistré : %hint%. Laissez vide pour le conserver.'
+        help_empty: 'Non défini.'
+        placeholder_saved: '%hint%'
+    clear:
+        label: 'Supprimer la valeur enregistrée'

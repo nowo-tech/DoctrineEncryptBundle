@@ -43,6 +43,15 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
     /** Maximum number of non-decryptable values listed individually in the output. */
     private const MAX_REPORTED_FAILURES = 50;
 
+    /**
+     * @param EntityManagerInterface $entityManager Entity manager to process
+     * @param AttributeReader $attributeReader Reads #[Encrypted] properties
+     * @param DoctrineEncryptSubscriber $subscriber Encrypt/decrypt Doctrine subscriber
+     * @param EncryptorInterface|null $defaultEncryptor Encryptor of the default profile
+     * @param EncryptorRegistry|null $encryptorRegistry Encryptors per profile alias
+     * @param int $defaultBatchSize Default batch size (`batch_size` config)
+     * @param string $kernelEnvironment Kernel environment
+     */
     public function __construct(
         EntityManagerInterface $entityManager,
         AttributeReader $attributeReader,

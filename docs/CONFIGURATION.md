@@ -6,6 +6,7 @@ The bundle is configured under the root key `nowo_doctrine_encrypt`. The only su
 
 - [Options](#options)
   - [Several connections / entity managers](#several-connections--entity-managers)
+- [Profiles](#profiles)
 - [Example: single encryptor (default)](#example-single-encryptor-default)
 - [Example: multiple encryptors](#example-multiple-encryptors)
 - [Encryptors](#encryptors)
@@ -47,6 +48,14 @@ nowo_doctrine_encrypt:
 ```
 
 One listener instance serves all listed connections; its per-entity decryption cache is scoped to the entity manager being flushed.
+
+## Profiles
+
+- **Canonical keys:** `default_profile` (string) and `profiles` (map of profile name ⇒ `encryptor_class`, `secret_directory_path` / `secret_key_filename` or `secret_key_env_var`).
+- **Legacy synonyms (still accepted):** `default_config` ⇒ `default_profile` and `configs` ⇒ `profiles`. They are renamed before normalization; the legacy container parameters `nowo_doctrine_encrypt.default_config` and `nowo_doctrine_encrypt.configs` are still set with the same values.
+- **Defaults:** without `default_profile`, the first profile name is used (`default` when `profiles` is empty, which yields one Halite profile in `%kernel.project_dir%`).
+- **Validation:** the extension fails at container build when `default_profile` is not a key of `profiles` (`nowo_doctrine_encrypt.default_profile "x" must be a key in nowo_doctrine_encrypt.profiles`).
+- **Runtime selection:** per property, through the attribute alias — `#[Encrypted]` or `#[Encrypted('default')]` use `default_profile`; `#[Encrypted('financial_data')]` uses that profile. The `doctrine:encrypt:database` / `doctrine:decrypt:database` commands use the same attribute mapping.
 
 ## Example: single encryptor (default)
 

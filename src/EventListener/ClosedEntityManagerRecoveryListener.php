@@ -21,6 +21,9 @@ use Symfony\Component\HttpKernel\KernelEvents;
  */
 final readonly class ClosedEntityManagerRecoveryListener implements EventSubscriberInterface
 {
+    /**
+     * @param ManagerRegistry|null $managerRegistry Doctrine registry (null when DoctrineBundle is absent)
+     */
     public function __construct(
         private ?ManagerRegistry $managerRegistry = null,
     ) {
@@ -36,6 +39,11 @@ final readonly class ClosedEntityManagerRecoveryListener implements EventSubscri
         ];
     }
 
+    /**
+     * Resets entity managers left closed by a previous request (FrankenPHP worker mode).
+     *
+     * @param RequestEvent $event Kernel request event (main requests only)
+     */
     public function onKernelRequest(RequestEvent $event): void
     {
         if (!$event->isMainRequest() || !$this->managerRegistry instanceof ManagerRegistry) {

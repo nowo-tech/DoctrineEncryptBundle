@@ -1,0 +1,8 @@
+secret:
+    value:
+        label: 'Nieuwe waarde'
+        help_saved: 'Opgeslagen: %hint%. Laat leeg om te behouden.'
+        help_empty: 'Niet ingesteld.'
+        placeholder_saved: '%hint%'
+    clear:
+        label: 'Opgeslagen waarde verwijderen'

@@ -53,6 +53,13 @@ final class MysqlAesEncryptor implements EncryptorInterface
         $this->keyContent = $keyContent !== null && $keyContent !== '' ? $keyContent : null;
     }
 
+    /**
+     * Encrypts like MySQL AES_ENCRYPT() (AES-128-ECB, raw binary output).
+     *
+     * @param string $data Plaintext
+     *
+     * @return string Raw binary ciphertext
+     */
     public function encrypt(string $data): string
     {
         $encrypted = openssl_encrypt($data, self::CIPHER, $this->getDerivedKey(), OPENSSL_RAW_DATA);
@@ -65,6 +72,13 @@ final class MysqlAesEncryptor implements EncryptorInterface
         return $encrypted;
     }
 
+    /**
+     * Decrypts like MySQL AES_DECRYPT().
+     *
+     * @param string $data Raw binary ciphertext
+     *
+     * @return string Plaintext
+     */
     public function decrypt(string $data): string
     {
         $decrypted = openssl_decrypt($data, self::CIPHER, $this->getDerivedKey(), OPENSSL_RAW_DATA);

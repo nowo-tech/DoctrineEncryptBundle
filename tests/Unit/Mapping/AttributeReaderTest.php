@@ -15,6 +15,7 @@ use Nowo\DoctrineEncryptBundle\Tests\Unit\Mapping\fixtures\RepeatableTestAnnotat
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use ReflectionMethod;
 use stdClass;
 
 class AttributeReaderTest extends TestCase
@@ -141,5 +142,18 @@ class AttributeReaderTest extends TestCase
         $this->assertArrayHasKey(Encrypted::class, $annotations);
         $this->assertInstanceOf(Encrypted::class, $annotations[Encrypted::class]);
         $this->assertCount(1, $annotations);
+    }
+
+    /**
+     * Defensive path: a class without #[Attribute] is reported as not repeatable (and cached).
+     * Unreachable through getPropertyAnnotations(), because ReflectionAttribute::newInstance()
+     * already rejects such classes, so the private helper is exercised directly.
+     */
+    public function testIsRepeatableIsFalseForClassWithoutAttributeMarker(): void
+    {
+        $method = new ReflectionMethod(AttributeReader::class, 'isRepeatable');
+
+        $this->assertFalse($method->invoke($this->reader, stdClass::class));
+        $this->assertFalse($method->invoke($this->reader, stdClass::class));
     }
 }

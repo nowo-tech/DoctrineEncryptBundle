@@ -30,6 +30,9 @@ final readonly class EncryptUtil
 
     public const ENCRYPTION_MARKER = '<ENC>';
 
+    /**
+     * @param EncryptorRegistry $registry Encryptors per profile alias
+     */
     public function __construct(
         private EncryptorRegistry $registry
     ) {

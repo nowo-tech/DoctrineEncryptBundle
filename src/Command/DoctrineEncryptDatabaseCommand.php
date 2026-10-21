@@ -36,6 +36,14 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
 {
     private const ENCRYPTION_MARKER = DoctrineEncryptSubscriber::ENCRYPTION_MARKER;
 
+    /**
+     * @param EntityManagerInterface $entityManager Entity manager to process
+     * @param AttributeReader $attributeReader Reads #[Encrypted] properties
+     * @param DoctrineEncryptSubscriber $subscriber Encrypt/decrypt Doctrine subscriber
+     * @param EncryptorInterface|null $defaultEncryptor Encryptor of the default profile
+     * @param EncryptorRegistry|null $encryptorRegistry Encryptors per profile alias
+     * @param int $defaultBatchSize Default batch size (`batch_size` config)
+     */
     public function __construct(
         EntityManagerInterface $entityManager,
         AttributeReader $attributeReader,

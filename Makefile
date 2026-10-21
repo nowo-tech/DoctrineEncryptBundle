@@ -7,7 +7,7 @@ COMPOSE_BIN := $(shell docker compose version >/dev/null 2>&1 && echo "docker co
 COMPOSE     := $(COMPOSE_BIN) -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
-.PHONY: help up down down-dev build shell install update validate test test-coverage coverage-php-percent cs-check cs-fix qa clean ensure-up assets release-check release-check-demos demo-smoke composer-sync rector rector-dry phpstan igor check-no-cursor-coauthor check-open-prs strip-cursor-coauthor-from-history setup-hooks
+.PHONY: help up down down-dev build shell install update validate test test-coverage coverage-php-percent cs-check cs-fix qa clean ensure-up assets release-check release-check-demos demo-smoke composer-sync rector rector-dry phpstan igor check-no-cursor-coauthor check-open-prs strip-cursor-coauthor-from-history setup-hooks validate-translations
 
 help:
 	@echo "Doctrine Encrypt Bundle - Development Commands"
@@ -31,7 +31,8 @@ help:
 	@echo "  phpstan       Run PHPStan static analysis"
 	@echo "  igor          Run Igor worker-state audit (REQ-CS-008)"
 	@echo "  qa            Run all QA checks (validate + cs-check + test)"
-	@echo "  release-check Pre-release: co-author + open-PRs + cs + phpstan + coverage + demos"
+	@echo "  release-check Pre-release: ensure-up + co-author + open-PRs + cs + phpstan + igor + translations + coverage + demos"
+	@echo "  validate-translations  Translation key parity (7 locales) + YAML parse (REQ-MAKE-004)"
 	@echo "  demo-smoke    Boot demo/symfony8 and assert HTTP 200 (REQ-TEST-011)"
 	@echo "  check-open-prs Fail if unresolved open GitHub PRs remain (REQ-REL-003)"
 	@echo "  composer-sync Validate composer.json and align composer.lock (no install)"
@@ -110,7 +111,26 @@ qa: ensure-up validate
 # Run Igor worker-state audit (REQ-CS-008)
 igor: ensure-up
 	$(COMPOSE) exec -T php composer igor
-release-check: check-no-cursor-coauthor check-open-prs ensure-up composer-sync cs-fix cs-check rector-dry phpstan igor test-coverage release-check-demos
+# REQ-MAKE-002: sequential chain, ensure-up first. check-no-raw-html-form is not wired yet:
+# the demo templates still use raw <form>/<input> (REQ-TWIG-005, scheduled with the Twig wave).
+release-check:
+	@$(MAKE) ensure-up
+	@$(MAKE) check-no-cursor-coauthor
+	@$(MAKE) check-open-prs
+	@$(MAKE) composer-sync
+	@$(MAKE) cs-fix
+	@$(MAKE) cs-check
+	@$(MAKE) rector-dry
+	@$(MAKE) phpstan
+	@$(MAKE) igor
+	@$(MAKE) validate-translations
+	@$(MAKE) test-coverage
+	@$(MAKE) release-check-demos
+
+# REQ-MAKE-004 / REQ-I18N-002: key parity across the 7 required locales + YAML syntax.
+validate-translations: ensure-up
+	python3 .scripts/check-translation-key-parity.py
+	$(COMPOSE) exec -T $(SERVICE_PHP) php -r 'require "vendor/autoload.php"; foreach (glob("src/Resources/translations/*.yaml") as $$f) { Symfony\Component\Yaml\Yaml::parseFile($$f); } echo "YAML OK\n";'
 
 # REQ-TEST-011 — boot demo stack and assert one HTTP 200
 demo-smoke:

@@ -28,6 +28,9 @@ use function strlen;
  */
 final class DecryptExtension extends AbstractExtension
 {
+    /**
+     * @param EncryptorRegistry $registry Encryptors per profile alias
+     */
     public function __construct(
         private readonly EncryptorRegistry $registry
     ) {

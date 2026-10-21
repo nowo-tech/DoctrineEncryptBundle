@@ -79,6 +79,11 @@ final class SecretType extends AbstractType
         }
     }
 
+    /**
+     * Declares `current_value`, `hint_visible_last`, `allow_clear`, `value_options`, `clear_options` and the defaults.
+     *
+     * @param OptionsResolver $resolver Options resolver
+     */
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
@@ -101,6 +106,9 @@ final class SecretType extends AbstractType
         $resolver->setInfo('allow_clear', 'Add the "clear" checkbox: null = only when a secret is stored, true = always, false = never.');
     }
 
+    /**
+     * @return string Twig block prefix (`nowo_secret`)
+     */
     public function getBlockPrefix(): string
     {
         return 'nowo_secret';

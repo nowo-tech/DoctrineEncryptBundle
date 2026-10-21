@@ -59,10 +59,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Dependencies refreshed (Composer and pnpm/npm lock files of the bundle and its demos, campaign 2026-10-19).
 - `.php-cs-fixer.dist.php`: `new ParallelConfig(2)` (REQ-CS-001).
+- `SecretType` translations shipped in the seven required locales (`en`, `es`, `it`, `fr`, `pt`, `de`, `nl`); new `make validate-translations` checks key parity and YAML syntax and runs in `release-check` (REQ-I18N-002 / REQ-MAKE-004).
+- `release-check` runs sequentially and starts with `ensure-up` (REQ-MAKE-002).
+- PHPDoc on the remaining public methods and constructors (REQ-CS-001).
+- `composer.json`: plain one-sentence description; `support.docs` points to the README (REQ-PKG-004).
+- Flex recipe moved to the canonical layout `.symfony/recipe/nowo-tech/doctrine-encrypt-bundle/1.0/manifest.json` (was nested in a duplicated `1.0/1.0/` directory, REQ-RECIPE-001).
 
 ### Documentation
 
 - Documentation: wave-1 REQ compliance — README documentation list order and canonical FrankenPHP worker claim, CONTRIBUTING Cursor Agent queue settings and post-commit co-author check, TOCs for long docs.
+- `docs/CONFIGURATION.md`: new Profiles section (canonical keys, legacy `default_config` / `configs` synonyms, default resolution, validation, runtime selection) (REQ-CFG-002).
+- `docs/USAGE.md`: translation override procedure for the `NowoDoctrineEncryptBundle` domain (REQ-I18N-001).
+
+### Fixed
+
+- `.scripts/check-no-cursor-coauthor.sh` also runs inside git worktrees (`.git` file instead of directory).
 
 ## [2.8.1] - 2026-10-18
 

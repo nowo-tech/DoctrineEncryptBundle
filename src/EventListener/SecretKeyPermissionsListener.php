@@ -54,6 +54,11 @@ final class SecretKeyPermissionsListener implements EventSubscriberInterface
         ];
     }
 
+    /**
+     * Hardens key directories/files on main requests, at most once per `http_check_interval` seconds.
+     *
+     * @param RequestEvent $event Kernel request event
+     */
     public function onKernelRequest(RequestEvent $event): void
     {
         if (!$event->isMainRequest()) {
@@ -70,6 +75,9 @@ final class SecretKeyPermissionsListener implements EventSubscriberInterface
         $this->ensure();
     }
 
+    /**
+     * Hardens key directories/files before every console command.
+     */
     public function onConsoleCommand(): void
     {
         $this->ensure();

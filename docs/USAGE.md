@@ -12,6 +12,7 @@
 - ["Leave blank to keep" secret fields (`SecretType` / `SecretFieldApplier`)](#leave-blank-to-keep-secret-fields-secrettype--secretfieldapplier)
   - [SecretFieldApplier (no symfony/form needed)](#secretfieldapplier-no-symfonyform-needed)
   - [SecretType form field](#secrettype-form-field)
+  - [Translations](#translations)
 - [Searching and performance](#searching-and-performance)
 - [Embedded entities](#embedded-entities)
 - [Console commands](#console-commands)
@@ -217,7 +218,25 @@ What it renders:
 - **`value`** — `PasswordType` with `always_empty: true`, `required: false`, `trim: true`, `autocomplete="new-password"`. With a stored value the help reads *"Saved: •••• 1234. Leave blank to keep it."* (`MaskUtil::secretHint()`, also used as placeholder); otherwise *"Not set."*.
 - **`clear`** — `CheckboxType` *"Remove the saved value"*, added when a value is stored (or always/never, see `allow_clear`).
 
-The field is **not mapped** by default (`mapped: false`), so the form component never writes the array into your entity; the stored plaintext is never sent to the browser (only the hint). Child labels and help use the `NowoDoctrineEncryptBundle` translation domain (English and Spanish shipped); override them with `value_options` / `clear_options`. Options are listed in [CONFIGURATION.md → SecretType options](CONFIGURATION.md#secrettype-form-options).
+The field is **not mapped** by default (`mapped: false`), so the form component never writes the array into your entity; the stored plaintext is never sent to the browser (only the hint). Child labels and help use the `NowoDoctrineEncryptBundle` translation domain (see [Translations](#translations)); override them per field with `value_options` / `clear_options`. Options are listed in [CONFIGURATION.md → SecretType options](CONFIGURATION.md#secrettype-form-options).
+
+### Translations
+
+`SecretType` labels and help texts live in the `NowoDoctrineEncryptBundle` domain, shipped in `en`, `es`, `it`, `fr`, `pt`, `de` and `nl` (`src/Resources/translations/NowoDoctrineEncryptBundle.<locale>.yaml`). To override them application-wide:
+
+1. Use the same domain, `NowoDoctrineEncryptBundle`.
+2. Create `translations/NowoDoctrineEncryptBundle.<locale>.yaml` in your application.
+3. Redefine only the keys you need; missing keys fall back to the bundle catalogue (the application translations take priority).
+
+```yaml
+# translations/NowoDoctrineEncryptBundle.en.yaml
+secret:
+    value:
+        label: 'API key'
+        help_empty: 'No API key stored yet.'
+```
+
+Available keys: `secret.value.label`, `secret.value.help_saved` (`%hint%`), `secret.value.help_empty`, `secret.value.placeholder_saved` (`%hint%`), `secret.clear.label`.
 
 ## Searching and performance
 
