@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.8.2] - 2026-10-21](#282---2026-10-21)
 - [[2.8.1] - 2026-10-18](#281---2026-10-18)
 - [[2.8.0] - 2026-10-13](#280---2026-10-13)
 - [[2.7.2] - 2026-10-13](#272---2026-10-13)
@@ -54,6 +55,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-02-19](#100---2026-02-19)
 
 ## [Unreleased]
+
+## [2.8.2] - 2026-10-21
+
+Dependency refresh, seven translation locales, validate-translations, Profiles docs, recipe layout, PHPDoc. See [UPGRADING](UPGRADING.md#to-282).
 
 ### Changed
 
