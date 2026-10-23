@@ -1001,7 +1001,7 @@
             "dist": {
                 "type": "path",
                 "url": "/var/doctrine-encrypt-bundle",
-                "reference": "75d19bc9af11b9c94d9e6be7b7610cfb674625c4"
+                "reference": "8b2ef4494dffe28fd180f76346dc3202d7e6f8fd"
             },
             "require": {
                 "doctrine/doctrine-bundle": "^2.13 || ^3.0",
@@ -1103,7 +1103,7 @@
                     "homepage": "https://nowo.tech"
                 }
             ],
-            "description": "Symfony 7.4+|8 bundle to encrypt Doctrine entity fields at rest with Halite, Defuse, or MySQL-compatible MysqlAes (GDPR-friendly, multiple keys, key rotation).",
+            "description": "Symfony bundle (Symfony 7.4 and 8.x) that encrypts Doctrine entity fields at rest with Halite, Defuse or MySQL-compatible MysqlAes, with multiple keys and key rotation for GDPR-friendly storage.",
             "homepage": "https://github.com/nowo-tech/DoctrineEncryptBundle",
             "keywords": [
                 "defuse",
@@ -1120,7 +1120,7 @@
             "support": {
                 "issues": "https://github.com/nowo-tech/DoctrineEncryptBundle/issues",
                 "source": "https://github.com/nowo-tech/DoctrineEncryptBundle",
-                "docs": "https://github.com/nowo-tech/DoctrineEncryptBundle/blob/master/docs/INSTALLATION.md"
+                "docs": "https://github.com/nowo-tech/DoctrineEncryptBundle/blob/master/README.md"
             },
             "transport-options": {
                 "relative": false
@@ -5754,16 +5754,16 @@
         },
         {
             "name": "nowo-tech/hot-reload-bundle",
-            "version": "v1.6.1",
+            "version": "v1.6.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nowo-tech/HotReloadBundle.git",
-                "reference": "6d3117328bd9d7f55a70743567d04ee25d6bc366"
+                "reference": "cf84e69a6f93f95f06876638337f9f792b2bcb0a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nowo-tech/HotReloadBundle/zipball/6d3117328bd9d7f55a70743567d04ee25d6bc366",
-                "reference": "6d3117328bd9d7f55a70743567d04ee25d6bc366",
+                "url": "https://api.github.com/repos/nowo-tech/HotReloadBundle/zipball/cf84e69a6f93f95f06876638337f9f792b2bcb0a",
+                "reference": "cf84e69a6f93f95f06876638337f9f792b2bcb0a",
                 "shasum": ""
             },
             "require": {
@@ -5841,7 +5841,7 @@
                 "issues": "https://github.com/nowo-tech/HotReloadBundle/issues",
                 "source": "https://github.com/nowo-tech/HotReloadBundle"
             },
-            "time": "2026-10-13T10:57:34+00:00"
+            "time": "2026-10-21T05:26:17+00:00"
         },
         {
             "name": "nowo-tech/twig-inspector-bundle",
