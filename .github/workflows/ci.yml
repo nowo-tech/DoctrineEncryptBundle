@@ -1,4 +1,4 @@
-# CI: tests on PHP 8.2–8.5 × Symfony 7.4, 8.0, 8.1 (exclusions for incompatible pairs). Requires ext-sodium.
+# CI: tests on PHP 8.2–8.5 × Symfony 7.4, 8.1 (exclusions for incompatible pairs). Requires ext-sodium.
 # Coverage with PCOV; release updated via release.yml on tag push.
 name: CI
 
@@ -31,14 +31,11 @@ jobs:
       fail-fast: false
       matrix:
         php: ['8.2', '8.3', '8.4', '8.5']
-        symfony: ['7.4', '8.0', '8.1']
+        # Symfony 8.0 reached end of maintenance (July 2026): its CI cell is dropped (REQ-SF-002); composer.json still allows ^8.0.
+        symfony: ['7.4', '8.1']
         exclude:
           - php: '8.2'
-            symfony: '8.0'
-          - php: '8.2'
             symfony: '8.1'
-          - php: '8.3'
-            symfony: '8.0'
           - php: '8.3'
             symfony: '8.1'
 
