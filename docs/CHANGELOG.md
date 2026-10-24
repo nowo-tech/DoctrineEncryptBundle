@@ -56,6 +56,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Demo (REQ-TWIG-003):** the `secret_message`, `sensitive_record` and `mysql_aes_note` new/edit/sql_new templates render their forms through the child loop (`form_row(child)`) instead of field-by-field `form_row`/`form_label`/`form_widget`; the field hints moved to the FormType `help` option, and `SensitiveRecordType::envVarNote` now renders before the buttons instead of after them.
+
 ## [2.8.2] - 2026-10-21
 
 Dependency refresh, seven translation locales, validate-translations, Profiles docs, recipe layout, PHPDoc. See [UPGRADING](UPGRADING.md#to-282).

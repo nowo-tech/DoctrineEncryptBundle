@@ -12,17 +12,11 @@
     </div>
     <div class="card-body">
         {{ form_start(form, { attr: { class: 'needs-validation', novalidate: true } }) }}
-        <div class="mb-3">
-            {{ form_label(form.title) }}
-            {{ form_widget(form.title) }}
-            {{ form_errors(form.title) }}
-        </div>
-        <div class="mb-3">
-            {{ form_label(form.message) }}
-            {{ form_widget(form.message) }}
-            {{ form_errors(form.message) }}
-            <div class="form-text">This field is encrypted with Halite before being stored in the database.</div>
-        </div>
+        {% for child in form %}
+            {% if not child.rendered %}
+                {{ form_row(child) }}
+            {% endif %}
+        {% endfor %}
         <hr class="my-4">
         <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary">Create</button>

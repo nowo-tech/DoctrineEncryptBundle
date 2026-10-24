@@ -18,6 +18,7 @@ class SensitiveRecordType extends AbstractType
             ->add('personalNote', TextareaType::class, [
                 'required'   => false,
                 'label'      => 'Personal note (Halite – personal_data, default path)',
+                'help'       => 'Stored encrypted with Halite (config: personal_data).',
                 'label_attr' => ['class' => 'form-label'],
                 'attr'       => [
                     'class'       => 'form-control',
@@ -28,6 +29,7 @@ class SensitiveRecordType extends AbstractType
             ->add('financialNote', TextareaType::class, [
                 'required'   => false,
                 'label'      => 'Financial note (encrypted with Defuse – financial_data, secret_key_filename)',
+                'help'       => 'Stored encrypted with Defuse (config: financial_data).',
                 'label_attr' => ['class' => 'form-label'],
                 'attr'       => [
                     'class'       => 'form-control',

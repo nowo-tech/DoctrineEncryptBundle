@@ -28,6 +28,7 @@ class SecretMessageType extends AbstractType
             ->add('message', TextareaType::class, [
                 'required'   => false,
                 'label'      => 'Message (encrypted in database)',
+                'help'       => 'This field is encrypted with Halite before being stored in the database.',
                 'label_attr' => ['class' => 'form-label'],
                 'attr'       => [
                     'class'       => 'form-control',

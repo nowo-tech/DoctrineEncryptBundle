@@ -12,16 +12,11 @@
     </div>
     <div class="card-body">
         {{ form_start(form, { attr: { class: 'needs-validation', novalidate: true } }) }}
-        <div class="mb-3">
-            {{ form_label(form.personalNote) }}
-            {{ form_widget(form.personalNote) }}
-            {{ form_errors(form.personalNote) }}
-        </div>
-        <div class="mb-3">
-            {{ form_label(form.financialNote) }}
-            {{ form_widget(form.financialNote) }}
-            {{ form_errors(form.financialNote) }}
-        </div>
+        {% for child in form %}
+            {% if not child.rendered %}
+                {{ form_row(child) }}
+            {% endif %}
+        {% endfor %}
         <hr class="my-4">
         <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary">Update</button>

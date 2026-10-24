@@ -13,8 +13,11 @@
     <div class="card-body">
         {{ form_start(form) }}
         <div class="vstack gap-3">
-            {{ form_row(form.title) }}
-            {{ form_row(form.secretOrm) }}
+            {% for child in form %}
+                {% if not child.rendered %}
+                    {{ form_row(child) }}
+                {% endif %}
+            {% endfor %}
         </div>
         {% include 'mysql_aes_note/_form_actions.html.twig' with {
             submit_label: 'Update',
