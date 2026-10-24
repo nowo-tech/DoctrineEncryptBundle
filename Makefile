@@ -7,7 +7,7 @@ COMPOSE_BIN := $(shell docker compose version >/dev/null 2>&1 && echo "docker co
 COMPOSE     := $(COMPOSE_BIN) -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
-.PHONY: help up down down-dev build shell install update validate test test-coverage coverage-php-percent cs-check cs-fix qa clean ensure-up assets release-check release-check-demos demo-smoke composer-sync rector rector-dry phpstan igor check-no-cursor-coauthor check-open-prs strip-cursor-coauthor-from-history setup-hooks validate-translations
+.PHONY: help up down down-dev build shell install update validate test test-coverage coverage-php-percent cs-check cs-fix qa clean ensure-up assets release-check release-check-demos demo-smoke composer-sync rector rector-dry phpstan igor check-no-cursor-coauthor check-open-prs check-no-raw-html-form strip-cursor-coauthor-from-history setup-hooks validate-translations
 
 help:
 	@echo "Doctrine Encrypt Bundle - Development Commands"
@@ -35,6 +35,7 @@ help:
 	@echo "  validate-translations  Translation key parity (7 locales) + YAML parse (REQ-MAKE-004)"
 	@echo "  demo-smoke    Boot demo/symfony8 and assert HTTP 200 (REQ-TEST-011)"
 	@echo "  check-open-prs Fail if unresolved open GitHub PRs remain (REQ-REL-003)"
+	@echo "  check-no-raw-html-form Fail on raw <form>/<input>/<textarea>/<select> in Twig (REQ-TWIG-005)"
 	@echo "  composer-sync Validate composer.json and align composer.lock (no install)"
 	@echo "  clean         Remove vendor and cache"
 	@echo "  update        Update composer.lock (composer update)"
@@ -111,8 +112,10 @@ qa: ensure-up validate
 # Run Igor worker-state audit (REQ-CS-008)
 igor: ensure-up
 	$(COMPOSE) exec -T php composer igor
-# REQ-MAKE-002: sequential chain, ensure-up first. check-no-raw-html-form is not wired yet:
-# the demo templates still use raw <form>/<input> (REQ-TWIG-005, scheduled with the Twig wave).
+
+# REQ-MAKE-002: sequential chain, ensure-up first.
+# check-twig-extra (REQ-TWIG-004) is omitted: the bundle ships no Twig views.
+# check-no-raw-html-form (REQ-TWIG-005) is wired once the remaining raw form markup is migrated
 release-check:
 	@$(MAKE) ensure-up
 	@$(MAKE) check-no-cursor-coauthor
@@ -175,6 +178,10 @@ setup-hooks:
 check-no-cursor-coauthor:
 	@chmod +x .scripts/check-no-cursor-coauthor.sh
 	@./.scripts/check-no-cursor-coauthor.sh HEAD
+
+# Fail on raw <form>/<input>/<textarea>/<select> in Twig (REQ-TWIG-005)
+check-no-raw-html-form:
+	@bash .scripts/check-no-raw-html-form.sh
 
 check-open-prs:
 	@chmod +x .scripts/check-open-prs.sh

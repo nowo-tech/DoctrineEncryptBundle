@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Developer tooling (REQ-MAKE-002):** `make release-check` runs the full REQ-MAKE-002 chain in order (ensure-up, co-author and open-PR gates, composer-sync, cs-fix, cs-check, rector-dry, phpstan, igor, validate-translations, test-coverage, demo release-check). New `make check-no-raw-html-form` target (`.scripts/check-no-raw-html-form.sh`, REQ-TWIG-005); it joins the chain once the remaining raw form markup in the demo is migrated. `check-twig-extra` does not apply (no bundle Twig views).
 - **Demo (REQ-TWIG-003):** the `secret_message`, `sensitive_record` and `mysql_aes_note` new/edit/sql_new templates render their forms through the child loop (`form_row(child)`) instead of field-by-field `form_row`/`form_label`/`form_widget`; the field hints moved to the FormType `help` option, and `SensitiveRecordType::envVarNote` now renders before the buttons instead of after them.
 
 ## [2.8.2] - 2026-10-21
