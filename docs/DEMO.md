@@ -11,6 +11,7 @@ The bundle includes a **dockerized** demo project (**Symfony 8**). It runs on **
 - [What each demo includes](#what-each-demo-includes)
 - [Multiple encryptors and EncryptUtil](#multiple-encryptors-and-encryptutil)
 - [Troubleshooting: `composer update` and security advisories](#troubleshooting-composer-update-and-security-advisories)
+- [Forms in Twig (REQ-TWIG-005)](#forms-in-twig-req-twig-005)
 
 ## Screenshots
 
@@ -99,3 +100,20 @@ If `composer update` still fails after pulling, run inside the container:
 ```bash
 composer update -W --no-interaction
 ```
+
+## Forms in Twig (REQ-TWIG-005)
+
+Every UI form — bundle views and the demo apps — is a PHP Symfony Form Type (FormKit types when FormKit is in the stack) rendered with `form_start`, the REQ-TWIG-003 child loop and `form_end`; submit / cancel buttons may stay outside the loop:
+
+```twig
+{{ form_start(form) }}
+    {% for child in form %}
+        {% if not child.rendered %}
+            {{ form_row(child) }}
+        {% endif %}
+    {% endfor %}
+    <button type="submit">Save</button>
+{{ form_end(form) }}
+```
+
+CSRF-only actions (delete, logout-style buttons, toggles) use an empty Form Type too, and login forms map `_username` / `_password` / `_csrf_token` (token id `authenticate`) on a Form Type. Host overrides and demos must not reintroduce raw `<form>` / `<input>` / `<textarea>` / `<select>` markup: `make check-no-raw-html-form` (part of `make release-check`) fails when it appears.

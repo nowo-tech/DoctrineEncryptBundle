@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\SensitiveRecord;
+use App\Form\DeleteFormFactory;
 use App\Form\SensitiveRecordType;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,28 +14,37 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+use function array_column;
+use function array_map;
+
 #[Route('/sensitive-record')]
 class SensitiveRecordController extends AbstractController
 {
     #[Route('/', name: 'sensitive_record_index', methods: ['GET'])]
-    public function index(EntityManagerInterface $em): Response
+    public function index(EntityManagerInterface $em, DeleteFormFactory $deleteForms): Response
     {
         $records = $em->getRepository(SensitiveRecord::class)->findBy([], ['id' => 'DESC']);
 
         return $this->render('sensitive_record/index.html.twig', [
-            'records' => $records,
+            'records'      => $records,
+            'delete_forms' => $deleteForms->views(
+                'sensitive_record_delete',
+                array_map(static fn (SensitiveRecord $record): int => (int) $record->getId(), $records),
+                'Delete this record?',
+            ),
         ]);
     }
 
     #[Route('/raw', name: 'sensitive_record_raw_index', methods: ['GET'])]
-    public function rawIndex(Connection $conn): Response
+    public function rawIndex(Connection $conn, DeleteFormFactory $deleteForms): Response
     {
         $rows = $conn->fetchAllAssociative(
             'SELECT id, personal_note, financial_note FROM sensitive_record ORDER BY id DESC',
         );
 
         return $this->render('sensitive_record/raw_index.html.twig', [
-            'rows' => $rows,
+            'rows'         => $rows,
+            'delete_forms' => $deleteForms->views('sensitive_record_delete', array_column($rows, 'id'), 'Delete?'),
         ]);
     }
 
@@ -60,10 +70,11 @@ class SensitiveRecordController extends AbstractController
     }
 
     #[Route('/{id}', name: 'sensitive_record_show', methods: ['GET'])]
-    public function show(SensitiveRecord $sensitiveRecord): Response
+    public function show(SensitiveRecord $sensitiveRecord, DeleteFormFactory $deleteForms): Response
     {
         return $this->render('sensitive_record/show.html.twig', [
             'sensitive_record' => $sensitiveRecord,
+            'delete_form'      => $deleteForms->create('sensitive_record_delete', (int) $sensitiveRecord->getId(), 'Delete this record?')->createView(),
         ]);
     }
 
@@ -87,9 +98,11 @@ class SensitiveRecordController extends AbstractController
     }
 
     #[Route('/{id}', name: 'sensitive_record_delete', methods: ['POST'])]
-    public function delete(Request $request, SensitiveRecord $sensitiveRecord, EntityManagerInterface $em): Response
+    public function delete(Request $request, SensitiveRecord $sensitiveRecord, EntityManagerInterface $em, DeleteFormFactory $deleteForms): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $sensitiveRecord->getId(), (string) $request->request->get('_token'))) {
+        $form = $deleteForms->create('sensitive_record_delete', (int) $sensitiveRecord->getId());
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
             $em->remove($sensitiveRecord);
             $em->flush();
             $this->addFlash('success', 'Sensitive record deleted.');

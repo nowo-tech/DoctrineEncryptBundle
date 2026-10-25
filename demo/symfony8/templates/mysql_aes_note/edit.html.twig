@@ -25,10 +25,10 @@
         } %}
         {{ form_end(form) }}
 
-        <form method="post" action="{{ path('mysql_aes_note_delete', { id: note.id }) }}" class="mt-4 pt-3 border-top" onsubmit="return confirm('Delete this note?');">
-            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ note.id) }}">
+        {{ form_start(delete_form) }}
+            {% for child in delete_form %}{% if not child.rendered %}{{ form_row(child) }}{% endif %}{% endfor %}
             <button type="submit" class="btn btn-outline-danger">Delete</button>
-        </form>
+        {{ form_end(delete_form) }}
     </div>
 </div>
 {% endblock %}

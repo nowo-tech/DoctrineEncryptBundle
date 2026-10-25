@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\MysqlAesNote;
+use App\Form\DeleteFormFactory;
+use App\Form\ListFilterType;
 use App\Form\MysqlAesNativeType;
 use App\Form\MysqlAesNoteType;
 use App\Repository\MysqlAesNoteRepository;
@@ -12,6 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -38,11 +41,10 @@ class MysqlAesNoteController extends AbstractController
         return $this->render('mysql_aes_note/index.html.twig', [
             'notes'           => $notes,
             'nativeSupported' => $repository->supportsNativeMysqlAes(),
-            'filter'          => [
-                'title'       => $titleFilter,
-                'secret'      => $secretFilter,
-                'secret_mode' => $secretMode,
-            ],
+            'filter_form'     => $this->createFilterForm($titleFilter, $secretFilter, $secretMode, [
+                'plaintext'  => 'After decrypt (PHP contains)',
+                'ciphertext' => 'LIKE on secret_orm (ciphertext)',
+            ]),
             'queryDescription' => MysqlAesNoteRepository::describeDoctrineLikeFilter(
                 $titleLike,
                 $secretNeedle,
@@ -101,12 +103,11 @@ class MysqlAesNoteController extends AbstractController
         $secretLike = MysqlAesNoteRepository::buildLikePattern($secretFilter !== '' ? $secretFilter : null);
 
         return $this->render('mysql_aes_note/sql_index.html.twig', [
-            'rows'   => $repository->findDecryptedWithAesDecryptFiltered($titleLike, $secretLike, $secretMode),
-            'filter' => [
-                'title'       => $titleFilter,
-                'secret'      => $secretFilter,
-                'secret_mode' => $secretMode,
-            ],
+            'rows'        => $repository->findDecryptedWithAesDecryptFiltered($titleLike, $secretLike, $secretMode),
+            'filter_form' => $this->createFilterForm($titleFilter, $secretFilter, $secretMode, [
+                'decrypted'  => 'LIKE on AES_DECRYPT (plaintext)',
+                'ciphertext' => 'LIKE on HEX(blob) (ciphertext)',
+            ]),
             'queryDescription' => MysqlAesNoteRepository::describeSqlLikeFilter($titleLike, $secretLike, $secretMode),
         ]);
     }
@@ -173,7 +174,7 @@ class MysqlAesNoteController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'mysql_aes_note_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, MysqlAesNote $note, EntityManagerInterface $em): Response
+    public function edit(Request $request, MysqlAesNote $note, EntityManagerInterface $em, DeleteFormFactory $deleteForms): Response
     {
         $form = $this->createForm(MysqlAesNoteType::class, $note);
         $form->handleRequest($request);
@@ -186,20 +187,39 @@ class MysqlAesNoteController extends AbstractController
         }
 
         return $this->render('mysql_aes_note/edit.html.twig', [
-            'note' => $note,
-            'form' => $form,
+            'note'        => $note,
+            'form'        => $form,
+            'delete_form' => $deleteForms->create('mysql_aes_note_delete', (int) $note->getId(), 'Delete this note?', 'mt-4 pt-3 border-top')->createView(),
         ]);
     }
 
     #[Route('/{id}', name: 'mysql_aes_note_delete', methods: ['POST'])]
-    public function delete(Request $request, MysqlAesNote $note, EntityManagerInterface $em): Response
+    public function delete(Request $request, MysqlAesNote $note, EntityManagerInterface $em, DeleteFormFactory $deleteForms): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $note->getId(), (string) $request->request->get('_token'))) {
+        $form = $deleteForms->create('mysql_aes_note_delete', (int) $note->getId());
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
             $em->remove($note);
             $em->flush();
             $this->addFlash('success', 'Note deleted.');
         }
 
         return $this->redirectToRoute('mysql_aes_note_index');
+    }
+
+    /**
+     * GET filter form (query names title / secret / secret_mode unchanged; REQ-TWIG-005 rule 6).
+     *
+     * @param array<string, string> $secretModeChoices value => label
+     */
+    private function createFilterForm(string $title, string $secret, string $secretMode, array $secretModeChoices): FormView
+    {
+        return $this->container->get('form.factory')->createNamed('', ListFilterType::class, [
+            'title'       => $title,
+            'secret'      => $secret,
+            'secret_mode' => $secretMode,
+        ], [
+            'secret_mode_choices' => $secretModeChoices,
+        ])->createView();
     }
 }

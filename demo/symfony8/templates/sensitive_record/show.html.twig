@@ -23,10 +23,10 @@
             <dt class="col-sm-3">Financial note (Defuse)</dt>
             <dd class="col-sm-9">{{ sensitive_record.financialNote ?? '–' }}</dd>
         </dl>
-        <form method="post" action="{{ path('sensitive_record_delete', { id: sensitive_record.id }) }}" class="d-inline" onsubmit="return confirm('Delete this record?');">
-            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ sensitive_record.id) }}">
+        {{ form_start(delete_form) }}
+            {% for child in delete_form %}{% if not child.rendered %}{{ form_row(child) }}{% endif %}{% endfor %}
             <button type="submit" class="btn btn-danger">Delete</button>
-        </form>
+        {{ form_end(delete_form) }}
     </div>
 </div>
 {% endblock %}

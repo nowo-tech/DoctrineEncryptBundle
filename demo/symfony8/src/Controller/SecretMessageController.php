@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\SecretMessage;
+use App\Form\DeleteFormFactory;
 use App\Form\SecretMessageType;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,18 +15,24 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
+use function array_map;
 use function in_array;
 
 #[Route('/secret-message')]
 class SecretMessageController extends AbstractController
 {
     #[Route('/', name: 'secret_message_index', methods: ['GET'])]
-    public function index(EntityManagerInterface $em): Response
+    public function index(EntityManagerInterface $em, DeleteFormFactory $deleteForms): Response
     {
         $messages = $em->getRepository(SecretMessage::class)->findBy([], ['id' => 'DESC']);
 
         return $this->render('secret_message/index.html.twig', [
-            'messages' => $messages,
+            'messages'     => $messages,
+            'delete_forms' => $deleteForms->views(
+                'secret_message_delete',
+                array_map(static fn (SecretMessage $message): int => (int) $message->getId(), $messages),
+                'Delete this message?',
+            ),
         ]);
     }
 
@@ -86,10 +93,11 @@ class SecretMessageController extends AbstractController
     }
 
     #[Route('/{id}', name: 'secret_message_show', methods: ['GET'])]
-    public function show(SecretMessage $secretMessage): Response
+    public function show(SecretMessage $secretMessage, DeleteFormFactory $deleteForms): Response
     {
         return $this->render('secret_message/show.html.twig', [
             'secret_message' => $secretMessage,
+            'delete_form'    => $deleteForms->create('secret_message_delete', (int) $secretMessage->getId(), 'Delete this message?', 'mt-4 pt-3 border-top')->createView(),
         ]);
     }
 
@@ -113,9 +121,11 @@ class SecretMessageController extends AbstractController
     }
 
     #[Route('/{id}', name: 'secret_message_delete', methods: ['POST'])]
-    public function delete(Request $request, SecretMessage $secretMessage, EntityManagerInterface $em): Response
+    public function delete(Request $request, SecretMessage $secretMessage, EntityManagerInterface $em, DeleteFormFactory $deleteForms): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $secretMessage->getId(), (string) $request->request->get('_token'))) {
+        $form = $deleteForms->create('secret_message_delete', (int) $secretMessage->getId());
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
             $em->remove($secretMessage);
             $em->flush();
             $this->addFlash('success', 'Secret message deleted.');

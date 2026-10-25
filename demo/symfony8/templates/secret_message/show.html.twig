@@ -23,10 +23,10 @@
             <dt class="col-sm-3">Message (decrypted)</dt>
             <dd class="col-sm-9">{{ secret_message.message ?? '–' }}</dd>
         </dl>
-        <form method="post" action="{{ path('secret_message_delete', { id: secret_message.id }) }}" class="mt-4 pt-3 border-top" onsubmit="return confirm('Delete this message?');">
-            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ secret_message.id) }}">
+        {{ form_start(delete_form) }}
+            {% for child in delete_form %}{% if not child.rendered %}{{ form_row(child) }}{% endif %}{% endfor %}
             <button type="submit" class="btn btn-outline-danger">Delete</button>
-        </form>
+        {{ form_end(delete_form) }}
     </div>
 </div>
 {% endblock %}

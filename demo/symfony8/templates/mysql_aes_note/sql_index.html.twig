@@ -17,12 +17,8 @@
         <h2 class="h6 text-muted text-uppercase mb-3">Filter (LIKE)</h2>
 
         {% include 'mysql_aes_note/_list_filter.html.twig' with {
-            filter: filter,
+            filter_form: filter_form,
             clearPath: path('mysql_aes_note_sql_index'),
-            secretModeOptions: {
-                decrypted: 'LIKE on AES_DECRYPT (plaintext)',
-                ciphertext: 'LIKE on HEX(blob) (ciphertext)',
-            },
             queryDescription: queryDescription,
         } only %}
 
