@@ -190,6 +190,8 @@ PLAYWRIGHT_IMAGE ?= mcr.microsoft.com/playwright:v1.63.0-jammy
 DEMO_PORT = $$(grep -E '^PORT=' .env 2>/dev/null | cut -d= -f2 | tr -d '\r'); PORT=$${PORT:-8008}
 
 test-e2e: up
+	@# Earlier runs used the image's root user: drop root-owned leftovers before running as the host user (npm ci reinstalls).
+	@docker run --rm --user 0:0 -v "$(CURDIR)/e2e:/e2e" $(PLAYWRIGHT_IMAGE) rm -rf /e2e/node_modules /e2e/test-results /e2e/playwright-report
 	@mkdir -p e2e/node_modules
 	@PORT=$(DEMO_PORT); \
 	docker run --rm --network host --user "$$(id -u):$$(id -g)" -e HOME=/tmp \
@@ -199,6 +201,8 @@ test-e2e: up
 		bash -lc 'npm ci --no-fund --no-audit && npx playwright test --project=chromium --workers=1'
 
 demo-screenshots: up fixtures
+	@# Earlier runs used the image's root user: drop root-owned leftovers before running as the host user (npm ci reinstalls).
+	@docker run --rm --user 0:0 -v "$(CURDIR)/e2e:/e2e" $(PLAYWRIGHT_IMAGE) rm -rf /e2e/node_modules /e2e/test-results /e2e/playwright-report
 	@mkdir -p ../../docs/images/demo e2e/node_modules
 	@PORT=$(DEMO_PORT); \
 	docker run --rm --network host --user "$$(id -u):$$(id -g)" -e HOME=/tmp \
