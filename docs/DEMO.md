@@ -7,6 +7,7 @@ The bundle includes a **dockerized** demo project (**Symfony 8**). It runs on **
 - [Screenshots](#screenshots)
 - [Quick start (Docker)](#quick-start-docker)
 - [Makefile targets](#makefile-targets)
+- [Playwright e2e and screenshots](#playwright-e2e-and-screenshots)
 - [FrankenPHP (runtime and worker mode)](#frankenphp-runtime-and-worker-mode)
 - [What each demo includes](#what-each-demo-includes)
 - [Multiple encryptors and EncryptUtil](#multiple-encryptors-and-encryptutil)
@@ -15,13 +16,11 @@ The bundle includes a **dockerized** demo project (**Symfony 8**). It runs on **
 
 ## Screenshots
 
-**Demo home** – Overview, CRUD link and console commands:
+Captured by Playwright (`make demo-screenshots`) from the running demo, with the Symfony web debug toolbar:
 
-![Doctrine Encrypt Bundle Demo – home](assets/demo-home.webp)
+![Secret messages: ciphertext stored in MySQL next to the decrypted value](images/demo/encrypted-at-rest.webp)
 
-**Secret messages (CRUD)** – List of messages (encrypted in DB with Halite), create/edit/delete:
-
-![Secret messages CRUD](assets/demo-crud.webp)
+![MySQL AES notes: an AES_ENCRYPT column filtered with AES_DECRYPT in SQL](images/demo/mysql-aes-search.webp)
 
 | Demo      | Path            | Default port | PHP | Notes |
 |-----------|-----------------|--------------|-----|-------|
@@ -52,6 +51,15 @@ Then open **http://localhost:8008** (or the port shown by `make up`).
 - **cache-clear**, **update-bundle**, **test** – Cache, bundle update, tests.
 
 Change port: `PORT=9008 make up`.
+
+## Playwright e2e and screenshots
+
+REQ-DEMO-013: the specs live in `demo/symfony8/e2e/tests/` and run in the official Playwright Docker image (one worker) against the demo `PORT`.
+
+- **test-e2e** – Starts the demo (`make up` waits for HTTP 200), then `demo.spec.ts`: home, decrypted list, create a secret message through the form, check the Halite ciphertext in the raw SQL view and the decrypted value in the Doctrine list, delete it again.
+- **demo-screenshots** – Reloads the fixtures, then `screenshots.spec.ts` captures the full demo frame (navbar, bundle feature, web debug toolbar) as PNG and `scripts/to-webp.mjs` (`sharp`) writes `docs/images/demo/*.webp` and removes the PNGs.
+
+Both targets are also available from the repository root (`make test-e2e`, `make demo-screenshots`); `make release-check` runs `test-e2e`.
 
 ## FrankenPHP (runtime and worker mode)
 

@@ -43,8 +43,8 @@ help:
 	@echo "  make update-bundle      Update bundle from path repo"
 	@echo "  make test               Run tests"
 	@echo "  make test-coverage      Run tests with coverage (console output)"
-	@echo "  make test-e2e           Playwright e2e (Docker image)"
-	@echo "  make demo-screenshots   Recapture docs screenshots (docs/assets/*.webp)"
+	@echo "  make test-e2e           Playwright e2e: create/encrypt/decrypt happy path (Docker image)"
+	@echo "  make demo-screenshots   Reload fixtures and refresh README screenshots (docs/images/demo/*.webp)"
 	@echo ""
 
 up:
@@ -185,27 +185,32 @@ BUNDLE_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../..)
 # Optional: monorepo helper absent on standalone GitHub Actions checkout (REQ-MAKE-009).
 -include $(BUNDLE_ROOT)/../.scripts/Makefile.demo-update-deps.mk
 
-# REQ-DEMO-013: Playwright e2e + docs screenshots (official Playwright image).
+# REQ-DEMO-013: Playwright e2e + README screenshots (official Playwright Docker image, one worker).
 PLAYWRIGHT_IMAGE ?= mcr.microsoft.com/playwright:v1.63.0-jammy
+DEMO_PORT = $$(grep -E '^PORT=' .env 2>/dev/null | cut -d= -f2 | tr -d '\r'); PORT=$${PORT:-8008}
 
-test-e2e: ensure-up
+test-e2e: up
+	@# Earlier runs used the image's root user: drop root-owned leftovers before running as the host user (npm ci reinstalls).
+	@docker run --rm --user 0:0 -v "$(CURDIR)/e2e:/e2e" $(PLAYWRIGHT_IMAGE) rm -rf /e2e/node_modules /e2e/test-results /e2e/playwright-report
 	@mkdir -p e2e/node_modules
-	@PORT=$$(grep -E '^PORT=' .env 2>/dev/null | cut -d= -f2); PORT=$${PORT:-8008}; \
-	docker run --rm --network host \
+	@PORT=$(DEMO_PORT); \
+	docker run --rm --network host --user "$$(id -u):$$(id -g)" -e HOME=/tmp \
 		-v "$(CURDIR)/e2e:/e2e" -w /e2e \
 		-e DEMO_BASE_URL=http://127.0.0.1:$$PORT \
 		$(PLAYWRIGHT_IMAGE) \
-		bash -lc 'npm install --no-fund --no-audit && npx playwright test --project=chromium'
+		bash -lc 'npm ci --no-fund --no-audit && npx playwright test --project=chromium --workers=1'
 
-demo-screenshots: ensure-up
-	@mkdir -p ../../docs/assets e2e/node_modules
-	@PORT=$$(grep -E '^PORT=' .env 2>/dev/null | cut -d= -f2); PORT=$${PORT:-8008}; \
-	docker run --rm --network host \
+demo-screenshots: up fixtures
+	@# Earlier runs used the image's root user: drop root-owned leftovers before running as the host user (npm ci reinstalls).
+	@docker run --rm --user 0:0 -v "$(CURDIR)/e2e:/e2e" $(PLAYWRIGHT_IMAGE) rm -rf /e2e/node_modules /e2e/test-results /e2e/playwright-report
+	@mkdir -p ../../docs/images/demo e2e/node_modules
+	@PORT=$(DEMO_PORT); \
+	docker run --rm --network host --user "$$(id -u):$$(id -g)" -e HOME=/tmp \
 		-v "$(CURDIR)/e2e:/e2e" \
-		-v "$(CURDIR)/../../docs/assets:/screenshots" \
+		-v "$(CURDIR)/../../docs/images/demo:/screenshots" \
 		-w /e2e \
 		-e DEMO_BASE_URL=http://127.0.0.1:$$PORT \
 		-e SCREENSHOT_DIR=/screenshots \
 		$(PLAYWRIGHT_IMAGE) \
-		bash -lc 'npm install --no-fund --no-audit && npx playwright test --project=screenshots && node scripts/to-webp.mjs /screenshots'
-	@echo "Screenshots written under docs/assets/ (WebP)"
+		bash -lc 'npm ci --no-fund --no-audit && npx playwright test --project=screenshots --workers=1 && node scripts/to-webp.mjs /screenshots 90'
+	@echo "Screenshots written under docs/images/demo/ (WebP)"

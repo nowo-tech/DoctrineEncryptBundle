@@ -12,6 +12,19 @@ This bundle is **FrankenPHP worker mode friendly**.
 
 This also holds when the kernel is not reset between requests; see [docs/FRANKENPHP-WORKER-AUDIT.md](docs/FRANKENPHP-WORKER-AUDIT.md).
 
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/images/demo/encrypted-at-rest.webp" alt="Secret messages table showing the Halite ciphertext stored in MySQL next to the value decrypted by the bundle" />
+      <br /><sub>Encrypted at rest — ciphertext in MySQL, plain text in your entities</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/images/demo/mysql-aes-search.webp" alt="MySQL AES notes filtered on the encrypted column, with the AES_DECRYPT query used and the matching decrypted secret" />
+      <br /><sub>MySQL AES interop — search an AES_ENCRYPT column with AES_DECRYPT in SQL</sub>
+    </td>
+  </tr>
+</table>
+
 ## Table of contents
 
 - [Quick search terms](#quick-search-terms)
@@ -162,6 +175,13 @@ Values are encrypted on persist/update and decrypted on load. For **programmatic
 ## Demo
 
 The Symfony 8 demo is in `demo/symfony8`. It runs with **FrankenPHP** and **Caddy** (HTTP on port 80 in the container). **`FRANKENPHP_MODE`** selects **`classic`** or **`worker`** (default **`worker`** in `.env.example`) — [docs/DEMO-FRANKENPHP.md](docs/DEMO-FRANKENPHP.md). Default host port: **8008** via `PORT`. Quick start: [docs/DEMO.md](docs/DEMO.md).
+
+Playwright e2e and the README screenshots ([REQ-DEMO-013](docs/DEMO.md#playwright-e2e-and-screenshots)):
+
+```bash
+make test-e2e           # create a secret message, assert ciphertext in MySQL and the decrypted value on load
+make demo-screenshots   # reload the demo fixtures and refresh docs/images/demo/*.webp
+```
 
 ## Development
 

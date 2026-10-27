@@ -13,9 +13,10 @@ class SecretMessageFixtures extends Fixture
     public function load(ObjectManager $manager): void
     {
         $messages = [
-            ['title' => 'Welcome', 'message' => 'This message is stored encrypted in the database.'],
-            ['title' => 'Demo note', 'message' => 'You can create, edit and delete secret messages from the CRUD.'],
-            ['title' => 'Halite', 'message' => 'The message field uses Halite for encryption at rest.'],
+            ['title' => 'Office Wi-Fi', 'message' => 'Guest network "ACME-Visitors", passphrase rotates every Monday.'],
+            ['title' => 'Patient callback', 'message' => 'Call Ms. Garcia after 5 pm about her MRI results.'],
+            ['title' => 'Vendor portal', 'message' => 'Recovery codes are kept in the finance safe, drawer 2.'],
+            ['title' => 'Payroll note', 'message' => 'March bonus approved for the support team (12 people).'],
         ];
 
         foreach ($messages as $data) {
