@@ -7,7 +7,7 @@ COMPOSE_BIN := $(shell docker compose version >/dev/null 2>&1 && echo "docker co
 COMPOSE     := $(COMPOSE_BIN) -f $(COMPOSE_FILE)
 SERVICE_PHP := php
 
-.PHONY: help up down down-dev build shell install update validate test test-coverage coverage-php-percent cs-check cs-fix qa clean ensure-up assets release-check release-check-demos demo-smoke composer-sync rector rector-dry phpstan igor check-no-cursor-coauthor check-open-prs check-no-raw-html-form strip-cursor-coauthor-from-history setup-hooks validate-translations
+.PHONY: help up down down-dev build shell install update validate test test-coverage coverage-php-percent cs-check cs-fix qa clean ensure-up assets release-check release-check-demos demo-smoke composer-sync rector rector-dry phpstan igor check-no-cursor-coauthor check-open-prs check-no-raw-html-form strip-cursor-coauthor-from-history setup-hooks validate-translations test-e2e demo-screenshots
 
 help:
 	@echo "Doctrine Encrypt Bundle - Development Commands"
@@ -31,9 +31,11 @@ help:
 	@echo "  phpstan       Run PHPStan static analysis"
 	@echo "  igor          Run Igor worker-state audit (REQ-CS-008)"
 	@echo "  qa            Run all QA checks (validate + cs-check + test)"
-	@echo "  release-check Pre-release: ensure-up + co-author + open-PRs + cs + phpstan + igor + translations + coverage + demos"
+	@echo "  release-check Pre-release: ensure-up + co-author + open-PRs + cs + phpstan + igor + translations + coverage + e2e + demos"
 	@echo "  validate-translations  Translation key parity (7 locales) + YAML parse (REQ-MAKE-004)"
 	@echo "  demo-smoke    Boot demo/symfony8 and assert HTTP 200 (REQ-TEST-011)"
+	@echo "  test-e2e      Playwright e2e against demo/symfony8: create a secret message, ciphertext in MySQL, decrypted on load (REQ-DEMO-013)"
+	@echo "  demo-screenshots Reload demo fixtures and refresh README screenshots docs/images/demo/*.webp (REQ-DEMO-013)"
 	@echo "  check-open-prs Fail if unresolved open GitHub PRs remain (REQ-REL-003)"
 	@echo "  check-no-raw-html-form Fail on raw <form>/<input>/<textarea>/<select> in Twig (REQ-TWIG-005)"
 	@echo "  composer-sync Validate composer.json and align composer.lock (no install)"
@@ -128,6 +130,7 @@ release-check:
 	@$(MAKE) igor
 	@$(MAKE) validate-translations
 	@$(MAKE) test-coverage
+	@$(MAKE) test-e2e
 	@$(MAKE) release-check-demos
 
 # REQ-MAKE-004 / REQ-I18N-002: key parity across the 7 required locales + YAML syntax.
@@ -148,6 +151,13 @@ demo-smoke:
 		sleep 3; \
 	done; \
 	echo "demo-smoke failed: last HTTP $$code"; exit 1
+
+# REQ-DEMO-013: Playwright e2e + WebP README screenshots (demo/symfony8/e2e, Playwright Docker image).
+test-e2e:
+	@$(MAKE) -C demo/symfony8 test-e2e
+
+demo-screenshots:
+	@$(MAKE) -C demo/symfony8 demo-screenshots
 
 release-check-demos:
 	@$(MAKE) -C demo release-check

@@ -53,6 +53,7 @@ The project uses [PHP-CS-Fixer](https://github.com/FriendsOfPHP/PHP-CS-Fixer) wi
 
 - Add or update unit and functional tests as needed.
 - Run `composer test` (or `make test`) and ensure all tests pass.
+- Demo e2e (REQ-DEMO-013): `make test-e2e` runs Playwright (official Docker image) against `demo/symfony8`: create a secret message, ciphertext in MySQL, decrypted value on load. `make demo-screenshots` reloads the demo fixtures and refreshes the README WebP screenshots in `docs/images/demo/`. Specs live in `demo/symfony8/e2e/tests/`; see [DEMO.md](DEMO.md#playwright-e2e-and-screenshots).
 
 ## Pull requests
 
