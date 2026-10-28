@@ -27,6 +27,7 @@ use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
 use Symfony\Component\PropertyAccess\PropertyAccess;
+use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Contracts\Service\ResetInterface;
 use Throwable;
 use WeakMap;
@@ -91,6 +92,17 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      * @var WeakMap<object, array<string, array{plaintext: string, ciphertext: mixed}>>
      */
     private WeakMap $cachedDecryptions;
+
+    /**
+     * Encrypted and embedded properties per class (null config = #[Embedded]), resolved once: postLoad runs for every
+     * hydrated entity, so reflecting every property and instantiating #[Encrypted] per row was the hot path.
+     * Class structure does not change while the process runs, so this is not cleared by reset().
+     *
+     * @var array<string, list<array{ReflectionProperty, Encrypted|null}>>
+     */
+    private array $fieldMap = []; // @igor-ignore - Per-class reflection cache (immutable class metadata), safe across requests.
+
+    private ?PropertyAccessorInterface $propertyAccessor = null; // @igor-ignore - Stateless accessor, created once.
 
     private readonly LoggerInterface $logger;
 
@@ -284,19 +296,11 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
 
         $encryptorMethod   = $isEncryptOperation ? 'encrypt' : 'decrypt';
         $realClass         = $this->getRealClass($entity);
-        $properties        = $this->getClassProperties($realClass);
         $defaultConfigName = $this->registry?->getDefaultName();
 
-        foreach ($properties as $refProperty) {
-            $attributes = $refProperty->getAttributes();
-            $isEmbebed  = $this->defineAtributeType($attributes, Embedded::class);
-            if ($isEmbebed) {
-                $this->handleEmbeddedAnnotation($entity, $refProperty, $isEncryptOperation, $configFilter);
-                continue;
-            }
-
-            $encryptedAttr = $this->getEncryptedAttributeInstance($attributes);
+        foreach ($this->fieldMap($realClass) as [$refProperty, $encryptedAttr]) {
             if (!$encryptedAttr instanceof Encrypted) {
+                $this->handleEmbeddedAnnotation($entity, $refProperty, $isEncryptOperation, $configFilter);
                 continue;
             }
 
@@ -311,7 +315,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
                 ? $encryptor
                 : $this->registry->get($encryptedAttr->config);
 
-            $pac   = PropertyAccess::createPropertyAccessor();
+            $pac   = $this->propertyAccessor ??= PropertyAccess::createPropertyAccessor();
             $value = $pac->getValue($entity, $refProperty->getName());
             if ($encryptorMethod === 'decrypt') {
                 if ($value !== null && $value !== '' && str_ends_with((string) $value, self::ENCRYPTION_MARKER)) {
@@ -371,7 +375,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     {
         $propName = $embeddedProperty->getName();
 
-        $pac = PropertyAccess::createPropertyAccessor();
+        $pac = $this->propertyAccessor ??= PropertyAccess::createPropertyAccessor();
 
         $embeddedEntity = $pac->getValue($entity, $propName);
 
@@ -429,6 +433,35 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      *
      * @param string $className Class name
      *
+     * @return array<string, ReflectionProperty>
+     */
+    /**
+     * @return list<array{ReflectionProperty, Encrypted|null}>
+     */
+    private function fieldMap(string $className): array
+    {
+        if (isset($this->fieldMap[$className])) {
+            return $this->fieldMap[$className];
+        }
+
+        $fields = [];
+        foreach ($this->getClassProperties($className) as $refProperty) {
+            assert($refProperty instanceof ReflectionProperty);
+            $attributes = $refProperty->getAttributes();
+            if ($this->defineAtributeType($attributes, Embedded::class)) {
+                $fields[] = [$refProperty, null];
+                continue;
+            }
+            $encryptedAttr = $this->getEncryptedAttributeInstance($attributes);
+            if ($encryptedAttr instanceof Encrypted) {
+                $fields[] = [$refProperty, $encryptedAttr];
+            }
+        }
+
+        return $this->fieldMap[$className] = $fields;
+    }
+
+    /**
      * @return array<string, ReflectionProperty>
      */
     private function getClassProperties(string $className): array

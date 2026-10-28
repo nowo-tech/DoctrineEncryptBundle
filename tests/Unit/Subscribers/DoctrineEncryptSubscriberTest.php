@@ -92,6 +92,22 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->assertSame('OVR-Switzerland<ENC>', $user->getAddress());
     }
 
+    /** postLoad runs per hydrated row: the encrypted-field map is resolved once per class. */
+    public function testEncryptedFieldsAreResolvedOncePerClass(): void
+    {
+        $this->subscriber->processFields(new User('David', 'Switzerland'), true);
+        $this->subscriber->processFields(new User('Anna', 'Spain'), true);
+        $this->subscriber->processFields(new WithUser('x', null, new User('Eve', 'Italy')), true);
+
+        $map = (new ReflectionProperty(DoctrineEncryptSubscriber::class, 'fieldMap'))->getValue($this->subscriber);
+        $this->assertIsArray($map);
+        $this->assertSame([User::class, WithUser::class], array_keys($map));
+        $this->assertSame(['name', 'address'], array_map(static fn (array $f): string => $f[0]->getName(), $map[User::class]));
+
+        $this->subscriber->reset();
+        $this->assertCount(2, (new ReflectionProperty(DoctrineEncryptSubscriber::class, 'fieldMap'))->getValue($this->subscriber), 'class metadata survives reset()');
+    }
+
     public function testProcessFieldsEncrypt(): void
     {
         $user = new User('David', 'Switzerland');

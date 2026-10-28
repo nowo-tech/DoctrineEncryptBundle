@@ -56,6 +56,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Performance
+
+- **Encrypted fields resolved once per class.** `postLoad` runs for every hydrated entity, and `processFields()`
+  reflected every property and instantiated `#[Encrypted]` on each call (also for classes without encrypted fields).
+  The list of encrypted / embedded properties is now cached per class, and the property accessor is created once.
+
 ### Changed
 
 - Demo: the row/show/edit delete buttons render through Symfony Form Types (`App\Form\CsrfOnlyType` built by `App\Form\DeleteFormFactory`: form `delete_{id}`, CSRF token id `delete{id}`, same routes, classes and confirm prompts) and the MysqlAes list filter through a GET `App\Form\ListFilterType` (query names `title` / `secret` / `secret_mode` unchanged), all with `form_start` / child loop / `form_end`; delete handlers validate with `handleRequest` + `isValid()`. The unused `secret_message/raw_index.html.twig` (its route redirects to the DB values page) is removed (REQ-TWIG-005).
