@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.9.0] - 2026-10-28](#290---2026-10-28)
 - [[2.8.2] - 2026-10-21](#282---2026-10-21)
 - [[2.8.1] - 2026-10-18](#281---2026-10-18)
 - [[2.8.0] - 2026-10-13](#280---2026-10-13)
@@ -55,6 +56,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-02-19](#100---2026-02-19)
 
 ## [Unreleased]
+
+## [2.9.0] - 2026-10-28
+
+Performance: encrypted fields are resolved once per class instead of reflecting every property of every loaded entity. See [UPGRADING](UPGRADING.md#to-290).
 
 ### Performance
 
