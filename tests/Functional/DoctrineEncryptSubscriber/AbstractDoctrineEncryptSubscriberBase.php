@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Functional\DoctrineEncryptSubscriber;
 
+use Doctrine\ORM\Events;
+use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Tests\Functional\AbstractFunctionalTestCase;
 use Nowo\DoctrineEncryptBundle\Tests\Functional\fixtures\Entity\CascadeTarget;
 use Nowo\DoctrineEncryptBundle\Tests\Functional\fixtures\Entity\Owner;
@@ -207,5 +209,66 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
         $shouldBeDifferentFromBefore = $result['secret'];
         $this->assertStringEndsWith('<ENC>', $shouldBeDifferentFromBefore); // is encrypted
         $this->assertNotEquals($originalEncryption, $shouldBeDifferentFromBefore);
+    }
+
+    public function testPlaintextEndingWithTheMarkerIsStoredEncrypted(): void
+    {
+        $secret = 'smtp://user:not-a-real-password@mail.test:25<ENC>';
+        $em     = $this->entityManager;
+        $owner  = new Owner();
+        $owner->setSecret($secret);
+        $em->persist($owner);
+        $em->flush();
+        $id = $owner->getId();
+        $this->assertSame($secret, $owner->getSecret(), 'decrypted again after flush');
+        $em->clear();
+
+        $stored = $em->getConnection()->fetchOne('SELECT secret FROM owner WHERE id = ?', [$id]);
+        $this->assertIsString($stored);
+        $this->assertNotSame($secret, $stored, 'never stored in clear');
+        $this->assertSame($secret, $this->encryptor->decrypt(substr($stored, 0, -5)));
+
+        $loaded = $em->find(Owner::class, $id);
+        $this->assertInstanceOf(Owner::class, $loaded);
+        $this->assertSame($secret, $loaded->getSecret());
+
+        // Changing it to another marker-ending plaintext encrypts it as well.
+        $loaded->setSecret('second<ENC>');
+        $em->flush();
+        $em->clear();
+        $stored = $em->getConnection()->fetchOne('SELECT secret FROM owner WHERE id = ?', [$id]);
+        $this->assertIsString($stored);
+        $this->assertSame('second<ENC>', $this->encryptor->decrypt(substr($stored, 0, -5)));
+    }
+
+    public function testUndecryptableValueIsWrittenBackUnchangedWhenOnDecryptFailureIsNull(): void
+    {
+        $em    = $this->entityManager;
+        $owner = new Owner();
+        $owner->setSecret('placeholder');
+        $owner->setNotSecret('before');
+        $em->persist($owner);
+        $em->flush();
+        $id = $owner->getId();
+        $em->clear();
+        // Ciphertext from another key (or corrupted): it must survive an unrelated change.
+        $em->getConnection()->executeStatement('UPDATE owner SET secret = ? WHERE id = ?', ['Zm9yZWlnbi1rZXk=<ENC>', $id]);
+
+        $events = [Events::postUpdate, Events::preUpdate, Events::postLoad, Events::onFlush, Events::preFlush, Events::postFlush];
+        $em->getEventManager()->removeEventListener($events, $this->subscriber);
+        $strict = new DoctrineEncryptSubscriber($this->encryptor, null, DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_NULL);
+        $em->getEventManager()->addEventListener($events, $strict);
+
+        $loaded = $em->find(Owner::class, $id);
+        $this->assertInstanceOf(Owner::class, $loaded);
+        $this->assertNull($loaded->getSecret(), 'callers never receive ciphertext');
+
+        $loaded->setNotSecret('after');
+        $em->flush();
+
+        $row = $em->getConnection()->fetchAssociative('SELECT * FROM owner WHERE id = ?', [$id]);
+        $this->assertIsArray($row);
+        $this->assertSame('after', $row['notSecret']);
+        $this->assertSame('Zm9yZWlnbi1rZXk=<ENC>', $row['secret']);
     }
 }

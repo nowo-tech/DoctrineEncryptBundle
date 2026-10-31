@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Encryptors;
 
+use Nowo\DoctrineEncryptBundle\Exception\MissingEncryptionKeyException;
 use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
 use ParagonIE\Halite\Alerts\CannotPerformOperation;
 use ParagonIE\Halite\KeyFactory;
@@ -20,7 +21,8 @@ use function sprintf;
  * Encryptor implementation using paragonie/halite (symmetric authenticated encryption).
  *
  * The secret key can be read from a file (hex-encoded) or from string content (e.g. env var).
- * If the key file does not exist, a new key is generated and saved.
+ * If the key file does not exist, a new key is generated and saved only when $generateMissingKey is true
+ * (bundle default: only in debug); otherwise {@see MissingEncryptionKeyException} is thrown.
  *
  * @author Michael de Groot <specamps@gmail.com>
  */
@@ -32,8 +34,11 @@ final class HaliteEncryptor implements EncryptorInterface
     /**
      * @param string $keyFile path to the key file (ignored when $keyContent is set)
      * @param string|null $keyContent Optional key value (e.g. from env). When set, $keyFile is not read.
+     * @param bool $generateMissingKey Whether a missing key file may be created on first use. The bundle passes
+     *                                 `generate_missing_key` (default: kernel.debug); when false a missing key file throws
+     *                                 {@see MissingEncryptionKeyException}. An existing key file is never replaced.
      */
-    public function __construct(private readonly string $keyFile, ?string $keyContent = null)
+    public function __construct(private readonly string $keyFile, ?string $keyContent = null, private readonly bool $generateMissingKey = true)
     {
         $this->keyContent = $keyContent !== null && $keyContent !== '' ? $keyContent : null;
     }
@@ -87,6 +92,13 @@ final class HaliteEncryptor implements EncryptorInterface
                 // @igor-ignore - Stateless crypto helper; mutation is local algorithm state
                 $this->encryptionKey = KeyFactory::loadEncryptionKey($this->keyFile);
             } catch (CannotPerformOperation) {
+                if (file_exists($this->keyFile)) {
+                    // Never replace an existing (unreadable) key: that would make every stored value undecryptable.
+                    throw MissingEncryptionKeyException::unreadable($this->keyFile);
+                }
+                if (!$this->generateMissingKey) {
+                    throw MissingEncryptionKeyException::forFile($this->keyFile);
+                }
                 // @igor-ignore - Stateless crypto helper; mutation is local algorithm state
                 $this->encryptionKey = KeyFactory::generateEncryptionKey();
                 SecretKeyPermissions::ensureDirectory(dirname($this->keyFile));

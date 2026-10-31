@@ -49,6 +49,10 @@ The bundle will:
 
 An `<ENC>` marker is appended to stored values so the bundle can tell encrypted from plain text; existing unencrypted data can still be read and will be encrypted on the next update.
 
+The marker alone is never taken as proof that a value is encrypted (since 2.10.0): a value ending with `<ENC>` is only written as-is when it is ciphertext the listener produced, or when it actually decrypts with the property's profile. Any other value — including a plaintext that happens to end with `<ENC>` — is encrypted, and reads back exactly as it was assigned. When a stored value cannot be decrypted, [`on_decrypt_failure`](CONFIGURATION.md#on_decrypt_failure) decides what the property gets (`keep`, `null` or `throw`).
+
+**Property access:** the listener reads and writes `#[Encrypted]` properties through Symfony PropertyAccess (getter / one-argument setter / public property) and, when a property is not reachable that way (private property without accessors, setter with more than one required argument), directly through reflection (since 2.10.0). A setter, when usable, still receives the ciphertext on flush, so keep setters of encrypted properties free of normalisation (trimming, lower-casing).
+
 **Column type:** Halite and Defuse produce ASCII ciphertext, so any `string` / `text` column works (size it for the ciphertext, which is longer than the plaintext). The deprecated **`MysqlAes`** profile produces **raw binary**: a `utf8mb4` `string` / `text` column rejects it (MySQL error 1366 *Incorrect string value*), so map the field as `binary` (`VARBINARY`) or `text` with `charset: binary`, or move to another profile. Details and the resulting schema diff: [MYSQL_AES.md › Column type](MYSQL_AES.md#column-type-for-orm-managed-fields-utf8mb4-limitation).
 
 ## Multiple encryptors
@@ -96,7 +100,20 @@ class MyService
 ```
 
 - **`encrypt(?string $value, ?string $config = null): ?string`** — Encrypts and appends the `<ENC>` marker. Use `$config = null` for the default config, or e.g. `'financial_data'` for a named config.
-- **`decrypt(?string $value, ?string $config = null): ?string`** — Decrypts if the value ends with `<ENC>`, otherwise returns the value as-is.
+- **`decrypt(?string $value, ?string $config = null): ?string`** — Decrypts if the value ends with `<ENC>`, otherwise returns the value as-is (**lenient**: unmarked input is treated as plaintext).
+- **`decryptStrict(?string $value, ?string $config = null): ?string`** (since 2.10.0) — For input that **must** be ciphertext (sealed exports, imports, values from another store). `null` and `''` are returned as-is; a value without the marker (or with an empty ciphertext) throws `ValueNotEncryptedException`; a value that does not decrypt throws `DecryptionFailedException`. Plaintext never passes through.
+
+```php
+use Nowo\DoctrineEncryptBundle\Exception\ExceptionInterface;
+
+try {
+    $token = $this->encryptUtil->decryptStrict($sealed, 'financial_data');
+} catch (ExceptionInterface) {
+    throw new \UnexpectedValueException('invalid sealed value');
+}
+```
+
+Since 2.10.0 `encrypt('0')` encrypts `'0'` like any other value (it was returned in clear) and `decrypt('0')` returns `'0'` (it returned `''`).
 
 The service is autowireable by type-hinting `EncryptUtil`.
 

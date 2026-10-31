@@ -95,6 +95,8 @@ php bin/console doctrine:encrypt:generate-secret-key
 
 (Command name may vary; list commands with `php bin/console list doctrine`.)
 
+Since 2.10.0 the bundle creates a missing key file on first use **only in debug** (`generate_missing_key`); in production create the key with this command before the first deploy and back it up, otherwise the first encryption fails with `MissingEncryptionKeyException`. See [Configuration › generate_missing_key](CONFIGURATION.md#generate_missing_key-missing-key-files).
+
 **Important:** Add key files to `.gitignore`:
 
 ```gitignore

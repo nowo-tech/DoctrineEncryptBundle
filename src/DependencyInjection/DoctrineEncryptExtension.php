@@ -10,6 +10,7 @@ use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
 use Nowo\DoctrineEncryptBundle\EventListener\SecretKeyPermissionsListener;
 use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
+use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -63,7 +64,10 @@ final class DoctrineEncryptExtension extends Extension
 
         $this->configureListenerConnections($container, $config['connections'] ?? []);
         $this->assertNoMysqlAesInProduction($container, $profiles);
+        $this->deprecateMysqlAes($profiles);
         $this->registerProfiles($container, $config);
+        $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber')
+            ->replaceArgument(2, $config['on_decrypt_failure'] ?? DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_KEEP);
         $this->registerSecretPermissions($container, $config['secret_permissions'] ?? []);
     }
 
@@ -129,11 +133,29 @@ final class DoctrineEncryptExtension extends Extension
         }
 
         foreach ($profiles as $name => $options) {
-            $encryptorClass = $options['encryptor_class'] ?? '';
-            if ($encryptorClass === 'MysqlAes' || $encryptorClass === MysqlAesEncryptor::class) {
+            if ($this->isMysqlAes((string) ($options['encryptor_class'] ?? ''))) {
                 throw new InvalidArgumentException(sprintf('nowo_doctrine_encrypt.profiles.%s uses MysqlAes, which is blocked in production. Use Halite or Defuse and migrate legacy ciphertext.', $name));
             }
         }
+    }
+
+    /**
+     * MysqlAes is AES-128-ECB without authentication (malleable, foreign keys pass the padding check about 1 time in 256).
+     *
+     * @param array<string, array<string, mixed>> $profiles
+     */
+    private function deprecateMysqlAes(array $profiles): void
+    {
+        foreach ($profiles as $name => $options) {
+            if ($this->isMysqlAes((string) ($options['encryptor_class'] ?? ''))) {
+                trigger_deprecation('nowo-tech/doctrine-encrypt-bundle', '2.10', 'nowo_doctrine_encrypt.profiles.%s uses MysqlAes (AES-128-ECB, unauthenticated), which is insecure and will be removed in 3.0. Use Halite and migrate the ciphertext (see docs/MYSQL_AES.md).', $name);
+            }
+        }
+    }
+
+    private function isMysqlAes(string $encryptorClass): bool
+    {
+        return $encryptorClass === 'MysqlAes' || $encryptorClass === MysqlAesEncryptor::class;
     }
 
     /**
@@ -172,6 +194,13 @@ final class DoctrineEncryptExtension extends Extension
             if ($keyContent !== null) {
                 // @igor-ignore - Justified false positive for FrankenPHP worker audit
                 $def->setArgument(1, $keyContent);
+            }
+            if ($encryptorClass === HaliteEncryptor::class || $encryptorClass === DefuseEncryptor::class) {
+                // null = only in debug: outside debug a missing key file is an error, never a silent new key.
+                // @igor-ignore - Container definition at compile time (not a runtime service)
+                $def->setArgument(1, $keyContent);
+                // @igor-ignore - Container definition at compile time (not a runtime service)
+                $def->setArgument(2, $config['generate_missing_key'] ?? '%kernel.debug%');
             }
             $encryptorRefs[$name] = new Reference($serviceId);
         }

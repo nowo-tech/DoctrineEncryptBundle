@@ -65,7 +65,8 @@ services:
   # (none = every connection).
   nowo_doctrine_encrypt.orm_subscriber:
     class: Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber
-    arguments: ["@nowo_doctrine_encrypt.encryptor_registry", "@?logger"]
+    # Third argument (on_decrypt_failure) is set by DoctrineEncryptExtension.
+    arguments: ["@nowo_doctrine_encrypt.encryptor_registry", "@?logger", "keep"]
     tags:
       - { name: 'kernel.reset', method: 'reset' }
       - { name: 'doctrine.event_listener', event: 'postUpdate', priority: 500 }

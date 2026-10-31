@@ -6,6 +6,8 @@
 nowo_doctrine_encrypt:
   default_profile: personal_data
   # batch_size: 5   # optional; default batch for decrypt/encrypt database commands (raw SQL)
+  # on_decrypt_failure: throw   # keep (default) | null | throw — recommended: null or throw
+  # generate_missing_key: ~      # default: only in debug; production needs doctrine:encrypt:generate-secret-key
   profiles:
     # 1) No secret_key_filename: default path .Halite.personal_data.key
     personal_data:

@@ -57,6 +57,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Hardening from the InstanceSettingsBundle security review: a plaintext ending with `<ENC>` is now encrypted, decrypt failures can fail closed, missing key files are no longer silently regenerated outside debug, and `SecretType` no longer reveals the last characters of a secret. See [UPGRADING](UPGRADING.md#unreleased).
+
+### Security
+
+- **A plaintext ending with `<ENC>` was stored in clear.** The listener skipped every value that already ended with the
+  marker, so such a plaintext (e.g. a password or DSN chosen to end with `<ENC>`) was written unencrypted and came back
+  without the marker. A value ending with `<ENC>` is now only kept as-is when it is ciphertext the listener wrote (or
+  restored), or when it actually decrypts with the property's profile; anything else is encrypted and reads back exactly
+  as assigned. Existing ciphertext is unaffected. A bare `<ENC>` is a plaintext too. `doctrine:encrypt:database` still
+  never encrypts a marked value twice, but now reports marked values that do not decrypt.
+- **Missing key files are no longer silently regenerated outside debug.** Halite and Defuse generated a new key when the
+  key file was missing (wrong `secret_directory_path`, lost volume), making every stored value undecryptable without an
+  error. New option `generate_missing_key` (default `null` = `kernel.debug`): outside debug a missing key file throws
+  `MissingEncryptionKeyException`. An existing but unreadable key file is never replaced (Halite overwrote it).
+- **`SecretType` reveals nothing of the stored secret by default**: `hint_visible_last` defaults to `0` (`••••`, was `4`).
+- **MysqlAes** (AES-128-ECB, unauthenticated) now triggers a deprecation at container build for every profile selecting
+  it; documented as insecure (malleable, padding-oracle-like false positives about 1 in 256 with a wrong key).
+
+### Added
+
+- **`on_decrypt_failure`** (`keep` | `null` | `throw`, default `keep`): what an `#[Encrypted]` property gets when its
+  stored value cannot be decrypted. `null` keeps the stored ciphertext on flush (an unrelated update never destroys it);
+  `throw` raises `DecryptionFailedException`. `null` / `throw` are recommended.
+- **`EncryptUtil::decryptStrict()`**: refuses unmarked input (`ValueNotEncryptedException`) and wraps decryption
+  failures (`DecryptionFailedException`); plaintext never passes through.
+- **`Util\EncryptedValue`** (`hasMarker()`, `payload()`, `isDecryptable()`) and the exception namespace
+  `Nowo\DoctrineEncryptBundle\Exception` (`ExceptionInterface`, `DecryptionFailedException`,
+  `ValueNotEncryptedException`, `MissingEncryptionKeyException`, the last one extending `RuntimeException`).
+- **Reflection fallback for `#[Encrypted]` properties**: private properties without accessors and setters with more than
+  one required argument work (PropertyAccess is still used when it can reach the property).
+- `HaliteEncryptor` / `DefuseEncryptor` take an optional third constructor argument `bool $generateMissingKey = true`.
+
+### Changed
+
+- `SecretType` option `hint_visible_last` defaults to `0` (was `4`).
+- `EncryptUtil::encrypt('0')` encrypts `'0'` (it was returned in clear) and `EncryptUtil::decrypt('0')` returns `'0'`
+  (it returned `''`), matching the Doctrine listener.
+- The `on_decrypt_failure: keep` warning has an `{outcome}` placeholder (`The raw value is kept.` / `The property is set to null.`).
+
 ## [2.9.0] - 2026-10-28
 
 Performance: encrypted fields are resolved once per class instead of reflecting every property of every loaded entity. See [UPGRADING](UPGRADING.md#to-290).

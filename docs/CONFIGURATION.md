@@ -13,6 +13,8 @@ The bundle is configured under the root key `nowo_doctrine_encrypt`. The only su
   - [Encryptor and query performance (overview)](#encryptor-and-query-performance-overview)
 - [Secret key: file or env](#secret-key-file-or-env)
 - [Secret key files (when using path)](#secret-key-files-when-using-path)
+- [generate_missing_key (missing key files)](#generate_missing_key-missing-key-files)
+- [on_decrypt_failure](#on_decrypt_failure)
 - [secret_permissions (key file hardening)](#secret_permissions-key-file-hardening)
 - [Loading configuration](#loading-configuration)
 - [SecretType form options](#secrettype-form-options)
@@ -23,6 +25,8 @@ The bundle is configured under the root key `nowo_doctrine_encrypt`. The only su
 |--------|------|---------|-------------|
 | `connections` | `list<string>` | `[]` (every connection) | Doctrine DBAL connections whose entity managers get the encrypt/decrypt listener. Empty = all connections (DoctrineBundle registers an untagged listener on each one). List names (e.g. `[default, customer]`) to restrict it; entities on a connection that is **not** listed are neither encrypted nor decrypted. A single string is accepted. |
 | `default_profile` | `string` | `default` | Which profile to use when the attribute has no alias or uses `"default"`. |
+| `on_decrypt_failure` | `keep` \| `null` \| `throw` | `keep` | What an `#[Encrypted]` property gets when its stored value ends with `<ENC>` but cannot be decrypted (wrong or rotated key, corrupted ciphertext). `keep` = the raw ciphertext (marker stripped) and a warning — callers may take it for the secret. **`null` (recommended)** = `null` and a warning; the stored ciphertext is written back unchanged on flush, so an unrelated update never destroys it (a non-nullable property throws instead). **`throw` (recommended)** = `Nowo\DoctrineEncryptBundle\Exception\DecryptionFailedException` (no value in the message). See [On decrypt failure](#on_decrypt_failure). |
+| `generate_missing_key` | `?bool` | `null` (= `kernel.debug`) | Whether the Halite / Defuse encryptors may create a **missing** key file on first use. `null` = only in debug; outside debug a missing key file throws `MissingEncryptionKeyException` (a wrong path or a lost volume would otherwise encrypt new data with a throwaway key). An existing key file is never replaced, also when it is unreadable. See [Missing key files](#generate_missing_key-missing-key-files). |
 | `batch_size` | `int` | `5` | Default batch size for `doctrine:decrypt:database` and `doctrine:encrypt:database` (raw SQL). Overridable per run via the `batchSize` argument. Minimum: 1. |
 | `secret_permissions` | `array` | see below | Filesystem hardening for file-based keys. See [secret_permissions](#secret_permissions-key-file-hardening). |
 | `profiles` | `array` | `[]` (normalized to one `default` profile) | Map of alias => options. Each alias has `encryptor_class` and either `secret_directory_path` or `secret_key_env_var`. Optional: `secret_key_filename`. |
@@ -137,7 +141,40 @@ Key file per profile: `.{encryptor_class}.{alias}.key` (or your `secret_key_file
 .Defuse.*.key
 ```
 
-If no key file exists, the bundle can generate one (e.g. via the `doctrine:encrypt:generate-secret-key` command, if available). See [Commands](COMMANDS.md).
+Create key files explicitly with `php bin/console doctrine:encrypt:generate-secret-key` (no argument: creates every **missing** key and never overwrites an existing one). See [Commands](COMMANDS.md) and [generate_missing_key](#generate_missing_key-missing-key-files).
+
+## generate_missing_key (missing key files)
+
+Up to 2.9.x the Halite and Defuse encryptors silently generated a **new** key when the key file did not exist (wrong `secret_directory_path`, lost volume, new container). Every stored value then became undecryptable and new data was encrypted with a throwaway key, without any error. Since 2.10.0:
+
+| `generate_missing_key` | Missing key file | Existing but unreadable key file |
+|------------------------|------------------|----------------------------------|
+| `null` (default) | generated when `kernel.debug` is true; `MissingEncryptionKeyException` otherwise | `MissingEncryptionKeyException` (never replaced) |
+| `true` | generated (2.9.x behaviour) | `MissingEncryptionKeyException` (never replaced) |
+| `false` | `MissingEncryptionKeyException` | `MissingEncryptionKeyException` (never replaced) |
+
+```yaml
+# config/packages/nowo_doctrine_encrypt.yaml
+nowo_doctrine_encrypt:
+    generate_missing_key: false   # also refuse in dev; create keys with doctrine:encrypt:generate-secret-key
+```
+
+Deployment: create the key once (`php bin/console doctrine:encrypt:generate-secret-key`), back it up, and mount it (or use `secret_key_env_var`). Profiles using `secret_key_env_var` and custom encryptors are not affected; `MysqlAes` already refused a missing key file.
+
+## on_decrypt_failure
+
+When a stored value ends with `<ENC>` but its ciphertext cannot be decrypted, the listener applies `on_decrypt_failure`:
+
+```yaml
+nowo_doctrine_encrypt:
+    on_decrypt_failure: throw   # or null; keep = 2.x default
+```
+
+- **`keep`** (default in 2.x): the property gets the raw ciphertext (marker stripped) and a warning is logged. Consumers may treat that ciphertext as the secret (send it as a password, export it, show "a secret is set"). Planned to change in 3.0 (see [ROADMAP](ROADMAP.md)).
+- **`null`**: the property is set to `null` and a warning is logged. If the entity is flushed and the property is still `null`, the original ciphertext is written back (nothing is lost while a key is missing); assigning a new value replaces it. A non-nullable property cannot hold `null`: `DecryptionFailedException` is thrown instead.
+- **`throw`**: `DecryptionFailedException` (implements `Nowo\DoctrineEncryptBundle\Exception\ExceptionInterface`) is thrown from `postLoad` / `postFlush`; the message names the entity, property and profile, never the value.
+
+Outside Doctrine use `EncryptUtil::decryptStrict()` (see [USAGE.md](USAGE.md#encryptutil-programmatic-encryptdecrypt)).
 
 ## secret_permissions (key file hardening)
 
@@ -176,7 +213,7 @@ If no config file exists, the bundle uses one default config (Halite, `%kernel.p
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `current_value` | `?string` | `null` | Stored plain secret. Only used to build the `MaskUtil::secretHint()` hint (help + placeholder); never rendered. `null` / `''` = nothing stored. |
-| `hint_visible_last` | `int` | `4` | Trailing characters revealed by the hint (`<= 0` shows only the mask). |
+| `hint_visible_last` | `int` | `0` | Trailing characters revealed by the hint (`<= 0` shows only the mask `••••`). Was `4` up to 2.9.x; pass `4` to get `•••• 1234` back. |
 | `allow_clear` | `?bool` | `null` | Add the `clear` checkbox: `null` = only when `current_value` is set, `true` = always, `false` = never. |
 | `value_options` | `array` | `[]` | Merged (recursively) over the `value` child options (`PasswordType`: `always_empty`, `trim: true`, `required: false`, label/help in the bundle domain). Use it for `constraints`, `label`, `attr`. |
 | `clear_options` | `array` | `[]` | Merged over the `clear` child options (`CheckboxType`). |

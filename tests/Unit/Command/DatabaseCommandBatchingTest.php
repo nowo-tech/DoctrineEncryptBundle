@@ -148,6 +148,7 @@ final class DatabaseCommandBatchingTest extends TestCase
         $tester = $this->runCommand($this->createEncryptCommand($encryptor), ['config' => 'default']);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertStringContainsString('1 value(s) end with <ENC> but do not decrypt with their config', $tester->getDisplay());
         $names = $this->names();
         $this->assertSame('other-key:plain2' . self::MARKER, $names[2]);
         $this->assertSame('enc:plain1' . self::MARKER, $names[1]);

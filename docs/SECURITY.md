@@ -8,6 +8,8 @@
 - [Mitigations](#mitigations)
 - [Cryptography and secrets](#cryptography-and-secrets)
   - [MysqlAes (legacy — do not use in new production)](#mysqlaes-legacy--do-not-use-in-new-production)
+  - [Marker, decrypt failures and missing keys (since 2.10.0)](#marker-decrypt-failures-and-missing-keys-since-2100)
+  - [Associated data / context binding](#associated-data--context-binding)
 - [Logging](#logging)
 - [Dependencies and updates](#dependencies-and-updates)
 - [Reporting a vulnerability](#reporting-a-vulnerability)
@@ -46,7 +48,8 @@ There is no separate HTTP API exposed by the bundle itself beyond what your app 
 - Use **Halite** or **Defuse** as provided; for custom encryptors, use authenticated encryption and secure key handling.
 - With several Doctrine connections, keep the encrypt listener on every connection that stores `#[Encrypted]` entities. Since **2.7.0** it is attached to all connections by default (up to 2.6.x it ran on `default` only and other connections stored plaintext); if you restrict it with `connections`, entities on an unlisted connection are stored **unencrypted**.
 - Store keys **outside the web root**, restrict filesystem permissions, and prefer **secrets management** in production. The bundle creates missing key directories `0770` and keeps key files at `0600` (`secret_permissions`, see [CONFIGURATION.md](CONFIGURATION.md#secret_permissions-key-file-hardening)); existing directories (e.g. the project root) are not changed.
-- Show saved secrets with **`MaskUtil::secretHint()`** / **`|secret_hint`** (`•••• 1234`) instead of echoing them back into forms or HTML.
+- Show saved secrets with **`MaskUtil::secretHint()`** / **`|secret_hint`** instead of echoing them back into forms or HTML. `SecretType` shows only `••••` by default since 2.10.0 (`hint_visible_last: 0`); revealing trailing characters is opt-in.
+- Set **`on_decrypt_failure: throw`** (or `null`) so a wrong or rotated key never hands ciphertext to callers as if it were the secret, and keep **`generate_missing_key`** off in production (default) so a missing key file is an error, not a new key.
 - Keep **`secret_directory_path`** and env-based keys out of version control; use `.gitignore` for key files.
 - Run **key rotation** during maintenance windows with backups; use `doctrine:encrypt:rotate-keys` or the documented manual flow.
 - In Twig, only decrypt what you must display; `|decrypt`, `|mask` and `|secret_hint` are subject to auto-escaping (no `is_safe: html`). Escape explicitly when rendering outside HTML contexts if needed.
@@ -59,16 +62,42 @@ Encryption uses **Paragonie Halite** or **Defuse php-encryption** (authenticated
 
 ### MysqlAes (legacy — do not use in new production)
 
-`MysqlAesEncryptor` exists only for interoperability with MySQL `AES_ENCRYPT` / `AES_DECRYPT` (AES-128-ECB). It is **deprecated since 2.1.0** and triggers a deprecation notice on construction. Since **2.3.9**, selecting MysqlAes (alias or FQCN) in **any** profile when `kernel.environment` is `prod` throws `InvalidArgumentException` at compile time.
+`MysqlAesEncryptor` exists only for interoperability with MySQL `AES_ENCRYPT` / `AES_DECRYPT` (AES-128-ECB). It is **deprecated since 2.1.0**, **insecure** (AES-128-ECB without authentication: malleable, block swaps / truncation still decrypt, a wrong key passes the padding check about 1 time in 256) and triggers a deprecation notice on construction and, since 2.10.0, at container build for every profile that selects it. Removal is planned for 3.0. Since **2.3.9**, selecting MysqlAes (alias or FQCN) in **any** profile when `kernel.environment` is `prod` throws `InvalidArgumentException` at compile time.
 
 - **Do not** select MysqlAes in production configs.
 - **Migrate** existing MysqlAes ciphertext to Halite or Defuse in a non-prod environment first (decrypt with MysqlAes, re-encrypt with Halite/Defuse; see [MYSQL_AES.md](MYSQL_AES.md) and key-rotation docs).
 - Prefer authenticated encryption (Halite/Defuse) for any new at-rest field encryption.
 - Regression tests: `DoctrineEncryptExtensionTest` (`testMysqlAesBlockedInProduction`, FQCN / mixed-profile cases).
 
+### Marker, decrypt failures and missing keys (since 2.10.0)
+
+| Issue (≤ 2.9.x) | Behaviour since 2.10.0 |
+|-----------------|------------------------|
+| A plaintext ending with `<ENC>` was skipped by the listener and stored **in clear** (and read back without the marker). | A marked value is only kept as-is when it is ciphertext the listener wrote or restored, or when it decrypts with the property's profile (Halite / Defuse are authenticated, so a plaintext never does). Everything else is encrypted. |
+| A decryption failure (wrong / rotated key, corrupted data) kept the raw ciphertext in the property; callers received ciphertext as if it were the secret. | `on_decrypt_failure`: `keep` (2.x default), `null` (stored ciphertext written back unchanged on flush) or `throw` (`DecryptionFailedException`). `null` / `throw` recommended; the default is planned to change in 3.0. |
+| Halite / Defuse silently generated a new key when the key file was missing (Halite also when it was unreadable). | `generate_missing_key` (default: only in debug). Outside debug a missing key throws `MissingEncryptionKeyException`; an existing key file is never replaced. Create keys with `doctrine:encrypt:generate-secret-key`. |
+| `EncryptUtil::decrypt()` returns unmarked input unchanged (plaintext pass-through). | Unchanged (lenient by design); use `EncryptUtil::decryptStrict()` for input that must be ciphertext. |
+| `SecretType` revealed the last 4 characters of the stored secret. | `hint_visible_last` defaults to `0`. |
+
+Log messages and exception messages name the entity, property and profile, never the value.
+
+### Associated data / context binding
+
+Ciphertext is **not bound to its context** (entity, row id, column): Halite / Defuse authenticate the ciphertext, but
+the bundle passes no associated data. Someone with write access to the database (or to a sealed export) can move a
+valid ciphertext from one row or column to another that uses the same profile, and it will decrypt there. Mitigations:
+
+- use **separate profiles (keys)** for data of different sensitivity (`#[Encrypted('financial_data')]`), so ciphertext
+  cannot be moved across them;
+- when you seal values yourself (exports, portability), prepend the target context to the plaintext before
+  `EncryptUtil::encrypt()` and verify it after `decryptStrict()`.
+
+Optional associated data (Halite `encryptWithAD()`; Defuse has no AD support) is on the [ROADMAP](ROADMAP.md): row ids
+are not known before `INSERT` for generated identifiers, so it needs a design that stays compatible with existing data.
+
 ## Logging
 
-Avoid logging decrypted personal data, key paths with sensitive contents, or encryption exceptions that embed user data. Prefer generic error messages in production logs.
+Avoid logging decrypted personal data, key paths with sensitive contents, or encryption exceptions that embed user data. Prefer generic error messages in production logs. The bundle's decrypt-failure warning and `DecryptionFailedException` contain the entity class, property, profile and the underlying exception class / message, never the stored value.
 
 ## Dependencies and updates
 

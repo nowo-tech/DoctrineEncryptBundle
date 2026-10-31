@@ -63,6 +63,46 @@
 
 ## Unreleased
 
+From **2.9.x** (planned **2.10.0**):
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
+Check these behaviour changes:
+
+1. **Key files are no longer created outside debug** (`generate_missing_key`, default `null` = `kernel.debug`). If a
+   production deployment relied on the first request creating `.Halite.*.key` / `.Defuse.*.key`, it now fails with
+   `MissingEncryptionKeyException` instead of encrypting with a throwaway key. Create the key explicitly before the
+   first deploy and back it up:
+
+   ```bash
+   php bin/console doctrine:encrypt:generate-secret-key   # creates only missing keys, never overwrites
+   ```
+
+   To keep the 2.9.x behaviour (not recommended), set `nowo_doctrine_encrypt.generate_missing_key: true`. A key file
+   that exists but cannot be read now throws as well (Halite used to replace it with a new key).
+2. **`SecretType` hint**: `hint_visible_last` defaults to `0` (`••••`). Pass `'hint_visible_last' => 4` where you want
+   `•••• 1234` back.
+3. **Plaintext ending with `<ENC>`** is now encrypted. Values of that kind written by 2.9.x are still in clear in the
+   database; on read they fail to decrypt and `on_decrypt_failure` applies (with `keep`, the value comes back without
+   the trailing `<ENC>`, as before). Re-save them to encrypt them. A value you assign that already is valid ciphertext +
+   `<ENC>` for the property's profile is still written as-is.
+4. **`EncryptUtil` and `'0'`**: `encrypt('0')` now returns ciphertext + `<ENC>` and `decrypt('0')` returns `'0'`.
+5. **Recommended**: choose a fail-closed decrypt policy (the default stays `keep` in 2.x and is planned to change in 3.0):
+
+   ```yaml
+   # config/packages/nowo_doctrine_encrypt.yaml
+   nowo_doctrine_encrypt:
+       on_decrypt_failure: throw   # or null
+   ```
+
+   With `null`, a non-nullable `#[Encrypted]` property throws `DecryptionFailedException` instead of holding `null`.
+6. **MysqlAes** profiles now trigger a deprecation at container build (removal planned for 3.0); migrate to Halite.
+7. Custom subclasses / direct instantiation: `DoctrineEncryptSubscriber::__construct()` has a third optional argument
+   (`$onDecryptFailure`), `HaliteEncryptor` / `DefuseEncryptor` a third optional argument (`$generateMissingKey`,
+   default `true` when instantiated directly).
+
 ## To 2.9.0
 
 From **2.8.2**:

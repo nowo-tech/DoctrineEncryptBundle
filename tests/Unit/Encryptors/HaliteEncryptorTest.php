@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Encryptors;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
+use Nowo\DoctrineEncryptBundle\Exception\MissingEncryptionKeyException;
 use ParagonIE\Halite\Alerts\InvalidMessage;
 use ParagonIE\Halite\KeyFactory;
 use ParagonIE\Halite\Symmetric\Crypto;
@@ -15,6 +16,7 @@ use SodiumException;
 use Throwable;
 
 use function extension_loaded;
+use function function_exists;
 
 class HaliteEncryptorTest extends TestCase
 {
@@ -265,6 +267,66 @@ class HaliteEncryptorTest extends TestCase
             if (is_dir($dir)) {
                 @rmdir($dir);
             }
+        }
+    }
+
+    public function testMissingKeyFileIsNotGeneratedWhenGenerationIsDisabled(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        $keyfile   = sys_get_temp_dir() . '/halite-missing-' . uniqid('', true) . '.key';
+        $encryptor = new HaliteEncryptor($keyfile, null, false);
+
+        try {
+            $encryptor->encrypt(self::DATA);
+            $this->fail('MissingEncryptionKeyException expected');
+        } catch (MissingEncryptionKeyException $e) {
+            $this->assertStringContainsString($keyfile, $e->getMessage());
+        }
+        $this->assertFileDoesNotExist($keyfile);
+    }
+
+    public function testExistingKeyFileIsUsedWhenGenerationIsDisabled(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        $keyfile = sys_get_temp_dir() . '/halite-existing-' . uniqid('', true) . '.key';
+        (new HaliteEncryptor($keyfile))->encrypt(self::DATA);
+        $key = file_get_contents($keyfile);
+
+        try {
+            $encryptor = new HaliteEncryptor($keyfile, null, false);
+            $this->assertSame(self::DATA, $encryptor->decrypt($encryptor->encrypt(self::DATA)));
+            $this->assertSame($key, file_get_contents($keyfile));
+        } finally {
+            @unlink($keyfile);
+        }
+    }
+
+    public function testUnreadableKeyFileIsNeverReplaced(): void
+    {
+        if (!extension_loaded('sodium')) {
+            $this->markTestSkipped('This test only runs when the sodium extension is enabled.');
+        }
+        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            $this->markTestSkipped('root can read a 0000 file.');
+        }
+        $keyfile = sys_get_temp_dir() . '/halite-unreadable-' . uniqid('', true) . '.key';
+        (new HaliteEncryptor($keyfile))->encrypt(self::DATA);
+        $key = file_get_contents($keyfile);
+        chmod($keyfile, 0o000);
+
+        try {
+            (new HaliteEncryptor($keyfile))->encrypt(self::DATA);
+            $this->fail('MissingEncryptionKeyException expected');
+        } catch (MissingEncryptionKeyException $e) {
+            $this->assertStringContainsString('cannot be read', $e->getMessage());
+        } finally {
+            chmod($keyfile, 0o600);
+            $this->assertSame($key, file_get_contents($keyfile));
+            @unlink($keyfile);
         }
     }
 }

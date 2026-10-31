@@ -17,9 +17,12 @@ use Doctrine\ORM\Events;
 // encryptorInterface
 use Doctrine\ORM\Mapping\Embedded;
 use Doctrine\Persistence\Mapping\ClassUtils;
+use InvalidArgumentException;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Exception\DecryptionFailedException;
+use Nowo\DoctrineEncryptBundle\Util\EncryptedValue;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 // attributes
@@ -34,7 +37,10 @@ use WeakMap;
 
 use function assert;
 use function count;
-use function strlen;
+use function in_array;
+use function is_object;
+use function is_string;
+use function sprintf;
 
 /**
  * Doctrine event listener that encrypts entity properties on persist/update and decrypts on load.
@@ -68,6 +74,17 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      */
     public const ENCRYPTED_ANN_NAME = Encrypted::class; // 'Ambta\DoctrineEncryptBundle\Configuration\Encrypted';
 
+    /** on_decrypt_failure: keep the stored ciphertext (marker stripped) in the property and log a warning (2.x default). */
+    public const ON_DECRYPT_FAILURE_KEEP = 'keep';
+
+    /** on_decrypt_failure: set the property to null and log a warning (the stored ciphertext is written back unchanged on flush). */
+    public const ON_DECRYPT_FAILURE_NULL = 'null';
+
+    /** on_decrypt_failure: throw {@see DecryptionFailedException}. */
+    public const ON_DECRYPT_FAILURE_THROW = 'throw';
+
+    public const ON_DECRYPT_FAILURE_MODES = [self::ON_DECRYPT_FAILURE_KEEP, self::ON_DECRYPT_FAILURE_NULL, self::ON_DECRYPT_FAILURE_THROW];
+
     private ?EncryptorRegistry $registry = null;
 
     /** When set, use this encryptor (or null to disable); when unset, use registry default. */
@@ -89,9 +106,26 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      * Ciphertext of each decrypted property, per entity, so an unchanged value is written back as-is on flush.
      * Entries disappear with the entity object, so the cache never outlives the identity map.
      *
-     * @var WeakMap<object, array<string, array{plaintext: string, ciphertext: mixed}>>
+     * The plaintext is null when the value could not be decrypted and `on_decrypt_failure: null` is configured.
+     *
+     * @var WeakMap<object, array<string, array{plaintext: string|null, ciphertext: string}>>
      */
     private WeakMap $cachedDecryptions;
+
+    /**
+     * Ciphertext written by this listener (or restored from the decryption cache), per entity and property.
+     * A value ending with the marker is only trusted without decrypting it when it is one of these.
+     *
+     * @var WeakMap<object, array<string, string>>
+     */
+    private WeakMap $knownCiphertexts;
+
+    /**
+     * Whether PropertyAccess can read / write a property, per "class::property" (false = reflection fallback).
+     *
+     * @var array<string, array{read: bool, write: bool}>
+     */
+    private array $accessModes = []; // @igor-ignore - Per-class accessor capability cache (immutable class metadata), safe across requests.
 
     /**
      * Encrypted and embedded properties per class (null config = #[Embedded]), resolved once: postLoad runs for every
@@ -109,10 +143,19 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     /**
      * @param EncryptorInterface|EncryptorRegistry|null $registryOrEncryptor Registry (normal DI), a single encryptor (BC/tests), or null
      * @param LoggerInterface|null $logger Receives a warning for every value that cannot be decrypted (wrong key, corrupted ciphertext)
+     * @param string $onDecryptFailure What a property gets when its value cannot be decrypted: "keep" (ciphertext, default), "null" or "throw"
      */
-    public function __construct(EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor = null, ?LoggerInterface $logger = null)
-    {
+    public function __construct(
+        EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor = null,
+        ?LoggerInterface $logger = null,
+        private readonly string $onDecryptFailure = self::ON_DECRYPT_FAILURE_KEEP,
+    ) {
+        if (!in_array($onDecryptFailure, self::ON_DECRYPT_FAILURE_MODES, true)) {
+            throw new InvalidArgumentException(sprintf('Invalid on_decrypt_failure "%s": use one of "%s".', $onDecryptFailure, implode('", "', self::ON_DECRYPT_FAILURE_MODES)));
+        }
+
         $this->cachedDecryptions = new WeakMap();
+        $this->knownCiphertexts  = new WeakMap();
         $this->logger            = $logger ?? new NullLogger();
 
         if ($registryOrEncryptor instanceof EncryptorInterface) {
@@ -174,6 +217,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     public function clearDecryptionCache(): void
     {
         $this->cachedDecryptions = new WeakMap();
+        $this->knownCiphertexts  = new WeakMap();
     }
 
     /**
@@ -185,6 +229,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     public function reset(): void
     {
         $this->cachedDecryptions    = new WeakMap();
+        $this->knownCiphertexts     = new WeakMap();
         $this->encryptorOverride    = null;
         $this->encryptorOverrideSet = false;
         $this->decryptCounter       = 0;
@@ -315,44 +360,153 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
                 ? $encryptor
                 : $this->registry->get($encryptedAttr->config);
 
-            $pac   = $this->propertyAccessor ??= PropertyAccess::createPropertyAccessor();
-            $value = $pac->getValue($entity, $refProperty->getName());
+            $name  = $refProperty->getName();
+            $value = $this->readProperty($entity, $refProperty);
             if ($encryptorMethod === 'decrypt') {
-                if ($value !== null && $value !== '' && str_ends_with((string) $value, self::ENCRYPTION_MARKER)) {
-                    $ciphertext = substr((string) $value, 0, -strlen(self::ENCRYPTION_MARKER));
-                    try {
-                        $currentPropValue = $propertyEncryptor->decrypt($ciphertext);
-                        ++$this->decryptCounter;
-                    } catch (Throwable $e) {
-                        // Ciphertext not valid (e.g. Halite "Invalid version tag", wrong key, or value was plain with <ENC> appended)
-                        $this->logger->warning('Could not decrypt {entity}::${property} (config "{config}"): {exception_class}: {reason}. The raw value is kept.', [
-                            'entity'          => $entity::class,
-                            'property'        => $refProperty->getName(),
-                            'config'          => $encryptedAttr->config,
-                            'exception_class' => $e::class,
-                            'reason'          => $e->getMessage(),
-                            'exception'       => $e,
-                        ]);
-                        $currentPropValue = $ciphertext;
-                    }
-                    $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
+                if (is_string($value) && EncryptedValue::hasMarker($value)) {
+                    $currentPropValue = $this->decryptValue($entity, $refProperty, $encryptedAttr->config, $propertyEncryptor, $value);
+                    $this->writeProperty($entity, $refProperty, $currentPropValue, $encryptedAttr->config);
                     $cached                           = $this->cachedDecryptions[$entity] ?? [];
-                    $cached[$refProperty->getName()]  = ['plaintext' => $currentPropValue, 'ciphertext' => $value];
+                    $cached[$name]                    = ['plaintext' => $currentPropValue, 'ciphertext' => $value];
                     $this->cachedDecryptions[$entity] = $cached;
                 }
-            } elseif ($value !== null && $value !== '') {
-                $cached = $this->cachedDecryptions[$entity][$refProperty->getName()] ?? null;
-                if ($cached !== null && $cached['plaintext'] === (string) $value) {
-                    $pac->setValue($entity, $refProperty->getName(), $cached['ciphertext']);
-                } elseif (!str_ends_with((string) $value, self::ENCRYPTION_MARKER)) {
-                    ++$this->encryptCounter;
-                    $currentPropValue = $propertyEncryptor->encrypt($value) . self::ENCRYPTION_MARKER;
-                    $pac->setValue($entity, $refProperty->getName(), $currentPropValue);
-                }
+
+                continue;
+            }
+
+            $cached = $this->cachedDecryptions[$entity][$name] ?? null;
+            if ($cached !== null && $cached['plaintext'] === ($value === null ? null : (string) $value)) {
+                // Unchanged since it was decrypted (or could not be decrypted): write the stored ciphertext back as-is.
+                $this->writeProperty($entity, $refProperty, $cached['ciphertext'], $encryptedAttr->config);
+                $this->rememberCiphertext($entity, $name, $cached['ciphertext']);
+            } elseif ($value !== null && $value !== '' && !$this->isCiphertext($entity, $name, (string) $value, $propertyEncryptor)) {
+                ++$this->encryptCounter;
+                $currentPropValue = $propertyEncryptor->encrypt((string) $value) . self::ENCRYPTION_MARKER;
+                $this->writeProperty($entity, $refProperty, $currentPropValue, $encryptedAttr->config);
+                $this->rememberCiphertext($entity, $name, $currentPropValue);
             }
         }
 
         return $entity;
+    }
+
+    /**
+     * Decrypts a marked value; on failure applies the on_decrypt_failure policy (keep / null / throw).
+     */
+    private function decryptValue(object $entity, ReflectionProperty $refProperty, string $config, EncryptorInterface $encryptor, string $value): ?string
+    {
+        try {
+            $plaintext = $encryptor->decrypt(EncryptedValue::payload($value));
+            ++$this->decryptCounter;
+
+            return $plaintext;
+        } catch (Throwable $e) {
+            // Wrong or rotated key, corrupted ciphertext, or (data written before 2.10) a plaintext that ended with <ENC>.
+            if ($this->onDecryptFailure === self::ON_DECRYPT_FAILURE_THROW) {
+                throw DecryptionFailedException::forProperty($entity::class, $refProperty->getName(), $config, $e);
+            }
+
+            $this->logger->warning('Could not decrypt {entity}::${property} (config "{config}"): {exception_class}: {reason}. {outcome}', [
+                'entity'          => $entity::class,
+                'property'        => $refProperty->getName(),
+                'config'          => $config,
+                'exception_class' => $e::class,
+                'reason'          => $e->getMessage(),
+                'outcome'         => $this->onDecryptFailure === self::ON_DECRYPT_FAILURE_NULL ? 'The property is set to null.' : 'The raw value is kept.',
+                'exception'       => $e,
+            ]);
+
+            return $this->onDecryptFailure === self::ON_DECRYPT_FAILURE_NULL ? null : EncryptedValue::payload($value);
+        }
+    }
+
+    /**
+     * Whether a value about to be written is already ciphertext and must not be encrypted again.
+     *
+     * The marker alone is not enough (a plaintext may end with "<ENC>"): the value must be ciphertext this listener
+     * wrote or restored, or its payload must decrypt with the property encryptor.
+     */
+    private function isCiphertext(object $entity, string $property, string $value, EncryptorInterface $encryptor): bool
+    {
+        if (!EncryptedValue::hasMarker($value)) {
+            return false;
+        }
+
+        if (($this->knownCiphertexts[$entity][$property] ?? null) === $value) {
+            return true;
+        }
+
+        if (!EncryptedValue::isDecryptable($value, $encryptor)) {
+            return false;
+        }
+
+        $this->rememberCiphertext($entity, $property, $value);
+
+        return true;
+    }
+
+    private function rememberCiphertext(object $entity, string $property, string $ciphertext): void
+    {
+        $known                           = $this->knownCiphertexts[$entity] ?? [];
+        $known[$property]                = $ciphertext;
+        $this->knownCiphertexts[$entity] = $known;
+    }
+
+    /**
+     * Reads a property through PropertyAccess (getter, isser, public property) or, when it is not readable that way
+     * (private property without getter), through reflection. An uninitialized typed property reads as null.
+     */
+    private function readProperty(object $entity, ReflectionProperty $refProperty): mixed
+    {
+        $pac = $this->propertyAccessor ??= PropertyAccess::createPropertyAccessor();
+        if ($this->accessMode($entity, $refProperty)['read']) {
+            return $pac->getValue($entity, $refProperty->getName());
+        }
+
+        return $refProperty->isInitialized($entity) ? $refProperty->getValue($entity) : null;
+    }
+
+    /**
+     * Writes a property through PropertyAccess (one-argument setter, public property) or, when it is not writable that
+     * way (private property without setter, setter with more than one required argument), through reflection.
+     */
+    private function writeProperty(object $entity, ReflectionProperty $refProperty, ?string $value, string $config): void
+    {
+        $pac = $this->propertyAccessor ??= PropertyAccess::createPropertyAccessor();
+
+        try {
+            if ($this->accessMode($entity, $refProperty)['write']) {
+                $pac->setValue($entity, $refProperty->getName(), $value);
+
+                return;
+            }
+
+            $refProperty->setValue($entity, $value);
+        } catch (Throwable $e) {
+            if ($value !== null) {
+                throw $e;
+            }
+
+            // on_decrypt_failure: null on a property that does not accept null: fail closed instead of keeping ciphertext.
+            throw DecryptionFailedException::forProperty($entity::class, $refProperty->getName(), $config, $e);
+        }
+    }
+
+    /**
+     * @return array{read: bool, write: bool}
+     */
+    private function accessMode(object $entity, ReflectionProperty $refProperty): array
+    {
+        $key = $entity::class . '::' . $refProperty->getName();
+        if (!isset($this->accessModes[$key])) {
+            $pac                     = $this->propertyAccessor ??= PropertyAccess::createPropertyAccessor();
+            $this->accessModes[$key] = [
+                'read'  => $pac->isReadable($entity, $refProperty->getName()),
+                'write' => $pac->isWritable($entity, $refProperty->getName()),
+            ];
+        }
+
+        return $this->accessModes[$key];
     }
 
     /**
@@ -373,13 +527,9 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
 
     private function handleEmbeddedAnnotation(object $entity, ReflectionProperty $embeddedProperty, bool $isEncryptOperation = true, ?string $configFilter = null): void
     {
-        $propName = $embeddedProperty->getName();
+        $embeddedEntity = $this->readProperty($entity, $embeddedProperty);
 
-        $pac = $this->propertyAccessor ??= PropertyAccess::createPropertyAccessor();
-
-        $embeddedEntity = $pac->getValue($entity, $propName);
-
-        if ($embeddedEntity) {
+        if (is_object($embeddedEntity)) {
             $this->processFields($embeddedEntity, $isEncryptOperation, $configFilter);
         }
     }
@@ -446,7 +596,6 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
 
         $fields = [];
         foreach ($this->getClassProperties($className) as $refProperty) {
-            assert($refProperty instanceof ReflectionProperty);
             $attributes = $refProperty->getAttributes();
             if ($this->defineAtributeType($attributes, Embedded::class)) {
                 $fields[] = [$refProperty, null];

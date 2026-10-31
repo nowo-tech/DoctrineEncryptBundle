@@ -7,8 +7,12 @@ namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Util;
 use InvalidArgumentException;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Exception\DecryptionFailedException;
+use Nowo\DoctrineEncryptBundle\Exception\ValueNotEncryptedException;
 use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 class EncryptUtilTest extends TestCase
 {
@@ -31,11 +35,13 @@ class EncryptUtilTest extends TestCase
         $this->assertSame('', $util->encrypt(''));
     }
 
-    public function testEncryptReturnsZeroForZero(): void
+    /** '0' is a value like any other: it is encrypted (it was stored in clear before 2.10). */
+    public function testEncryptEncryptsZero(): void
     {
-        $registry = new EncryptorRegistry([], 'default');
-        $util     = new EncryptUtil($registry);
-        $this->assertSame('0', $util->encrypt('0'));
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $encryptor->expects($this->once())->method('encrypt')->with('0')->willReturn('cipher');
+        $util = new EncryptUtil($this->createRegistryWithDefault($encryptor));
+        $this->assertSame('cipher' . EncryptUtil::ENCRYPTION_MARKER, $util->encrypt('0'));
     }
 
     public function testEncryptUsesDefaultConfigAndAppendsMarker(): void
@@ -70,11 +76,64 @@ class EncryptUtilTest extends TestCase
         $this->assertSame('', $util->decrypt(''));
     }
 
-    public function testDecryptReturnsEmptyStringForZero(): void
+    /** An unmarked '0' is plaintext and is returned unchanged (it was turned into '' before 2.10). */
+    public function testDecryptReturnsZeroForZero(): void
     {
         $registry = new EncryptorRegistry([], 'default');
         $util     = new EncryptUtil($registry);
-        $this->assertSame('', $util->decrypt('0'));
+        $this->assertSame('0', $util->decrypt('0'));
+    }
+
+    public function testDecryptStrictReturnsNullAndEmptyAsIs(): void
+    {
+        $util = new EncryptUtil(new EncryptorRegistry([], 'default'));
+
+        $this->assertNull($util->decryptStrict(null));
+        $this->assertSame('', $util->decryptStrict(''));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function unmarkedValues(): iterable
+    {
+        yield 'plaintext' => ['plain'];
+        yield 'zero' => ['0'];
+        yield 'marker only' => [EncryptUtil::ENCRYPTION_MARKER];
+        yield 'marker inside' => ['a<ENC>b'];
+    }
+
+    #[DataProvider('unmarkedValues')]
+    public function testDecryptStrictRefusesUnmarkedValues(string $value): void
+    {
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $encryptor->expects($this->never())->method('decrypt');
+        $util = new EncryptUtil($this->createRegistryWithDefault($encryptor));
+
+        $this->expectException(ValueNotEncryptedException::class);
+
+        $util->decryptStrict($value);
+    }
+
+    public function testDecryptStrictDecryptsMarkedCiphertext(): void
+    {
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $encryptor->expects($this->once())->method('decrypt')->with('enc')->willReturn('iban');
+        $util = new EncryptUtil(new EncryptorRegistry(['financial_data' => $encryptor], 'default'));
+
+        $this->assertSame('iban', $util->decryptStrict('enc' . EncryptUtil::ENCRYPTION_MARKER, 'financial_data'));
+    }
+
+    public function testDecryptStrictWrapsDecryptionFailures(): void
+    {
+        $encryptor = $this->createMock(EncryptorInterface::class);
+        $encryptor->method('decrypt')->willThrowException(new RuntimeException('Invalid MAC'));
+        $util = new EncryptUtil($this->createRegistryWithDefault($encryptor));
+
+        $this->expectException(DecryptionFailedException::class);
+        $this->expectExceptionMessage('Cause: RuntimeException: Invalid MAC');
+
+        $util->decryptStrict('forged' . EncryptUtil::ENCRYPTION_MARKER);
     }
 
     public function testDecryptReturnsValueAsIsWhenNoMarker(): void

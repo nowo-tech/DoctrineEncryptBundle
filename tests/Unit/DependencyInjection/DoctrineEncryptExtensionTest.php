@@ -22,9 +22,12 @@ use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Twig\DecryptExtension;
 use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\Reference;
+
+use const E_USER_DEPRECATED;
 
 class DoctrineEncryptExtensionTest extends TestCase
 {
@@ -556,6 +559,79 @@ class DoctrineEncryptExtensionTest extends TestCase
 
         $this->assertFalse($container->hasDefinition(SecretKeyPermissionsListener::class));
         $this->assertSame(0o770, $container->getParameter('nowo_doctrine_encrypt.secret_permissions.directory_mode'));
+    }
+
+    public function testOnDecryptFailureDefaultsToKeep(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([[]], $container);
+
+        $this->assertSame(DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_KEEP, $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber')->getArgument(2));
+    }
+
+    public function testOnDecryptFailureIsPassedToTheListener(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([['on_decrypt_failure' => 'throw']], $container);
+
+        $this->assertSame('throw', $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber')->getArgument(2));
+    }
+
+    public function testOnDecryptFailureRejectsUnknownModes(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->extension->load([['on_decrypt_failure' => 'ignore']], $this->createContainer());
+    }
+
+    public function testGenerateMissingKeyDefaultsToKernelDebugForHaliteAndDefuse(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([[
+            'profiles' => [
+                'default'  => ['encryptor_class' => 'Halite'],
+                'legacy'   => ['encryptor_class' => 'Defuse'],
+                'external' => ['encryptor_class' => 'Custom\\MyEncryptor'],
+            ],
+        ]], $container);
+
+        $halite = $container->getDefinition('nowo_doctrine_encrypt.encryptor.default');
+        $this->assertNull($halite->getArgument(1));
+        $this->assertSame('%kernel.debug%', $halite->getArgument(2));
+        $this->assertSame('%kernel.debug%', $container->getDefinition('nowo_doctrine_encrypt.encryptor.legacy')->getArgument(2));
+        $this->assertCount(1, $container->getDefinition('nowo_doctrine_encrypt.encryptor.external')->getArguments(), 'custom encryptors keep their signature');
+    }
+
+    public function testGenerateMissingKeyCanBeForced(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([['generate_missing_key' => true]], $container);
+        $this->assertTrue($container->getDefinition('nowo_doctrine_encrypt.encryptor.default')->getArgument(2));
+
+        $container = $this->createContainer();
+        $this->extension->load([['generate_missing_key' => false]], $container);
+        $this->assertFalse($container->getDefinition('nowo_doctrine_encrypt.encryptor.default')->getArgument(2));
+    }
+
+    public function testMysqlAesProfileTriggersADeprecation(): void
+    {
+        $deprecations = [];
+        // @phpstan-ignore frankenphp.worker.noSetErrorExceptionHandler (test-only, restored in finally)
+        set_error_handler(static function (int $level, string $message) use (&$deprecations): bool {
+            $deprecations[] = $message;
+
+            return true;
+        }, E_USER_DEPRECATED);
+
+        try {
+            $this->extension->load([['profiles' => ['legacy' => ['encryptor_class' => 'MysqlAes']]]], $this->createContainer());
+            $this->extension->load([['profiles' => ['default' => ['encryptor_class' => 'Halite']]]], $this->createContainer());
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertCount(1, $deprecations);
+        $this->assertStringContainsString('nowo_doctrine_encrypt.profiles.legacy uses MysqlAes (AES-128-ECB, unauthenticated)', $deprecations[0]);
     }
 
     private function createContainer(string $environment = 'dev'): ContainerBuilder
