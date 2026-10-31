@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.10.1] - 2026-10-31](#2101---2026-10-31)
 - [[2.10.0] - 2026-10-31](#2100---2026-10-31)
 - [[2.9.0] - 2026-10-28](#290---2026-10-28)
 - [[2.8.2] - 2026-10-21](#282---2026-10-21)
@@ -57,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-02-19](#100---2026-02-19)
 
 ## [Unreleased]
+
+## [2.10.1] - 2026-10-31
+
+SecretType errors render next to the field (error_bubbling false by default). See [UPGRADING](UPGRADING.md#to-2101).
 
 ### Fixed
 
