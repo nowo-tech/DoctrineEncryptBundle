@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.10.0] - 2026-10-31](#2100---2026-10-31)
 - [[2.9.0] - 2026-10-28](#290---2026-10-28)
 - [[2.8.2] - 2026-10-21](#282---2026-10-21)
 - [[2.8.1] - 2026-10-18](#281---2026-10-18)
@@ -56,6 +57,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [[1.0.0] - 2026-02-19](#100---2026-02-19)
 
 ## [Unreleased]
+
+## [2.10.0] - 2026-10-31
+
+Security hardening: plaintext ending with the marker is always encrypted, on_decrypt_failure (keep|null|throw), no silent key generation outside debug, decryptStrict(), MysqlAes deprecated, reflection fallback for #[Encrypted], SecretType hides all characters by default. See [UPGRADING](UPGRADING.md#to-2100).
 
 Hardening from the InstanceSettingsBundle security review: a plaintext ending with `<ENC>` is now encrypted, decrypt failures can fail closed, missing key files are no longer silently regenerated outside debug, and `SecretType` no longer reveals the last characters of a secret. See [UPGRADING](UPGRADING.md#unreleased).
 
