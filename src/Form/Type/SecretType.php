@@ -96,6 +96,8 @@ final class SecretType extends AbstractType
             'required'          => false,
             'data_class'        => null,
             'empty_data'        => [],
+            // Compound type: keep errors on the field (Symfony's compound default bubbles them to the root form).
+            'error_bubbling' => false,
         ]);
         $resolver->setAllowedTypes('current_value', ['null', 'string']);
         $resolver->setAllowedTypes('hint_visible_last', 'int');

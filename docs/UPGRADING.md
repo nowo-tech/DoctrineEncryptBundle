@@ -64,6 +64,17 @@
 
 ## Unreleased
 
+From **2.10.0**:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
+- **`SecretType` errors no longer appear at the top of the form.** `error_bubbling` now defaults to `false`, so errors
+  added to a secret field render next to it (`form_row` / `form_errors(form.apiKey)`). If a template relied on them
+  being in the root `form_errors(form)`, render the field errors there or pass `'error_bubbling' => true`. Hosts that
+  already set `error_bubbling: false` can drop it.
+
 ## To 2.10.0
 
 From **2.9.0**:
