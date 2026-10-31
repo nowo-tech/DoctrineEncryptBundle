@@ -58,11 +58,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`SecretType` errors are shown next to the field.** The type is compound, so Symfony's default `error_bubbling: true`
+  moved errors added to a secret field (validation constraints, `addError()`) to the root form, where many layouts do
+  not render them. `error_bubbling` now defaults to `false`; pass `'error_bubbling' => true` for the old behaviour.
+
 ## [2.10.0] - 2026-10-31
 
 Security hardening: plaintext ending with the marker is always encrypted, on_decrypt_failure (keep|null|throw), no silent key generation outside debug, decryptStrict(), MysqlAes deprecated, reflection fallback for #[Encrypted], SecretType hides all characters by default. See [UPGRADING](UPGRADING.md#to-2100).
 
-Hardening from the InstanceSettingsBundle security review: a plaintext ending with `<ENC>` is now encrypted, decrypt failures can fail closed, missing key files are no longer silently regenerated outside debug, and `SecretType` no longer reveals the last characters of a secret. See [UPGRADING](UPGRADING.md#unreleased).
+Hardening from the InstanceSettingsBundle security review: a plaintext ending with `<ENC>` is now encrypted, decrypt failures can fail closed, missing key files are no longer silently regenerated outside debug, and `SecretType` no longer reveals the last characters of a secret. See [UPGRADING](UPGRADING.md#to-2100).
 
 ### Security
 

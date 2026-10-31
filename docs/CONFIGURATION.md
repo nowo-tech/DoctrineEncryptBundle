@@ -218,5 +218,6 @@ If no config file exists, the bundle uses one default config (Halite, `%kernel.p
 | `value_options` | `array` | `[]` | Merged (recursively) over the `value` child options (`PasswordType`: `always_empty`, `trim: true`, `required: false`, label/help in the bundle domain). Use it for `constraints`, `label`, `attr`. |
 | `clear_options` | `array` | `[]` | Merged over the `clear` child options (`CheckboxType`). |
 | `mapped` | `bool` | `false` | Symfony option; kept `false` so the stored secret is only changed through `SecretFieldApplier`. |
+| `error_bubbling` | `bool` | `false` | Symfony option; `false` (since 2.10.1) keeps errors on the field so they render next to it instead of at the top of the form. |
 
 Submitted data: `['value' => ?string, 'clear' => bool]` (`clear` absent when the checkbox is not rendered). Translation domain of the default labels: `NowoDoctrineEncryptBundle` (`en`, `es`).
