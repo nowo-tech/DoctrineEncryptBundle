@@ -241,6 +241,41 @@ abstract class AbstractDoctrineEncryptSubscriberBase extends AbstractFunctionalT
         $this->assertSame('second<ENC>', $this->encryptor->decrypt(substr($stored, 0, -5)));
     }
 
+    public function testMarkerEndingPlaintextSurvivesRepeatedUpdatesWithoutClear(): void
+    {
+        $secret = 'smtp://user:not-a-real-password@mail.test:25<ENC>';
+        $em     = $this->entityManager;
+        $owner  = new Owner();
+        $owner->setSecret($secret);
+        $owner->setNotSecret('v0');
+        $em->persist($owner);
+        $em->flush();
+        $id     = $owner->getId();
+        $stored = $em->getConnection()->fetchOne('SELECT secret FROM owner WHERE id = ?', [$id]);
+
+        foreach (['v1', 'v2'] as $notSecret) {
+            // Unrelated change: postUpdate and postFlush both decrypt in the same flush.
+            $owner->setNotSecret($notSecret);
+            $em->flush();
+
+            $this->assertSame($secret, $owner->getSecret());
+            $row = $em->getConnection()->fetchAssociative('SELECT * FROM owner WHERE id = ?', [$id]);
+            $this->assertIsArray($row);
+            $this->assertSame($notSecret, $row['notSecret']);
+            $this->assertSame($stored, $row['secret'], 'ciphertext unchanged, never plaintext');
+        }
+
+        // Changing the secret itself, without clear(), also round-trips.
+        $owner->setSecret('changed<ENC>');
+        $em->flush();
+        $owner->setNotSecret('v3');
+        $em->flush();
+        $this->assertSame('changed<ENC>', $owner->getSecret());
+        $stored = $em->getConnection()->fetchOne('SELECT secret FROM owner WHERE id = ?', [$id]);
+        $this->assertIsString($stored);
+        $this->assertSame('changed<ENC>', $this->encryptor->decrypt(substr($stored, 0, -5)));
+    }
+
     public function testUndecryptableValueIsWrittenBackUnchangedWhenOnDecryptFailureIsNull(): void
     {
         $em    = $this->entityManager;

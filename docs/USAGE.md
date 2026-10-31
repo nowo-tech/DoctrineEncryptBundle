@@ -232,7 +232,7 @@ SecretFieldApplier::applyData($form->get('apiKey')->getData(), $settings->setRes
 
 What it renders:
 
-- **`value`** — `PasswordType` with `always_empty: true`, `required: false`, `trim: true`, `autocomplete="new-password"`. With a stored value the help reads *"Saved: •••• 1234. Leave blank to keep it."* (`MaskUtil::secretHint()`, also used as placeholder); otherwise *"Not set."*.
+- **`value`** — `PasswordType` with `always_empty: true`, `required: false`, `trim: true`, `autocomplete="new-password"`. With a stored value the help reads *"Saved: ••••. Leave blank to keep it."* (`MaskUtil::secretHint()` with `hint_visible_last`, default `0`, also used as placeholder; pass `'hint_visible_last' => 4` for *"Saved: •••• 1234. …"*); otherwise *"Not set."*.
 - **`clear`** — `CheckboxType` *"Remove the saved value"*, added when a value is stored (or always/never, see `allow_clear`).
 
 The field is **not mapped** by default (`mapped: false`), so the form component never writes the array into your entity; the stored plaintext is never sent to the browser (only the hint). Child labels and help use the `NowoDoctrineEncryptBundle` translation domain (see [Translations](#translations)); override them per field with `value_options` / `clear_options`. Options are listed in [CONFIGURATION.md → SecretType options](CONFIGURATION.md#secrettype-form-options).

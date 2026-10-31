@@ -364,6 +364,12 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
             $value = $this->readProperty($entity, $refProperty);
             if ($encryptorMethod === 'decrypt') {
                 if (is_string($value) && EncryptedValue::hasMarker($value)) {
+                    // Already decrypted in this flush (postUpdate, then postFlush): a plaintext that ends with the
+                    // marker must not be decrypted a second time.
+                    $alreadyDecrypted = $this->cachedDecryptions[$entity][$name] ?? null;
+                    if ($alreadyDecrypted !== null && $alreadyDecrypted['plaintext'] === $value) {
+                        continue;
+                    }
                     $currentPropValue = $this->decryptValue($entity, $refProperty, $encryptedAttr->config, $propertyEncryptor, $value);
                     $this->writeProperty($entity, $refProperty, $currentPropValue, $encryptedAttr->config);
                     $cached                           = $this->cachedDecryptions[$entity] ?? [];

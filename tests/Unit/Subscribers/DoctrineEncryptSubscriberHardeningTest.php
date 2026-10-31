@@ -46,6 +46,19 @@ final class DoctrineEncryptSubscriberHardeningTest extends TestCase
         $this->assertSame('<ENC>', $fresh->getAddress());
     }
 
+    public function testDecryptedPlaintextEndingWithTheMarkerIsNotDecryptedAgain(): void
+    {
+        $encryptor  = $this->strictEncryptor();
+        $subscriber = new DoctrineEncryptSubscriber($encryptor, null, DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_THROW);
+        $user       = new User($encryptor->encrypt('pw<ENC>') . '<ENC>', null);
+
+        $subscriber->processFields($user, false);
+        $subscriber->processFields($user, false);
+
+        $this->assertSame('pw<ENC>', $user->name);
+        $this->assertSame(1, $encryptor->decryptCalls);
+    }
+
     public function testCiphertextAssignedByTheCallerIsNotEncryptedTwice(): void
     {
         $encryptor  = $this->strictEncryptor();
