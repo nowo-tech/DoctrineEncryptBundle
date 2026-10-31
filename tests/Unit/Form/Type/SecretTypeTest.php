@@ -42,7 +42,7 @@ final class SecretTypeTest extends TypeTestCase
 
         $value = $form->get('value')->getConfig();
         self::assertSame('secret.value.help_saved', $value->getOption('help'));
-        self::assertSame(['%hint%' => '•••• 1234'], $value->getOption('help_translation_parameters'));
+        self::assertSame(['%hint%' => '••••'], $value->getOption('help_translation_parameters'), 'nothing of the secret is revealed by default');
         self::assertSame(['autocomplete' => 'new-password', 'placeholder' => 'secret.value.placeholder_saved'], $value->getOption('attr'));
 
         self::assertTrue($form->has('clear'));
@@ -66,6 +66,10 @@ final class SecretTypeTest extends TypeTestCase
         $form = $this->factory->create(SecretType::class, null, ['current_value' => 're_live_abcd1234', 'hint_visible_last' => 0]);
 
         self::assertSame(['%hint%' => '••••'], $form->get('value')->getConfig()->getOption('help_translation_parameters'));
+
+        $form = $this->factory->create(SecretType::class, null, ['current_value' => 're_live_abcd1234', 'hint_visible_last' => 4]);
+
+        self::assertSame(['%hint%' => '•••• 1234'], $form->get('value')->getConfig()->getOption('help_translation_parameters'), 'opt-in reveals the last characters');
     }
 
     public function testAllowClearForcedOnAndOff(): void

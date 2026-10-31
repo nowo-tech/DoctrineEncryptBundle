@@ -88,7 +88,7 @@ final class SecretType extends AbstractType
     {
         $resolver->setDefaults([
             'current_value'     => null,
-            'hint_visible_last' => 4,
+            'hint_visible_last' => 0,
             'allow_clear'       => null,
             'value_options'     => [],
             'clear_options'     => [],
@@ -102,7 +102,8 @@ final class SecretType extends AbstractType
         $resolver->setAllowedTypes('allow_clear', ['null', 'bool']);
         $resolver->setAllowedTypes('value_options', 'array');
         $resolver->setAllowedTypes('clear_options', 'array');
-        $resolver->setInfo('current_value', 'Stored plain secret, only used to render the "•••• last4" hint (never sent to the browser).');
+        $resolver->setInfo('current_value', 'Stored plain secret, only used to render the "••••" hint (never sent to the browser).');
+        $resolver->setInfo('hint_visible_last', 'Trailing characters of the stored secret revealed in the hint (default 0 = mask only; was 4 before 2.10).');
         $resolver->setInfo('allow_clear', 'Add the "clear" checkbox: null = only when a secret is stored, true = always, false = never.');
     }
 

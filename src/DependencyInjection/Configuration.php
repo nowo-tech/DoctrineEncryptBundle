@@ -6,6 +6,7 @@ namespace Nowo\DoctrineEncryptBundle\DependencyInjection;
 
 use InvalidArgumentException;
 use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
+use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -71,6 +72,15 @@ final class Configuration implements ConfigurationInterface
                 ->scalarNode('default_profile')
                     ->defaultValue(self::DEFAULT_PROFILE_NAME)
                     ->info('Profile name to use when #[Encrypted] has no alias or uses "default".')
+                ->end()
+                ->enumNode('on_decrypt_failure')
+                    ->values(DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_MODES)
+                    ->defaultValue(DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_KEEP)
+                    ->info('What an #[Encrypted] property gets when its stored value cannot be decrypted (wrong or rotated key, corrupted ciphertext): "keep" = the raw ciphertext (2.x default, callers may take it for the secret), "null" = null (recommended; the stored ciphertext is written back unchanged on flush), "throw" = DecryptionFailedException (recommended). A warning is logged for "keep" and "null".')
+                ->end()
+                ->booleanNode('generate_missing_key')
+                    ->defaultNull()
+                    ->info('Whether the Halite / Defuse encryptors may create a missing key file on first use. null (default) = only when kernel.debug is true; outside debug a missing key file is an error (a wrong path or a lost volume would otherwise encrypt new data with a throwaway key). Create keys explicitly with doctrine:encrypt:generate-secret-key.')
                 ->end()
                 ->integerNode('batch_size')
                     ->defaultValue(5)

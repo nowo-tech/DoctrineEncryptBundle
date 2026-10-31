@@ -6,8 +6,11 @@ namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Encryptors;
 
 use Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException;
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
+use Nowo\DoctrineEncryptBundle\Exception\MissingEncryptionKeyException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+
+use function function_exists;
 
 class DefuseEncryptorTest extends TestCase
 {
@@ -140,6 +143,57 @@ class DefuseEncryptorTest extends TestCase
             $encrypted = $defuse->encrypt(self::DATA);
             $this->assertSame(self::DATA, $defuse->decrypt($encrypted));
         } finally {
+            @unlink($keyfile);
+        }
+    }
+
+    public function testMissingKeyFileIsNotGeneratedWhenGenerationIsDisabled(): void
+    {
+        $keyfile   = sys_get_temp_dir() . '/defuse-missing-' . uniqid('', true) . '.key';
+        $encryptor = new DefuseEncryptor($keyfile, null, false);
+
+        try {
+            $encryptor->encrypt(self::DATA);
+            $this->fail('MissingEncryptionKeyException expected');
+        } catch (MissingEncryptionKeyException $e) {
+            $this->assertStringContainsString($keyfile, $e->getMessage());
+        }
+        $this->assertFileDoesNotExist($keyfile);
+    }
+
+    public function testExistingKeyFileIsUsedWhenGenerationIsDisabled(): void
+    {
+        $keyfile = sys_get_temp_dir() . '/defuse-existing-' . uniqid('', true) . '.key';
+        (new DefuseEncryptor($keyfile))->encrypt(self::DATA);
+        $key = file_get_contents($keyfile);
+
+        try {
+            $encryptor = new DefuseEncryptor($keyfile, null, false);
+            $this->assertSame(self::DATA, $encryptor->decrypt($encryptor->encrypt(self::DATA)));
+            $this->assertSame($key, file_get_contents($keyfile));
+        } finally {
+            @unlink($keyfile);
+        }
+    }
+
+    public function testUnreadableKeyFileIsNeverReplaced(): void
+    {
+        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            $this->markTestSkipped('root can read a 0000 file.');
+        }
+        $keyfile = sys_get_temp_dir() . '/defuse-unreadable-' . uniqid('', true) . '.key';
+        (new DefuseEncryptor($keyfile))->encrypt(self::DATA);
+        $key = file_get_contents($keyfile);
+        chmod($keyfile, 0o000);
+
+        try {
+            (new DefuseEncryptor($keyfile))->encrypt(self::DATA);
+            $this->fail('MissingEncryptionKeyException expected');
+        } catch (MissingEncryptionKeyException $e) {
+            $this->assertStringContainsString('cannot be read', $e->getMessage());
+        } finally {
+            chmod($keyfile, 0o600);
+            $this->assertSame($key, file_get_contents($keyfile));
             @unlink($keyfile);
         }
     }

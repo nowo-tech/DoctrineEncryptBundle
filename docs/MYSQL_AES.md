@@ -1,5 +1,7 @@
 # MySQL AES_ENCRYPT / AES_DECRYPT (`MysqlAes` encryptor)
 
+> **Insecure — deprecated.** `MysqlAes` is AES-128-ECB **without authentication**: identical plaintext blocks produce identical ciphertext, ciphertext blocks can be swapped or truncated and still decrypt, and a wrong key passes the padding check about 1 time in 256 (so a tampered value can decrypt to garbage instead of failing). It is blocked in `prod` since 2.3.9 and, since 2.10.0, every profile that selects it triggers a deprecation at container build. It will be removed in 3.0. Use **Halite** for new data and migrate existing ciphertext.
+
 The bundle provides a **`MysqlAes`** encryptor that uses **AES-128-ECB** with the same key padding as MySQL’s [`AES_ENCRYPT()`](https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html) / [`AES_DECRYPT()`](https://dev.mysql.com/doc/refman/8.0/en/encryption-functions.html) when `block_encryption_mode` is `aes-128-ecb` (default).
 
 ## Table of contents

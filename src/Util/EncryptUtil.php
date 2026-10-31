@@ -6,7 +6,10 @@ namespace Nowo\DoctrineEncryptBundle\Util;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Exception\DecryptionFailedException;
+use Nowo\DoctrineEncryptBundle\Exception\ValueNotEncryptedException;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
+use Throwable;
 
 use function strlen;
 
@@ -15,7 +18,8 @@ use function strlen;
  *
  * Provides methods for:
  * - Encrypting sensitive data with encryption marker
- * - Decrypting data if encryption marker is present
+ * - Decrypting data if encryption marker is present ({@see self::decrypt()}: unmarked values pass through as plaintext)
+ * - Decrypting data that must be ciphertext ({@see self::decryptStrict()}: unmarked values are refused)
  *
  * Same config philosophy as DecryptExtension (Twig): optional $config to choose encryptor;
  * omit (null) = default config, or pass a config name (e.g. personal_data, financial_data).
@@ -41,6 +45,9 @@ final readonly class EncryptUtil
     /**
      * Decrypts a value if it has the encryption marker at the end; otherwise returns the original value.
      *
+     * Lenient: a value without the marker is returned unchanged, as if it were plaintext. When the input must be
+     * ciphertext (sealed values, imports, values from an untrusted store) use {@see self::decryptStrict()}.
+     *
      * @param string|null $value Value to decrypt (ciphertext + marker, or plain)
      * @param string|null $config Encryptor config name (e.g. 'personal_data'). Null = default config
      *
@@ -51,7 +58,7 @@ final readonly class EncryptUtil
         if ($value === null) {
             return null;
         }
-        if ($value === '' || $value === '0') {
+        if ($value === '') {
             return '';
         }
         if (!str_ends_with($value, self::ENCRYPTION_MARKER)) {
@@ -64,21 +71,52 @@ final readonly class EncryptUtil
     }
 
     /**
+     * Decrypts a value that must be ciphertext: never passes plaintext through.
+     *
+     * - null → null and '' → '' (nothing stored)
+     * - a value without the marker, or with an empty ciphertext → {@see ValueNotEncryptedException}
+     * - a value that does not decrypt (wrong key, tampered or foreign ciphertext) → {@see DecryptionFailedException}
+     *
+     * @param string|null $value Ciphertext + marker
+     * @param string|null $config Encryptor config name. Null = default config
+     *
+     * @throws ValueNotEncryptedException
+     * @throws DecryptionFailedException
+     */
+    public function decryptStrict(?string $value, ?string $config = null): ?string
+    {
+        if ($value === null || $value === '') {
+            return $value;
+        }
+        if (!EncryptedValue::hasMarker($value)) {
+            throw ValueNotEncryptedException::create();
+        }
+
+        $encryptor = $this->getEncryptor($config);
+
+        try {
+            return $encryptor->decrypt(EncryptedValue::payload($value));
+        } catch (Throwable $e) {
+            throw DecryptionFailedException::forValue($config, $e);
+        }
+    }
+
+    /**
      * Encrypts a value and returns it with the encryption marker appended.
      *
-     * Empty strings and '0' are not encrypted and are returned as-is.
+     * Empty strings are not encrypted and are returned as-is ('0' is encrypted like any other value since 2.10).
      *
      * @param string|null $value Plain text to encrypt
      * @param string|null $config Encryptor config name. Null = default config
      *
-     * @return string|null Ciphertext + marker, or original value if empty/zero
+     * @return string|null Ciphertext + marker, or original value if null or empty
      */
     public function encrypt(?string $value, ?string $config = null): ?string
     {
         if ($value === null) {
             return null;
         }
-        if ($value === '' || $value === '0') {
+        if ($value === '') {
             return $value;
         }
 

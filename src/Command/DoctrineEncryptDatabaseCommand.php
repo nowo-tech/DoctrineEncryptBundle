@@ -10,6 +10,7 @@ use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
+use Nowo\DoctrineEncryptBundle\Util\EncryptedValue;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -143,6 +144,7 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
         $conn           = $this->entityManager->getConnection();
         $platform       = $conn->getDatabasePlatform();
         $encryptCounter = 0;
+        $skippedMarked  = 0;
 
         foreach ($configsToProcess as $configName) {
             $encryptorForConfig = $registry instanceof EncryptorRegistry ? $registry->get($configName) : $this->defaultEncryptor;
@@ -174,7 +176,7 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
                 $output->writeln(sprintf('  Processing <comment>%s</comment> (%s)', $metaData->name, $table));
                 $progressBar = new ProgressBar($output, $totalCount);
 
-                $this->processTableInBatches($conn, $quotedTable, $selectCols, $quotedIdCols, $batchSize, function (array $row) use ($idColumns, $tableInfo, $encryptorForConfig, $conn, $platform, $quotedTable, $progressBar, &$encryptCounter): void {
+                $this->processTableInBatches($conn, $quotedTable, $selectCols, $quotedIdCols, $batchSize, function (array $row) use ($idColumns, $tableInfo, $encryptorForConfig, $conn, $platform, $quotedTable, $progressBar, &$encryptCounter, &$skippedMarked): void {
                     $idValues = [];
                     foreach ($idColumns as $idCol) {
                         $idValues[$idCol] = $this->getRowValue($row, $idCol);
@@ -194,6 +196,11 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
                             continue;
                         }
                         if (str_ends_with((string) $value, self::ENCRYPTION_MARKER)) {
+                            // Already encrypted, or marked but not decryptable with this config (wrong key, or a
+                            // plaintext that ends with the marker): never encrypt twice, report it instead.
+                            if (!EncryptedValue::isDecryptable((string) $value, $encryptorForConfig)) {
+                                ++$skippedMarked;
+                            }
                             continue;
                         }
                         $encrypted = $encryptorForConfig->encrypt((string) $value) . self::ENCRYPTION_MARKER;
@@ -222,6 +229,9 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
         }
 
         $output->writeln('Encryption finished. Values encrypted: <info>' . $encryptCounter . ' values</info>.' . PHP_EOL . 'All values are now encrypted (raw SQL, no Doctrine events).');
+        if ($skippedMarked > 0) {
+            $output->writeln(sprintf('<comment>%d value(s) end with %s but do not decrypt with their config (wrong key, or plaintext ending with the marker). They were left unchanged: check them.</comment>', $skippedMarked, self::ENCRYPTION_MARKER));
+        }
 
         return self::SUCCESS;
     }

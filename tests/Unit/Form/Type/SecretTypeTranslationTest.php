@@ -63,7 +63,7 @@ final class SecretTypeTranslationTest extends TestCase
         $twig->addExtension(new TranslationExtension($collector));
 
         $form = Forms::createFormFactory()->createBuilder(FormType::class)
-            ->add('apiKey', SecretType::class, ['current_value' => 'sk_live_abcd1234', 'label' => false])
+            ->add('apiKey', SecretType::class, ['current_value' => 'sk_live_abcd1234', 'hint_visible_last' => 4, 'label' => false])
             ->getForm()
             ->createView();
 

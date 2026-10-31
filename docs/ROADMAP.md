@@ -7,6 +7,7 @@ This document outlines the direction of Doctrine Encrypt Bundle and helps contri
 - [Vision](#vision)
 - [Current focus (2.x)](#current-focus-2x)
 - [Short term (next releases)](#short-term-next-releases)
+- [Next major (3.0, planned)](#next-major-30-planned)
 - [Possible future (ideas, not committed)](#possible-future-ideas-not-committed)
 - [Out of scope (for this bundle)](#out-of-scope-for-this-bundle)
 - [Community](#community)
@@ -30,7 +31,15 @@ No breaking changes are planned for the 2.x line; new options will be additive w
 - **Code coverage:** Keep or raise coverage (e.g. ≥90%) and ensure coverage runs in CI (e.g. PCOV in Docker/CI).
 - **Demos:** Keep the Symfony 8 demo working and referenced from the docs.
 
+## Next major (3.0, planned)
+
+- **Fail-closed decrypt by default:** `on_decrypt_failure` default from `keep` to `throw` (or `null`); `keep` stays available as an explicit opt-in. Added in 2.10.0 with `keep` as default for BC.
+- **Remove `MysqlAes`** (AES-128-ECB, unauthenticated; deprecated since 2.1.0, deprecation at container build since 2.10.0).
+- **`generate_missing_key`:** consider `false` by default in every environment (2.10.0: only in debug).
+
 ## Possible future (ideas, not committed)
+
+- **Associated data (context binding):** optional Halite `encryptWithAD()` with the entity class / property (and, where available, the identifier) as associated data, so ciphertext cannot be moved between columns or rows. Needs a versioned ciphertext format (existing data has no AD) and a solution for identifiers generated on `INSERT`; Defuse has no AD support. See [SECURITY.md](SECURITY.md#associated-data--context-binding).
 
 - **Additional encryptors:** Optional support for other audited libraries, behind optional dependencies.
 - **Performance:** Optional in-request caching of decrypted values where safe (same entity, same request) to avoid repeated decrypt in loops.

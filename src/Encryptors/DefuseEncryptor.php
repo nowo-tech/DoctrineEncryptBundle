@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Encryptors;
 
 use Defuse\Crypto\Crypto;
+use Nowo\DoctrineEncryptBundle\Exception\MissingEncryptionKeyException;
 use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
 use RuntimeException;
 use Symfony\Component\Filesystem\Filesystem;
@@ -15,7 +16,8 @@ use function dirname;
  * Encryptor implementation using defuse/php-encryption (password-based encryption).
  *
  * The secret key can be read from a file or from string content (e.g. env var).
- * If the key file does not exist, a new key is generated and saved.
+ * If the key file does not exist, a new key is generated and saved only when $generateMissingKey is true
+ * (bundle default: only in debug); otherwise {@see MissingEncryptionKeyException} is thrown.
  */
 final class DefuseEncryptor implements EncryptorInterface
 {
@@ -26,8 +28,11 @@ final class DefuseEncryptor implements EncryptorInterface
     /**
      * @param string $keyFile path to the key file (ignored when $keyContent is set)
      * @param string|null $keyContent Optional key value (e.g. from env). When set, $keyFile is not read.
+     * @param bool $generateMissingKey Whether a missing key file may be created on first use. The bundle passes
+     *                                 `generate_missing_key` (default: kernel.debug); when false a missing key file throws
+     *                                 {@see MissingEncryptionKeyException}. An existing key file is never replaced.
      */
-    public function __construct(private readonly string $keyFile, ?string $keyContent = null)
+    public function __construct(private readonly string $keyFile, ?string $keyContent = null, private readonly bool $generateMissingKey = true)
     {
         $this->keyContent = $keyContent !== null && $keyContent !== '' ? $keyContent : null;
         $this->fs         = new Filesystem();
@@ -76,9 +81,15 @@ final class DefuseEncryptor implements EncryptorInterface
             }
             // @igor-ignore - Stateless crypto helper; mutation is local algorithm state
             if ($this->fs->exists($this->keyFile)) {
+                $content = is_readable($this->keyFile) ? file_get_contents($this->keyFile) : false;
+                if ($content === false) {
+                    throw MissingEncryptionKeyException::unreadable($this->keyFile);
+                }
                 // @igor-ignore - Stateless crypto helper; mutation is local algorithm state
-                $this->encryptionKey = trim((string) file_get_contents($this->keyFile));
+                $this->encryptionKey = trim($content);
             // @igor-ignore - Stateless crypto helper; mutation is local algorithm state
+            } elseif (!$this->generateMissingKey) {
+                throw MissingEncryptionKeyException::forFile($this->keyFile);
             } else {
                 // @igor-ignore - Stateless crypto helper; mutation is local algorithm state
                 $string = random_bytes(255);

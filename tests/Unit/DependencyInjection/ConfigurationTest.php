@@ -21,6 +21,18 @@ class ConfigurationTest extends TestCase
         $this->assertSame('default', $config['default_profile']);
         $this->assertSame(5, $config['batch_size']);
         $this->assertSame([], $config['profiles']);
+        $this->assertSame('keep', $config['on_decrypt_failure']);
+        $this->assertNull($config['generate_missing_key']);
+    }
+
+    public function testOnDecryptFailureAndGenerateMissingKey(): void
+    {
+        $config = $this->process(['on_decrypt_failure' => 'null', 'generate_missing_key' => false]);
+        $this->assertSame('null', $config['on_decrypt_failure']);
+        $this->assertFalse($config['generate_missing_key']);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->process(['on_decrypt_failure' => 'ignore']);
     }
 
     public function testBatchSizeDefaultAndCustom(): void
