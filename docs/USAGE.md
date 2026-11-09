@@ -15,6 +15,10 @@
   - [Translations](#translations)
 - [Searching and performance](#searching-and-performance)
 - [Embedded entities](#embedded-entities)
+- [Using it from a DDD / hexagonal application](#using-it-from-a-ddd--hexagonal-application)
+  - [Where the coupling is](#where-the-coupling-is)
+  - [Recommended setups](#recommended-setups)
+  - [Known limitations](#known-limitations)
 - [Console commands](#console-commands)
 - [Custom encryptor](#custom-encryptor)
 
@@ -271,6 +275,62 @@ The symfony8 demo (`/mysql-aes-note`, `/mysql-aes-note/sql`) lets you compare th
 ## Embedded entities
 
 Encrypted properties inside embedded entities are supported: mark the property in the embedded class with `Encrypted` and ensure the embeddable is correctly mapped.
+
+## Using it from a DDD / hexagonal application
+
+DoctrineEncryptBundle is an infrastructure adapter: a Doctrine ORM listener that encrypts the properties you mark
+when the entity manager flushes, and decrypts them when entities are loaded. It has no entities or tables of its
+own.
+
+### Where the coupling is
+
+- Fields are selected **only** with the PHP attribute `#[Nowo\DoctrineEncryptBundle\Configuration\Encrypted]` on
+  the Doctrine-mapped property. Embeddables are followed only when the property has the PHP attribute
+  `#[ORM\Embedded]`. There is no XML/YAML or config-based field list yet.
+- Encrypted properties hold strings (`?string`).
+- During a flush the listener writes the ciphertext into the entity and puts the plaintext back in `postFlush`,
+  through the property setter when one exists, otherwise through reflection.
+
+### Recommended setups
+
+1. **Separate persistence model (cleanest).** Keep your domain objects free of Doctrine and map them to
+   infrastructure records (`App\Infrastructure\Persistence\CustomerRecord`) in your repository adapter. Put
+   `#[ORM\Column]` and `#[Encrypted]` on the record only.
+2. **Domain entities mapped with attributes.** If you already accept `#[ORM\*]` attributes in the domain,
+   `#[Encrypted]` is the same kind of metadata. Make sure setters on encrypted properties do not validate the
+   value, or do not expose a setter (the listener then uses reflection).
+3. **Application-level encryption.** If you need encryption outside Doctrine (e.g. a payload to a queue), depend
+   on `Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface` (default profile) or `EncryptorRegistry::get('profile')`
+   behind your own port:
+
+```php
+// Domain / application port
+interface SecretCipher
+{
+    public function seal(string $plain): string;
+    public function open(string $sealed): string;
+}
+
+// Infrastructure
+final class NowoSecretCipher implements SecretCipher
+{
+    public function __construct(private readonly \Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry $registry) {}
+
+    public function seal(string $plain): string { return $this->registry->get('personal_data')->encrypt($plain); }
+    public function open(string $sealed): string { return $this->registry->get('personal_data')->decrypt($sealed); }
+}
+```
+
+- Your own key management or KMS plugs in as a custom `EncryptorInterface` set in
+  `profiles.<name>.encryptor_class` (see [Custom encryptor](custom_encryptor.md)).
+
+### Known limitations
+
+- No XML/YAML/config field mapping: an attribute-free domain mapped in XML cannot use the listener directly.
+- Embeddables mapped in XML are not followed.
+- Value-object properties are not supported directly; use an embeddable with string fields.
+- Domain setters may receive ciphertext during flush.
+- No events are dispatched (decrypt failures are handled by `on_decrypt_failure` and logged).
 
 ## Console commands
 
