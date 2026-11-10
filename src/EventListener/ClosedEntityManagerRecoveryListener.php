@@ -22,7 +22,7 @@ use function method_exists;
  * manager and its identity map of still-encrypted entities would be reused by later requests. Open managers
  * are never touched (their identity map is not cleared).
  *
- * Only the managers the bundle encrypts for are reset (2.11.1): `closed_manager_recovery.entity_managers` when set,
+ * Only the managers the bundle encrypts for are reset (2.12.0): `closed_manager_recovery.entity_managers` when set,
  * else the managers whose connection gets the encrypt listener (`connections`; every manager when it is empty).
  * Any other closed manager belongs to the host and is left as it is.
  */

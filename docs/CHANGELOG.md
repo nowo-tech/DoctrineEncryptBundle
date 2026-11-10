@@ -60,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Target **2.11.1**.
+Target **2.12.0** (minor: a new public configuration key and a behaviour change on hosts that list `connections`).
 
 ### Fixed
 
