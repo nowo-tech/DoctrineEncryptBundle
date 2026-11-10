@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.11.0] - 2026-11-10](#2110---2026-11-10)
 - [[2.10.1] - 2026-10-31](#2101---2026-10-31)
 - [[2.10.0] - 2026-10-31](#2100---2026-10-31)
 - [[2.9.0] - 2026-10-28](#290---2026-10-28)
@@ -59,8 +60,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.11.0] - 2026-11-10
+
 Target **2.11.0**: DDD / hexagonal adapter fixes (audit 2026-11-09, gaps G1, G2, G3). Additive; with the default
-configuration the listener behaves byte for byte as in 2.10.1. See [UPGRADING](UPGRADING.md#unreleased).
+configuration the listener behaves byte for byte as in 2.10.1. See [UPGRADING](UPGRADING.md#to-2110).
 
 ### Added
 
