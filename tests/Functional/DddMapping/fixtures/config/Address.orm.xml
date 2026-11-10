@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <embeddable name="Nowo\DoctrineEncryptBundle\Tests\Functional\DddMapping\fixtures\Domain\Address">
+        <field name="street" type="encrypted_string" length="1024" nullable="true"/>
+        <field name="city" type="string" length="1024" nullable="true"/>
+    </embeddable>
+</doctrine-mapping>

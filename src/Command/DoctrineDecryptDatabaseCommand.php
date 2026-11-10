@@ -129,7 +129,8 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
         $propertyCount = 0;
         foreach ($configsToProcess as $configName) {
             foreach ($this->getEncryptionableEntityMetaDataForConfig($configName, $defaultConfigName) as $metaData) {
-                $propertyCount += count($this->getEncryptionablePropertiesForConfig($metaData, $configName, $defaultConfigName));
+                $propertyCount += count($this->getEncryptionablePropertiesForConfig($metaData, $configName, $defaultConfigName))
+                    + count($this->getEncryptedColumnFieldsForConfig($metaData, $configName, $defaultConfigName));
             }
         }
 

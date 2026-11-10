@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
+use Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -56,12 +57,14 @@ final class DoctrineEncryptStatusCommand extends AbstractCommand
         $totalCount             = 0;
 
         foreach ($metaDataArray as $metaData) {
-            if ($metaData->isMappedSuperclass) {
+            if ($metaData->isMappedSuperclass || $this->isEmbeddable($metaData)) {
                 continue;
             }
 
             $propertiesWithConfig = $this->getEncryptionablePropertiesWithConfig($metaData, $defaultConfigName);
-            $count                = count($propertiesWithConfig);
+            $embeddedFields       = $this->getListenerEmbeddedFields($metaData, $defaultConfigName);
+            $typeFields           = $this->getEncryptedTypeFields($metaData, $defaultConfigName);
+            $count                = count($propertiesWithConfig) + count($embeddedFields) + count($typeFields);
 
             if ($count > 0) {
                 ++$entitiesWithEncryption;
@@ -69,6 +72,12 @@ final class DoctrineEncryptStatusCommand extends AbstractCommand
                 $output->writeln(sprintf('<info>%s</info> has <info>%d</info> encrypted property(ies):', $metaData->name, $count));
                 foreach ($propertiesWithConfig as ['property' => $property, 'config' => $config]) {
                     $output->writeln(sprintf('  - <comment>%s</comment> (config: <comment>%s</comment>)', $property->getName(), $config));
+                }
+                foreach ($embeddedFields as ['field' => $field, 'config' => $config]) {
+                    $output->writeln(sprintf('  - <comment>%s</comment> (config: <comment>%s</comment>, embedded)', $field, $config));
+                }
+                foreach ($typeFields as ['field' => $field, 'config' => $config, 'type' => $type]) {
+                    $output->writeln(sprintf('  - <comment>%s</comment> (config: <comment>%s</comment>, DBAL type <comment>%s</comment>)', $field, $config, $type));
                 }
             } else {
                 $output->writeln(sprintf('<info>%s</info> has no properties which are encrypted.', $metaData->name));
@@ -83,9 +92,30 @@ final class DoctrineEncryptStatusCommand extends AbstractCommand
             count($metaDataArray),
         ));
 
+        $this->outputUnmappedConfiguredClasses($output);
         $this->outputConfiguredConfigs($output, $defaultConfigName);
 
         return AbstractCommand::SUCCESS;
+    }
+
+    /**
+     * encrypted_fields entries for classes this entity manager does not map (e.g. the domain class when a persistence
+     * record is mapped): the listener never sees them, so nothing is encrypted.
+     */
+    private function outputUnmappedConfiguredClasses(OutputInterface $output): void
+    {
+        $map = $this->getEncryptedFieldMap();
+        if (!$map instanceof EncryptedFieldMap) {
+            return;
+        }
+
+        $factory = $this->entityManager->getMetadataFactory();
+        foreach (array_keys($map->all()) as $class) {
+            /** @var class-string $class validated at container build */
+            if ($factory->isTransient($class)) {
+                $output->writeln(sprintf('<error>encrypted_fields: %s is not mapped by this entity manager; its fields are NOT encrypted.</error>', $class));
+            }
+        }
     }
 
     private function outputConfiguredConfigs(OutputInterface $output, string $defaultConfigName): void

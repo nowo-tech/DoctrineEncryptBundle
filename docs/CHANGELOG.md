@@ -59,9 +59,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Target **2.11.0**: DDD / hexagonal adapter fixes (audit 2026-11-09, gaps G1, G2, G3). Additive; with the default
+configuration the listener behaves byte for byte as in 2.10.1. See [UPGRADING](UPGRADING.md#unreleased).
+
+### Added
+
+- **`encrypted_fields`** configuration: select the fields the listener encrypts per entity or embeddable class
+  (`properties`: property ⇒ profile; `embedded`: embedded properties to follow), besides `#[Encrypted]`. Works for
+  domains mapped in XML/YAML with no bundle import, including embeddables mapped in XML. Parent entries apply to
+  subclasses. Validated at container build (unknown class, property or profile, a property also marked
+  `#[Encrypted]`, or listed both as property and embedded fail the build). New service
+  `Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap`; the console commands use it too.
+- **`property_access: reflection`**: the listener reads and writes encrypted properties through reflection only, so
+  domain setters never receive ciphertext during a flush. Default `auto` keeps the 2.x behaviour.
+- **Encrypted DBAL types** (opt-in, `dbal_types: true`): `encrypted_string`, `encrypted_text`, `encrypted_json` plus
+  `<type>.<profile>` per profile, registered in DoctrineBundle. Encryption happens in the DBAL conversion: the entity
+  only holds plaintext, any mapping driver works, embeddables and value objects (subclass a type and override
+  `toPlaintext()` / `fromPlaintext()` / `getProfile()`) are supported. Same `<ciphertext><ENC>` format and profile keys
+  as `#[Encrypted]`, same `on_decrypt_failure` policy (new `DecryptionFailedException::forType()`), unmarked stored
+  values pass through as plaintext. The encryptors reach the types through
+  `Nowo\DoctrineEncryptBundle\Doctrine\Types\EncryptedTypeRuntime`, set when the kernel boots and cleared on
+  shutdown (`EncryptedTypeRuntimeConfigurator`); before that, or for an unconfigured profile, the types throw on
+  write and on read, whatever `on_decrypt_failure` says. Profile names with dashes are registered with underscores,
+  as the Config component normalises them.
+- Console commands (`doctrine:encrypt:status`, `doctrine:encrypt:database`, `doctrine:decrypt:database`, and so
+  `doctrine:encrypt:rotate-keys`) include `encrypted_fields` properties and columns mapped with an encrypted DBAL type
+  (embedded ones too).
+- Mapping validation on `loadClassMetadata` (`EventListener\EncryptedMappingValidator`): `encrypted_fields`
+  properties must be mapped fields, `embedded` entries embedded mappings, and a field cannot be selected for the
+  listener and mapped with an encrypted DBAL type (double encryption). The container build also rejects
+  `encrypted_fields` keys in the wrong case, traits, interfaces and enums, and scalar-typed `embedded` properties.
+- `doctrine:encrypt:status` reports `encrypted_fields` classes the entity manager does not map.
+- `DoctrineEncryptSubscriber` constructor: optional 4th (`?EncryptedFieldMap`) and 5th (`string $propertyAccess`)
+  arguments; `AbstractCommand::setEncryptedFieldMap()` (setter injection), `getEncryptedTypeFields()`,
+  `getEncryptedColumnFieldsForConfig()`, `getListenerEmbeddedFields()`, `isEmbeddable()`; `Mapping\ListenerFieldResolver`.
+
+### Fixed
+
+- **Data loss in key rotation for encrypted fields inside embeddables (2.0.7 – 2.10.1).** `doctrine:decrypt:database`,
+  `doctrine:encrypt:database` and so `doctrine:encrypt:rotate-keys` only processed the entity's own properties:
+  `#[Encrypted]` fields inside an `#[ORM\Embedded]` embeddable were neither decrypted nor re-encrypted nor reported,
+  while the rotation ended with "Key rotation completed successfully". After the key change those values could only be
+  decrypted with the **old** key. The commands and `doctrine:encrypt:status` now include every listener-encrypted
+  field inside followed embeddables (nested ones too, and `encrypted_fields` entries), using Doctrine's column names
+  (`address_city`). **If you rotated keys with an affected version and have such fields, keep your old key** (the
+  `--backup` directory or the previous env value) until you have verified your data: to recover, back up the database, make the
+  old key the current one and run `doctrine:decrypt:database` with 2.11.0 (it decrypts the embedded columns and
+  reports the other fields, already under the new key, as not decryptable and leaves them unchanged: the error exit is
+  expected), then put the new key back and run `doctrine:encrypt:database`. Without the old key the values cannot be
+  recovered.
+- Drivers that list embeddables in `getAllMetadata()` (XML, YAML) made the raw SQL commands treat an embeddable class
+  as a table (`no such table`). Embeddables are now skipped as tables (their fields are processed through the owning
+  entity, see above). The attribute driver never listed them.
+
 ### Documentation
 
 - USAGE: new section "Using it from a DDD / hexagonal application" (where the bundle sits in a hexagonal host, the ports, events and DTOs to build an anti-corruption layer on, and the known limitations).
+- USAGE: field selection in configuration, encrypted DBAL types (static runtime and its consequences in workers and
+  multi-kernel processes, no querying by encrypted value, no blind index), migration from `#[Encrypted]` to a type;
+  "Known limitations" reduced to what is left. CONFIGURATION: `encrypted_fields`, `property_access`, `dbal_types`.
 
 ## [2.10.1] - 2026-10-31
 
