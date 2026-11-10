@@ -14,6 +14,7 @@ use Nowo\DoctrineEncryptBundle\Doctrine\Types\EncryptedTypeRuntimeConfigurator;
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
+use Nowo\DoctrineEncryptBundle\EventListener\ClosedEntityManagerRecoveryListener;
 use Nowo\DoctrineEncryptBundle\EventListener\SecretKeyPermissionsListener;
 use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
@@ -88,6 +89,7 @@ final class DoctrineEncryptExtension extends Extension implements PrependExtensi
         $config['profiles'] = $profiles;
 
         $this->configureListenerConnections($container, $config['connections'] ?? []);
+        $this->configureClosedManagerRecovery($container, $config['closed_manager_recovery'] ?? [], $config['connections'] ?? []);
         $this->assertNoMysqlAesInProduction($container, $profiles);
         $this->deprecateMysqlAes($profiles);
         $this->registerProfiles($container, $config);
@@ -276,6 +278,25 @@ final class DoctrineEncryptExtension extends Extension implements PrependExtensi
                 }
             }
         }
+    }
+
+    /**
+     * Scopes the closed-manager recovery to the managers the bundle encrypts for (or removes it when disabled).
+     *
+     * @param array<string, mixed> $options Processed closed_manager_recovery node
+     * @param list<string> $connections Connections of the encrypt listener
+     */
+    private function configureClosedManagerRecovery(ContainerBuilder $container, array $options, array $connections): void
+    {
+        if (!($options['enabled'] ?? true)) {
+            $container->removeDefinition(ClosedEntityManagerRecoveryListener::class);
+
+            return;
+        }
+
+        $container->getDefinition(ClosedEntityManagerRecoveryListener::class)
+            ->setArgument('$connections', array_values(array_unique($connections)))
+            ->setArgument('$entityManagers', array_values(array_unique($options['entity_managers'] ?? [])));
     }
 
     /**

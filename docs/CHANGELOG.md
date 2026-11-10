@@ -60,6 +60,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Target **2.11.1**.
+
+### Fixed
+
+- `ClosedEntityManagerRecoveryListener` reset **every** closed entity manager of the registry at each main request,
+  including host managers on connections excluded through `connections`. It now resets only the managers the bundle
+  encrypts for: those whose connection gets the encrypt listener (every manager when `connections` is empty, as
+  before), or the ones listed in the new `closed_manager_recovery.entity_managers`. Rule 6 of the bundle architecture
+  bar.
+
+### Added
+
+- `closed_manager_recovery` option: `enabled` (default `true`) and `entity_managers` (default `[]`).
+
 ## [2.11.0] - 2026-11-10
 
 Target **2.11.0**: DDD / hexagonal adapter fixes (audit 2026-11-09, gaps G1, G2, G3). Additive; with the default
