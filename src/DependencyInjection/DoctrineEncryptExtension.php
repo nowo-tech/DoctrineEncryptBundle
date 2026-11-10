@@ -18,6 +18,7 @@ use Nowo\DoctrineEncryptBundle\EventListener\SecretKeyPermissionsListener;
 use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use ReflectionClass;
+use ReflectionNamedType;
 use ReflectionProperty;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -34,6 +35,7 @@ use function count;
 use function in_array;
 use function is_array;
 use function is_int;
+use function ltrim;
 use function sprintf;
 
 /**
@@ -118,7 +120,8 @@ final class DoctrineEncryptExtension extends Extension implements PrependExtensi
                 foreach ((array) ($rawConfig[$key] ?? []) as $name => $profile) {
                     $name = is_int($name) && is_array($profile) && isset($profile['name']) ? $profile['name'] : $name;
                     if (!is_int($name)) {
-                        $profiles[] = (string) $name;
+                        // The Config component turns "personal-data" into "personal_data" (the registry name).
+                        $profiles[] = str_replace('-', '_', (string) $name);
                     }
                 }
             }
@@ -190,6 +193,13 @@ final class DoctrineEncryptExtension extends Extension implements PrependExtensi
             if (!$reflection instanceof ReflectionClass) {
                 throw new InvalidArgumentException(sprintf('nowo_doctrine_encrypt.encrypted_fields: class "%s" does not exist.', $class));
             }
+            if ($reflection->getName() !== ltrim($class, '\\')) {
+                // PHP class names are case-insensitive, the map (and the listener lookup) is not.
+                throw new InvalidArgumentException(sprintf('nowo_doctrine_encrypt.encrypted_fields: write "%s" as "%s" (exact case).', $class, $reflection->getName()));
+            }
+            if ($reflection->isTrait() || $reflection->isInterface() || $reflection->isEnum()) {
+                throw new InvalidArgumentException(sprintf('nowo_doctrine_encrypt.encrypted_fields: "%s" is not a class; list the entity or embeddable classes that use it.', $class));
+            }
             $properties = $this->classProperties($reflection);
 
             $embedded = $entry['embedded'] ?? [];
@@ -211,6 +221,10 @@ final class DoctrineEncryptExtension extends Extension implements PrependExtensi
             foreach ($embedded as $property) {
                 if (!isset($properties[$property])) {
                     throw new InvalidArgumentException(sprintf('nowo_doctrine_encrypt.encrypted_fields: %s has no property "%s".', $class, $property));
+                }
+                $type = $properties[$property]->getType();
+                if ($type instanceof ReflectionNamedType && $type->isBuiltin() && !in_array($type->getName(), ['object', 'mixed'], true)) {
+                    throw new InvalidArgumentException(sprintf('nowo_doctrine_encrypt.encrypted_fields: %s::$%s is typed %s; "embedded" takes embedded objects only (list scalar fields under "properties").', $class, $property, $type->getName()));
                 }
             }
         }
@@ -245,19 +259,21 @@ final class DoctrineEncryptExtension extends Extension implements PrependExtensi
      */
     private function configureListenerConnections(ContainerBuilder $container, array $connections): void
     {
-        $definition = $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber');
-        $tags       = $definition->getTag('doctrine.event_listener');
-        $definition->clearTag('doctrine.event_listener');
+        foreach (['nowo_doctrine_encrypt.orm_subscriber', 'nowo_doctrine_encrypt.mapping_validator'] as $serviceId) {
+            $definition = $container->getDefinition($serviceId);
+            $tags       = $definition->getTag('doctrine.event_listener');
+            $definition->clearTag('doctrine.event_listener');
 
-        foreach ($tags as $attributes) {
-            unset($attributes['connection']);
-            if ($connections === []) {
-                $definition->addTag('doctrine.event_listener', $attributes);
-                continue;
-            }
+            foreach ($tags as $attributes) {
+                unset($attributes['connection']);
+                if ($connections === []) {
+                    $definition->addTag('doctrine.event_listener', $attributes);
+                    continue;
+                }
 
-            foreach (array_values(array_unique($connections)) as $connection) {
-                $definition->addTag('doctrine.event_listener', $attributes + ['connection' => $connection]);
+                foreach (array_values(array_unique($connections)) as $connection) {
+                    $definition->addTag('doctrine.event_listener', $attributes + ['connection' => $connection]);
+                }
             }
         }
     }

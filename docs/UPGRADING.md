@@ -74,6 +74,15 @@ composer update nowo-tech/doctrine-encrypt-bundle
 Nothing to change: the new options default to the 2.10 behaviour (`encrypted_fields: []`, `property_access: auto`,
 `dbal_types: false`).
 
+- **`#[Encrypted]` fields inside embeddables and key rotation.** Up to 2.10.1 `doctrine:encrypt:rotate-keys` and
+  `doctrine:encrypt/decrypt:database` skipped them, so after a rotation they could only be decrypted with the old key.
+  2.11.0 covers them. If you rotated with an affected version, **keep the old key** and follow the recovery steps in
+  the [CHANGELOG](CHANGELOG.md#unreleased). Check with `doctrine:encrypt:status` that every encrypted field is listed
+  before you destroy an old key.
+- A field selected for the listener and mapped with an encrypted DBAL type, or an `encrypted_fields` entry that does
+  not match the Doctrine mapping, now throws `LogicException` when the metadata loads (only possible with the new
+  2.11 features).
+
 - **Optional, attribute-free domains**: list fields in `encrypted_fields` instead of `#[Encrypted]`, and set
   `property_access: reflection` if setters validate their input. See
   [USAGE › Selecting fields in configuration](USAGE.md#selecting-fields-in-configuration-listener).

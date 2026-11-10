@@ -21,6 +21,7 @@ use Nowo\DoctrineEncryptBundle\DependencyInjection\DoctrineEncryptExtension;
 use Nowo\DoctrineEncryptBundle\Doctrine\Types\EncryptedTypeRuntime;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
+use Nowo\DoctrineEncryptBundle\EventListener\EncryptedMappingValidator;
 use Nowo\DoctrineEncryptBundle\Exception\DecryptionFailedException;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap;
@@ -93,6 +94,12 @@ final class XmlMappedDomainTest extends TestCase
         $dbalConfig->setMiddlewares([new Middleware($this->queries)]);
         $connection          = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'path' => $this->dbFile], $dbalConfig);
         $this->entityManager = new EntityManager($connection, $config);
+        $this->fieldMap      = new EncryptedFieldMap([
+            Customer::class => ['properties' => ['email' => null], 'embedded' => ['address']],
+            Address::class  => ['properties' => ['city' => 'financial_data']],
+        ]);
+        // The selection is checked against the XML metadata when it loads (schema creation below).
+        $this->entityManager->getEventManager()->addEventListener([Events::loadClassMetadata], new EncryptedMappingValidator($this->fieldMap));
 
         $schemaTool = new SchemaTool($this->entityManager);
         $schemaTool->createSchema($this->entityManager->getMetadataFactory()->getAllMetadata());
@@ -101,10 +108,7 @@ final class XmlMappedDomainTest extends TestCase
             $this->registry,
             null,
             DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_THROW,
-            $this->fieldMap = new EncryptedFieldMap([
-                Customer::class => ['properties' => ['email' => null], 'embedded' => ['address']],
-                Address::class  => ['properties' => ['city' => 'financial_data']],
-            ]),
+            $this->fieldMap,
             DoctrineEncryptSubscriber::PROPERTY_ACCESS_REFLECTION,
         );
         $this->entityManager->getEventManager()->addEventListener(
@@ -250,11 +254,15 @@ final class XmlMappedDomainTest extends TestCase
         $this->entityManager->flush();
         $id = (int) $customer->getId();
 
-        $status = $this->runCommand(new DoctrineEncryptStatusCommand($this->entityManager, new AttributeReader(), $this->subscriber, null, $this->registry), []);
+        // An entry for a class Doctrine does not map (here the value object) is reported.
+        $withUnmapped = new EncryptedFieldMap([...$this->fieldMap->all(), Iban::class => ['properties' => ['value' => null]]]);
+        $status       = $this->runCommand(new DoctrineEncryptStatusCommand($this->entityManager, new AttributeReader(), $this->subscriber, null, $this->registry), [], $withUnmapped);
+        self::assertStringContainsString('encrypted_fields: ' . Iban::class . ' is not mapped by this entity manager', $status);
         self::assertStringContainsString('phone (config: personal_data, DBAL type encrypted_string)', $status);
         self::assertStringContainsString('iban (config: financial_data, DBAL type encrypted_iban.financial_data)', $status);
         self::assertStringContainsString('address.street (config: personal_data, DBAL type encrypted_string)', $status);
         self::assertStringContainsString('email (config: personal_data)', $status);
+        self::assertStringContainsString('address.city (config: financial_data, embedded)', $status);
 
         $this->runCommand(new DoctrineDecryptDatabaseCommand($this->entityManager, new AttributeReader(), $this->subscriber, null, $this->registry), ['--force' => true]);
         $plain = $this->rawRow($id);
@@ -262,10 +270,11 @@ final class XmlMappedDomainTest extends TestCase
         self::assertSame('ES9121000418450200051332', $plain['iban']);
         self::assertSame('Gran Via 1', $plain['address_street']);
         self::assertSame('ana@example.com', $plain['email']);
+        self::assertSame('Madrid', $plain['address_city']);
 
         $this->runCommand(new DoctrineEncryptDatabaseCommand($this->entityManager, new AttributeReader(), $this->subscriber, null, $this->registry), ['--force' => true]);
         $encrypted = $this->rawRow($id);
-        foreach (['email', 'phone', 'iban', 'notes', 'preferences', 'address_street'] as $column) {
+        foreach (['email', 'phone', 'iban', 'notes', 'preferences', 'address_street', 'address_city'] as $column) {
             self::assertStringEndsWith(EncryptUtil::ENCRYPTION_MARKER, (string) $encrypted[$column], $column);
         }
 
@@ -276,6 +285,7 @@ final class XmlMappedDomainTest extends TestCase
         self::assertEquals(new Iban('ES9121000418450200051332'), $loaded->getIban());
         self::assertSame('Gran Via 1', $loaded->getAddress()->street());
         self::assertSame('ana@example.com', $loaded->getEmail());
+        self::assertSame('Madrid', $loaded->getAddress()->city());
     }
 
     private function newCustomer(): Customer
@@ -305,10 +315,10 @@ final class XmlMappedDomainTest extends TestCase
     /**
      * @param array<string, mixed> $input
      */
-    private function runCommand(AbstractCommand $command, array $input): string
+    private function runCommand(AbstractCommand $command, array $input, ?EncryptedFieldMap $fieldMap = null): string
     {
         $command->setApplication(new Application());
-        $command->setEncryptedFieldMap($this->fieldMap);
+        $command->setEncryptedFieldMap($fieldMap ?? $this->fieldMap);
         $tester = new CommandTester($command);
         $tester->execute($input, ['interactive' => false]);
         self::assertSame(Command::SUCCESS, $tester->getStatusCode(), $tester->getDisplay());

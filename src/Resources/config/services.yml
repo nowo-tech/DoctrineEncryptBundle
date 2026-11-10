@@ -83,6 +83,14 @@ services:
       - { name: 'doctrine.event_listener', event: 'preFlush', priority: 500 }
       - { name: 'doctrine.event_listener', event: 'postFlush', priority: 500 }
 
+  # Checks encrypted_fields and listener/type double selection against Doctrine metadata (loadClassMetadata).
+  # The "connection" attribute is set by DoctrineEncryptExtension, like the listener's.
+  nowo_doctrine_encrypt.mapping_validator:
+    class: Nowo\DoctrineEncryptBundle\EventListener\EncryptedMappingValidator
+    arguments: ["@nowo_doctrine_encrypt.encrypted_field_map"]
+    tags:
+      - { name: 'doctrine.event_listener', event: 'loadClassMetadata' }
+
   nowo_doctrine_encrypt.subscriber:
     alias: nowo_doctrine_encrypt.orm_subscriber
 

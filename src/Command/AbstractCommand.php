@@ -14,6 +14,7 @@ use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap;
+use Nowo\DoctrineEncryptBundle\Mapping\ListenerFieldResolver;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use ReflectionClass;
 use ReflectionProperty;
@@ -26,6 +27,7 @@ use function array_column;
 use function array_key_exists;
 use function count;
 use function ctype_digit;
+use function in_array;
 use function is_int;
 use function is_string;
 use function sprintf;
@@ -36,11 +38,14 @@ use function sprintf;
  * Provides shared helpers: entity iteration, encrypted property discovery, and config-filtered metadata.
  *
  * Encrypted fields are the properties marked with #[Encrypted], the ones selected in `encrypted_fields`, and (for the
- * raw SQL database commands) the columns mapped with an encrypted DBAL type.
+ * raw SQL database commands) the listener-encrypted fields inside followed embeddables and the columns mapped with an
+ * encrypted DBAL type.
  */
 abstract class AbstractCommand extends Command
 {
     private ?EncryptedFieldMap $encryptedFieldMap; // @igor-ignore - Set once by the container (setter injection), immutable afterwards.
+
+    private ?ListenerFieldResolver $listenerFieldResolver; // @igor-ignore - Reflection cache built from the immutable field map.
 
     /**
      * @param EntityManagerInterface $entityManager Doctrine entity manager
@@ -58,6 +63,8 @@ abstract class AbstractCommand extends Command
     ) {
         // @igor-ignore - Container wiring (setter injection below), never per-request state.
         $this->encryptedFieldMap = null;
+        // @igor-ignore - Reflection cache derived from the immutable field map.
+        $this->listenerFieldResolver = null;
         parent::__construct();
     }
 
@@ -69,6 +76,16 @@ abstract class AbstractCommand extends Command
     {
         // @igor-ignore - Container wiring at service creation, immutable afterwards.
         $this->encryptedFieldMap = $encryptedFieldMap;
+        // @igor-ignore - Rebuilt from the new map.
+        $this->listenerFieldResolver = null;
+    }
+
+    /**
+     * Fields selected in encrypted_fields (null when the container did not inject the map).
+     */
+    protected function getEncryptedFieldMap(): ?EncryptedFieldMap
+    {
+        return $this->encryptedFieldMap;
     }
 
     /**
@@ -114,7 +131,8 @@ abstract class AbstractCommand extends Command
 
             $properties = $this->getEncryptionableProperties($entityMetaData);
 
-            if (count($properties) === 0 && $this->getEncryptedTypeFields($entityMetaData, $this->encryptorRegistry?->getDefaultName() ?? 'default') === []) {
+            $defaultName = $this->encryptorRegistry?->getDefaultName() ?? 'default';
+            if (count($properties) === 0 && $this->getEncryptedTypeFields($entityMetaData, $defaultName) === [] && $this->getListenerEmbeddedFields($entityMetaData, $defaultName) === []) {
                 continue;
             }
 
@@ -280,7 +298,7 @@ abstract class AbstractCommand extends Command
             }
 
             $properties = $this->getEncryptionablePropertiesForConfig($entityMetaData, $configName, $defaultConfigName);
-            if (count($properties) > 0 || $this->getEncryptedTypeFieldsForConfig($entityMetaData, $configName, $defaultConfigName) !== []) {
+            if (count($properties) > 0 || $this->getEncryptedColumnFieldsForConfig($entityMetaData, $configName, $defaultConfigName) !== []) {
                 $validMetaData[] = $entityMetaData;
             }
         }
@@ -320,8 +338,8 @@ abstract class AbstractCommand extends Command
             $columns[]         = ['field' => $fieldName, 'column' => $columnName];
             $seen[$columnName] = true;
         }
-        // Encrypted DBAL types store the same format, so the raw SQL commands handle their columns too.
-        foreach ($this->getEncryptedTypeFieldsForConfig($entityMetaData, $configName, $defaultConfigName) as $fieldName) {
+        // Listener fields inside embeddables live in the owner's table; encrypted DBAL types store the same format.
+        foreach ($this->getEncryptedColumnFieldsForConfig($entityMetaData, $configName, $defaultConfigName) as $fieldName) {
             $columnName = $this->getColumnNameFromMetadata($entityMetaData, $fieldName);
             if (!isset($seen[$columnName])) {
                 $columns[]         = ['field' => $fieldName, 'column' => $columnName];
@@ -333,19 +351,44 @@ abstract class AbstractCommand extends Command
     }
 
     /**
-     * Field names mapped with an encrypted DBAL type that use the given config.
+     * Field names of listener-encrypted embedded fields and of encrypted DBAL type columns that use the given config.
      *
      * @param ClassMetadata<object>|object $entityMetaData Doctrine entity metadata
      *
      * @return list<string>
      */
-    protected function getEncryptedTypeFieldsForConfig($entityMetaData, string $configName, string $defaultConfigName): array
+    protected function getEncryptedColumnFieldsForConfig($entityMetaData, string $configName, string $defaultConfigName): array
     {
         $fields = [];
-        foreach ($this->getEncryptedTypeFields($entityMetaData, $defaultConfigName) as $field) {
-            if ($field['config'] === $configName) {
+        foreach ([...$this->getListenerEmbeddedFields($entityMetaData, $defaultConfigName), ...$this->getEncryptedTypeFields($entityMetaData, $defaultConfigName)] as $field) {
+            if ($field['config'] === $configName && !in_array($field['field'], $fields, true)) {
                 $fields[] = $field['field'];
             }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Listener-encrypted fields inside embeddables the listener follows (#[Encrypted] / encrypted_fields on the
+     * embeddable class, followed through #[ORM\Embedded] / encrypted_fields "embedded"), e.g. "address.street", with
+     * their resolved profile. Their columns are in the owner's table, so the raw SQL commands process them.
+     *
+     * @param ClassMetadata<object>|object $entityMetaData Doctrine entity metadata
+     *
+     * @return list<array{field: string, config: string}>
+     */
+    protected function getListenerEmbeddedFields($entityMetaData, string $defaultConfigName): array
+    {
+        if (!$entityMetaData instanceof ClassMetadata || $entityMetaData->embeddedClasses === []) {
+            return [];
+        }
+
+        // @igor-ignore - Reflection cache derived from the immutable field map, built once.
+        $this->listenerFieldResolver ??= new ListenerFieldResolver($this->encryptedFieldMap ?? new EncryptedFieldMap());
+        $fields = [];
+        foreach ($this->listenerFieldResolver->embeddedFields($entityMetaData) as $field) {
+            $fields[] = ['field' => $field['field'], 'config' => $field['config'] === 'default' ? $defaultConfigName : $field['config']];
         }
 
         return $fields;

@@ -72,9 +72,12 @@ abstract class AbstractEncryptedType extends Type
         }
 
         $profile = $this->getProfile();
+        // Outside the try: a missing configuration or an unknown profile is never a "decrypt failure" (it would fall
+        // back to the default policy and return the ciphertext).
+        $encryptor = EncryptedTypeRuntime::encryptor($profile);
 
         try {
-            $plaintext = EncryptedTypeRuntime::encryptor($profile)->decrypt(EncryptedValue::payload($stored));
+            $plaintext = $encryptor->decrypt(EncryptedValue::payload($stored));
         } catch (Throwable $e) {
             return $this->onDecryptFailure($profile, $stored, $e);
         }

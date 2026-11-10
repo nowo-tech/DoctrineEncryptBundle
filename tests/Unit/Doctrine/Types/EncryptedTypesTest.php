@@ -210,6 +210,27 @@ final class EncryptedTypesTest extends TestCase
         Type::getType('encrypted_string')->convertToDatabaseValue('secret', $this->platform);
     }
 
+    public function testReadWithoutConfigurationThrowsWhateverThePolicy(): void
+    {
+        $stored = Type::getType('encrypted_string')->convertToDatabaseValue('secret', $this->platform);
+        EncryptedTypeRuntime::clear();
+
+        $this->expectException(LogicException::class);
+        Type::getType('encrypted_string')->convertToPHPValue($stored, $this->platform);
+    }
+
+    public function testReadWithAnUnknownProfileThrowsWhateverThePolicy(): void
+    {
+        if (!Type::hasType('encrypted_string.not_configured')) {
+            Type::addType('encrypted_string.not_configured', EncryptedStringType::class);
+        }
+        EncryptedTypeRuntime::configure($this->registry, DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_KEEP);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown encryptor config "not_configured"');
+        Type::getType('encrypted_string.not_configured')->convertToPHPValue('p:eA==<ENC>', $this->platform);
+    }
+
     public function testRuntimeRejectsAnUnknownFailureMode(): void
     {
         $this->expectException(InvalidArgumentException::class);

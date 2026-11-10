@@ -22,6 +22,7 @@ use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\PlainAddress;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\PlainProfile;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\PlainProfileChild;
+use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\SecretTrait;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -153,6 +154,9 @@ final class EncryptedFieldsAndTypesConfigTest extends TestCase
         yield 'also #[Encrypted]' => [[User::class => ['properties' => ['name' => null]]], 'already carries #[Encrypted]'];
         yield 'property and embedded' => [[PlainProfile::class => ['properties' => ['address' => null], 'embedded' => ['address']]], 'cannot be both'];
         yield 'unknown embedded' => [[PlainProfile::class => ['embedded' => ['missing']]], 'has no property "missing"'];
+        yield 'wrong case' => [[strtolower(PlainProfile::class) => ['properties' => ['taxId' => null]]], '(exact case)'];
+        yield 'trait' => [[SecretTrait::class => ['properties' => ['secret' => null]]], 'is not a class'];
+        yield 'scalar under embedded' => [[PlainProfile::class => ['embedded' => ['taxId']]], 'is typed string; "embedded" takes embedded objects only'];
     }
 
     public function testInheritedPrivatePropertyIsAccepted(): void
@@ -196,7 +200,7 @@ final class EncryptedFieldsAndTypesConfigTest extends TestCase
         self::assertSame([], $container->getExtensionConfig('doctrine'));
 
         $container = $this->containerWithDoctrine();
-        $container->loadFromExtension('nowo_doctrine_encrypt', ['profiles' => ['personal_data' => []]]);
+        $container->loadFromExtension('nowo_doctrine_encrypt', ['profiles' => ['personal_data' => [], 'card-data' => []]]);
         $container->loadFromExtension('nowo_doctrine_encrypt', ['dbal_types' => true, 'configs' => [['name' => 'legacy_xml']], 'profile' => 'ignored']);
         (new DoctrineEncryptExtension())->prepend($container);
 
@@ -204,6 +208,9 @@ final class EncryptedFieldsAndTypesConfigTest extends TestCase
         self::assertSame(['class' => EncryptedStringType::class], $types['encrypted_string']);
         self::assertSame(['class' => EncryptedJsonType::class], $types['encrypted_json.personal_data']);
         self::assertSame(['class' => EncryptedTextType::class], $types['encrypted_text.legacy_xml']);
+        // Profile keys are normalised like the Config component does ("card-data" is the registry's "card_data").
+        self::assertArrayHasKey('encrypted_string.card_data', $types);
+        self::assertArrayNotHasKey('encrypted_string.card-data', $types);
 
         // DoctrineBundle accepts the prepended shape; a host entry with the same name wins.
         $doctrineConfigs   = $container->getExtensionConfig('doctrine');

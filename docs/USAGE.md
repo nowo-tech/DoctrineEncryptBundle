@@ -336,10 +336,20 @@ The same in XML (Symfony 7.4 deprecated XML configuration files; YAML and PHP ta
 </nowo-doctrine-encrypt:config>
 ```
 
-Entries of a parent class apply to its subclasses. The container build fails when a class, property or profile does not
-exist, when a property is also marked `#[Encrypted]`, or when it is listed both as a property and as embedded (a typo
-must never leave a field in plaintext). The console commands (`doctrine:encrypt:status`, `doctrine:encrypt:database`,
-`doctrine:decrypt:database`, `doctrine:encrypt:rotate-keys`) see these fields like `#[Encrypted]` ones.
+Entries of a parent class apply to its subclasses. What is checked:
+
+- **Container build**: the class exists and is written in its exact case (not a trait, interface or enum), every
+  property exists in the class or a parent, every profile exists, no property also carries `#[Encrypted]` or is listed
+  both as a property and as embedded, and an `embedded` property is not declared with a scalar type.
+- **When Doctrine loads the class's metadata** (first use, or `cache:warmup` with a metadata cache): every listed
+  property is a mapped field of that class, every `embedded` entry is an embedded mapping, and no listener-selected
+  field is also mapped with an encrypted DBAL type. A mismatch throws `LogicException`.
+- **Not checked automatically**: a class that Doctrine does not map at all (for example the domain class when a
+  separate persistence record is mapped). Its metadata never loads, so its entry is silently unused.
+  `doctrine:encrypt:status` reports such entries in red; run it after changing `encrypted_fields`.
+
+The console commands (`doctrine:encrypt:status`, `doctrine:encrypt:database`, `doctrine:decrypt:database`,
+`doctrine:encrypt:rotate-keys`) see these fields like `#[Encrypted]` ones, inside followed embeddables too.
 
 ### Encrypted DBAL types
 
@@ -433,7 +443,9 @@ kernel shuts down. Consequences:
 - **Several kernels in one process** (some test suites, multi-kernel apps): the last booted kernel's encryptors are
   used by every connection of every kernel. Do not run kernels with different keys side by side in one process with
   the types; use the listener there.
-- **Before boot / without the bundle** the types refuse to convert (`LogicException`): they never write plaintext. In a
+- **Before boot / without the bundle** the types refuse to convert in both directions (`LogicException`, whatever
+  `on_decrypt_failure` says): they never write plaintext and never return ciphertext as a value. The same holds for a
+  type whose profile is not configured (`InvalidArgumentException`). In a
   plain Doctrine setup register the types with `Type::addType()` and call `EncryptedTypeRuntime::configure($registry,
   'throw', $logger)` yourself.
 - **Querying by an encrypted value does not work**: Halite and Defuse ciphertexts are randomized, so `findBy(['phone'
@@ -441,8 +453,16 @@ kernel shuts down. Consequences:
   has no blind index; keep a separate hash column (HMAC with its own key) if you need equality lookups.
 - `MysqlAes` produces binary ciphertext; with the types, map such columns as you would for the listener (see
   [MYSQL_AES.md](MYSQL_AES.md)). Prefer Halite.
-- Do not use an encrypted type on a field that the listener also encrypts (`#[Encrypted]` or `encrypted_fields`): it
-  would be encrypted twice.
+- A field cannot be selected for the listener (`#[Encrypted]` or `encrypted_fields`) and mapped with an encrypted type
+  at the same time: it would be encrypted twice. This is rejected with `LogicException` when its metadata loads.
+- **Bulk DQL / QueryBuilder updates must pass the type.** `UPDATE … SET c.phone = :v` with an untyped parameter, or a
+  literal in `QueryBuilder::set()`, writes the **plaintext** (no Doctrine type conversion, and listeners do not run on
+  bulk queries either). Bind the type explicitly, `->setParameter('v', $phone, 'encrypted_string.personal_data')`.
+  Plaintext written that way is read back as-is (no marker), and `doctrine:encrypt:database` encrypts it. A DQL `WHERE`
+  on such a column with an untyped parameter sends the plaintext to the database and its logs.
+- **Second-level cache**: Doctrine caches the converted PHP values, so with an `#[ORM\Cache]` entity the plaintext of
+  encrypted-type fields lands in the cache pool. Do not enable the second-level cache for such entities, or encrypt the
+  pool.
 
 ### Migrating a field from `#[Encrypted]` to a DBAL type
 
@@ -493,9 +513,8 @@ final class NowoSecretCipher implements SecretCipher
 
 ### Known limitations
 
-- The raw SQL commands do not cover **listener-encrypted** fields inside embeddables (`#[Encrypted]` or
-  `encrypted_fields` on an embeddable class): `doctrine:encrypt:rotate-keys` would leave them encrypted with the old
-  key. Use an encrypted DBAL type for embeddable fields, or re-save those entities after a rotation.
+- `encrypted_fields` entries for classes Doctrine does not map are not detected automatically (see
+  `doctrine:encrypt:status`).
 - No events are dispatched (decrypt failures are handled by `on_decrypt_failure` and logged).
 - With the default `property_access: auto`, domain setters may receive ciphertext during a flush (unchanged from
   earlier versions); set `property_access: reflection` or use the DBAL types.

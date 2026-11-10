@@ -8,6 +8,14 @@ This guide describes a safe procedure to **rotate encryption keys**: back up the
 
 **Important:** Key rotation touches all encrypted data. Plan the steps, run them in a maintenance window, and verify backups before starting.
 
+**Keep the old key until you have verified the result.** Up to and including 2.10.1 the raw SQL commands (and so
+`doctrine:encrypt:rotate-keys`) skipped `#[Encrypted]` fields inside embeddables (`#[ORM\Embedded]`): they stayed
+encrypted with the old key while the command reported success. Since 2.11.0 they are covered (nested embeddables and
+`encrypted_fields` too). Before destroying an old key, run `doctrine:encrypt:status` and check that every encrypted
+field you expect is listed, then load a few entities with the new key only. If you rotated with an affected version
+and still have the old key (the `--backup` directory, or the previous env value), see
+[CHANGELOG](CHANGELOG.md#unreleased) for the recovery steps.
+
 ## Table of contents
 
 - [Overview](#overview)
@@ -98,7 +106,9 @@ Confirm that encryption succeeded (e.g. run the status command and spot-check th
 
 ## Step 5: After rotation
 
-- **Securely destroy or archive** the old key backup when you no longer need it (follow your retention policy).
+- **Securely destroy or archive** the old key backup only after the verification above (every field listed by
+  `doctrine:encrypt:status`, entities load with the new key only), and when you no longer need it (follow your
+  retention policy).
 - **Update any other systems** that held a copy of the old key (e.g. deployment or secrets management).
 - Keep the new key(s) only in secure storage and in the configured path(s) used by the application.
 
