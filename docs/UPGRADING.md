@@ -65,6 +65,29 @@
 
 ## Unreleased
 
+Target **2.11.0**. From **2.10.x**:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
+Nothing to change: the new options default to the 2.10 behaviour (`encrypted_fields: []`, `property_access: auto`,
+`dbal_types: false`).
+
+- **Optional, attribute-free domains**: list fields in `encrypted_fields` instead of `#[Encrypted]`, and set
+  `property_access: reflection` if setters validate their input. See
+  [USAGE › Selecting fields in configuration](USAGE.md#selecting-fields-in-configuration-listener).
+- **Optional, encrypted DBAL types**: set `dbal_types: true` and map fields as `encrypted_string` /
+  `encrypted_string.<profile>` (also `encrypted_text`, `encrypted_json`). The stored format and keys are the same as
+  `#[Encrypted]`: switching a column needs no data migration (remove `#[Encrypted]` at the same time, or the value is
+  encrypted twice). See [USAGE › Migrating a field](USAGE.md#migrating-a-field-from-encrypted-to-a-dbal-type). If you
+  already register a DBAL type named `encrypted_string`, `encrypted_text` or `encrypted_json` (another library), your
+  `doctrine.dbal.types` entry wins over the bundle's prepended one; keep `dbal_types: false` or rename yours to avoid
+  mixing two formats under one name.
+- **Classes extending `DoctrineEncryptSubscriber` or `AbstractCommand`**: the subscriber constructor gained two optional
+  arguments (pass them through if you override the constructor); `AbstractCommand` gained a `#[Required]`
+  `setEncryptedFieldMap()` and protected helpers. The raw SQL commands now skip embeddable metadata.
+
 ## To 2.10.1
 
 From **2.10.0**:

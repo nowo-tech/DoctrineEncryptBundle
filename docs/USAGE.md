@@ -17,6 +17,9 @@
 - [Embedded entities](#embedded-entities)
 - [Using it from a DDD / hexagonal application](#using-it-from-a-ddd--hexagonal-application)
   - [Where the coupling is](#where-the-coupling-is)
+  - [Selecting fields in configuration (listener)](#selecting-fields-in-configuration-listener)
+  - [Encrypted DBAL types](#encrypted-dbal-types)
+  - [Migrating a field from `#[Encrypted]` to a DBAL type](#migrating-a-field-from-encrypted-to-a-dbal-type)
   - [Recommended setups](#recommended-setups)
   - [Known limitations](#known-limitations)
 - [Console commands](#console-commands)
@@ -274,33 +277,196 @@ The symfony8 demo (`/mysql-aes-note`, `/mysql-aes-note/sql`) lets you compare th
 
 ## Embedded entities
 
-Encrypted properties inside embedded entities are supported: mark the property in the embedded class with `Encrypted` and ensure the embeddable is correctly mapped.
+Encrypted properties inside embedded entities are supported: mark the property in the embedded class with `Encrypted` and ensure the embeddable is correctly mapped. The listener follows properties with `#[ORM\Embedded]`; for embeddables mapped in XML/YAML list the property under `embedded` in [`encrypted_fields`](#selecting-fields-in-configuration-listener), or map the embeddable's fields with an [encrypted DBAL type](#encrypted-dbal-types).
 
 ## Using it from a DDD / hexagonal application
 
-DoctrineEncryptBundle is an infrastructure adapter: a Doctrine ORM listener that encrypts the properties you mark
-when the entity manager flushes, and decrypts them when entities are loaded. It has no entities or tables of its
-own.
+DoctrineEncryptBundle is an infrastructure adapter. It has no entities or tables of its own and offers two ways to
+encrypt a field:
+
+- **The listener** (since 1.x, the default): a Doctrine ORM listener encrypts the selected properties when the entity
+  manager flushes and decrypts them when entities are loaded. Fields are selected with `#[Encrypted]` **or**, since
+  2.11, in the bundle configuration (`encrypted_fields`), so an attribute-free domain mapped in XML can use it.
+- **Encrypted DBAL types** (since 2.11, opt-in with `dbal_types: true`): `encrypted_string`, `encrypted_text` and
+  `encrypted_json`. Encryption happens when Doctrine converts the value for the database, so the entity only ever
+  holds plaintext: no listener, no setter call, any mapping driver, embeddables and value objects included.
+
+Both store the same `<ciphertext><ENC>` format with the same profile keys, so a column can move from one to the other
+without migrating data.
 
 ### Where the coupling is
 
-- Fields are selected **only** with the PHP attribute `#[Nowo\DoctrineEncryptBundle\Configuration\Encrypted]` on
-  the Doctrine-mapped property. Embeddables are followed only when the property has the PHP attribute
-  `#[ORM\Embedded]`. There is no XML/YAML or config-based field list yet.
-- Encrypted properties hold strings (`?string`).
-- During a flush the listener writes the ciphertext into the entity and puts the plaintext back in `postFlush`,
-  through the property setter when one exists, otherwise through reflection.
+- With the listener, fields come from `#[Encrypted]` on the property or from `encrypted_fields`. Embeddables are
+  followed when the property has `#[ORM\Embedded]` or is listed under `embedded` in `encrypted_fields`.
+- Listener-encrypted properties hold strings (`?string`) and must be writable (not `readonly`): the listener puts the
+  ciphertext into the entity during the flush and the plaintext back in `postFlush`. By default it goes through the
+  property setter when one exists (`property_access: auto`); with `property_access: reflection` it never calls
+  domain setters or getters.
+- With the encrypted DBAL types nothing touches the entity: the type converts the column value.
+
+### Selecting fields in configuration (listener)
+
+```yaml
+# config/packages/nowo_doctrine_encrypt.yaml
+nowo_doctrine_encrypt:
+    property_access: reflection            # domain setters never see ciphertext
+    profiles:
+        personal_data: { encryptor_class: Halite }
+        financial_data: { encryptor_class: Halite }
+    encrypted_fields:
+        App\Domain\Customer\Customer:
+            properties:
+                email: ~                   # ~ = default_profile
+                taxId: financial_data
+            embedded: [address]            # follow this embedded value object
+        App\Domain\Customer\Address:
+            properties:
+                street: ~
+```
+
+The same in XML (Symfony 7.4 deprecated XML configuration files; YAML and PHP take the same keys):
+
+```xml
+<nowo-doctrine-encrypt:config property-access="reflection">
+    <nowo-doctrine-encrypt:encrypted-field class="App\Domain\Customer\Customer">
+        <nowo-doctrine-encrypt:property name="email"/>
+        <nowo-doctrine-encrypt:property name="taxId">financial_data</nowo-doctrine-encrypt:property>
+        <nowo-doctrine-encrypt:embedded>address</nowo-doctrine-encrypt:embedded>
+    </nowo-doctrine-encrypt:encrypted-field>
+</nowo-doctrine-encrypt:config>
+```
+
+Entries of a parent class apply to its subclasses. The container build fails when a class, property or profile does not
+exist, when a property is also marked `#[Encrypted]`, or when it is listed both as a property and as embedded (a typo
+must never leave a field in plaintext). The console commands (`doctrine:encrypt:status`, `doctrine:encrypt:database`,
+`doctrine:decrypt:database`, `doctrine:encrypt:rotate-keys`) see these fields like `#[Encrypted]` ones.
+
+### Encrypted DBAL types
+
+```yaml
+nowo_doctrine_encrypt:
+    dbal_types: true          # registers the types in DoctrineBundle (doctrine.dbal.types)
+    on_decrypt_failure: throw
+    profiles:
+        personal_data: { encryptor_class: Halite }
+        financial_data: { encryptor_class: Halite }
+```
+
+| Type | Column | PHP value |
+|------|--------|-----------|
+| `encrypted_string` | `VARCHAR` (`length` from the mapping) | `?string` (a `Stringable` is accepted on write) |
+| `encrypted_text` | `TEXT` / `CLOB` | `?string` |
+| `encrypted_json` | `TEXT` / `CLOB` (not a native JSON column: it stores ciphertext) | JSON-encodable value, decoded to arrays |
+
+`encrypted_string` uses `default_profile`; `encrypted_string.financial_data` (and `encrypted_text.<profile>`,
+`encrypted_json.<profile>`) uses that profile. One name per profile is registered.
+
+```xml
+<!-- config/doctrine/Customer.orm.xml: no bundle class in the domain -->
+<entity name="App\Domain\Customer\Customer" table="customer">
+    <field name="phone" type="encrypted_string" length="1024" nullable="true"/>
+    <field name="iban" type="encrypted_iban" length="1024" nullable="true"/>
+    <field name="preferences" type="encrypted_json" nullable="true"/>
+    <embedded name="address" class="App\Domain\Customer\Address"/>
+</entity>
+<embeddable name="App\Domain\Customer\Address">
+    <field name="street" type="encrypted_string.personal_data" length="1024" nullable="true"/>
+</embeddable>
+```
+
+**Value objects**: extend a type in your infrastructure and override `toPlaintext()` / `fromPlaintext()` (and
+`getProfile()` when the registered name has no `.<profile>` suffix):
+
+```php
+namespace App\Infrastructure\Doctrine;
+
+use App\Domain\Customer\Iban;
+use Nowo\DoctrineEncryptBundle\Doctrine\Types\EncryptedStringType;
+
+final class EncryptedIbanType extends EncryptedStringType
+{
+    protected function toPlaintext(mixed $value): ?string
+    {
+        return $value instanceof Iban ? $value->toString() : parent::toPlaintext($value);
+    }
+
+    protected function fromPlaintext(string $plaintext): mixed
+    {
+        return Iban::fromString($plaintext);
+    }
+
+    public function getProfile(): string
+    {
+        return 'financial_data';
+    }
+}
+```
+
+```yaml
+doctrine:
+    dbal:
+        types:
+            encrypted_iban: App\Infrastructure\Doctrine\EncryptedIbanType
+```
+
+Behaviour, the same as the listener where it applies:
+
+- `null` and `''` are stored as-is. A stored value without the `<ENC>` marker is returned as plaintext (rows written
+  before encryption was enabled); it is encrypted the next time the field changes, or run `doctrine:encrypt:database`.
+- A value that ends with `<ENC>` but does not decrypt follows `on_decrypt_failure`: `throw` =
+  `DecryptionFailedException` (names the type and profile, never the value), `null` = `null` and a warning, `keep` =
+  the ciphertext without the marker and a warning. When the PHP value cannot hold the ciphertext (`encrypted_json`, a
+  value object type), `keep` throws `DecryptionFailedException` instead. The stored value is not rewritten unless the
+  field changes.
+- Doctrine only converts changed fields, so an unchanged field is never re-encrypted or rewritten.
+- The raw SQL commands (`doctrine:encrypt:database`, `doctrine:decrypt:database`, `doctrine:encrypt:rotate-keys`) and
+  `doctrine:encrypt:status` include columns mapped with an encrypted type (embedded ones too), with the type's profile.
+
+**How the types get the encryptors.** DBAL types are stateless singletons that Doctrine instantiates itself, so they
+cannot receive services. When the kernel boots, the bundle stores the encryptor registry, `on_decrypt_failure` and the
+logger in a static holder, `Nowo\DoctrineEncryptBundle\Doctrine\Types\EncryptedTypeRuntime`, and clears it when that
+kernel shuts down. Consequences:
+
+- **Workers (FrankenPHP, RoadRunner, Messenger consumers)**: the kernel boots once per worker, the holder is set once
+  and holds only immutable services (no request or user data), so nothing leaks between requests. A key change needs a
+  worker restart, as with the listener.
+- **Several kernels in one process** (some test suites, multi-kernel apps): the last booted kernel's encryptors are
+  used by every connection of every kernel. Do not run kernels with different keys side by side in one process with
+  the types; use the listener there.
+- **Before boot / without the bundle** the types refuse to convert (`LogicException`): they never write plaintext. In a
+  plain Doctrine setup register the types with `Type::addType()` and call `EncryptedTypeRuntime::configure($registry,
+  'throw', $logger)` yourself.
+- **Querying by an encrypted value does not work**: Halite and Defuse ciphertexts are randomized, so `findBy(['phone'
+  => '600…'])` or a DQL parameter typed `encrypted_string` encrypts the parameter again and never matches. The bundle
+  has no blind index; keep a separate hash column (HMAC with its own key) if you need equality lookups.
+- `MysqlAes` produces binary ciphertext; with the types, map such columns as you would for the listener (see
+  [MYSQL_AES.md](MYSQL_AES.md)). Prefer Halite.
+- Do not use an encrypted type on a field that the listener also encrypts (`#[Encrypted]` or `encrypted_fields`): it
+  would be encrypted twice.
+
+### Migrating a field from `#[Encrypted]` to a DBAL type
+
+The stored format and keys are the same, so no data migration is needed:
+
+1. Enable `dbal_types: true` and deploy (the types are registered, nothing uses them yet).
+2. Replace `#[ORM\Column(type: 'string', length: 1024)] #[Encrypted('financial_data')]` with
+   `#[ORM\Column(type: 'encrypted_string.financial_data', length: 1024)]` (or `type="…"` in XML) and remove
+   `#[Encrypted]` (or the `encrypted_fields` entry). Keep the column length.
+3. Generate a migration: on DBAL 4 the column SQL is unchanged, so there is nothing to apply; on DBAL 3 only the column
+   comment (type hint) changes.
+
+To go back, do the reverse. Values written by the listener load through the type and the other way around.
 
 ### Recommended setups
 
-1. **Separate persistence model (cleanest).** Keep your domain objects free of Doctrine and map them to
-   infrastructure records (`App\Infrastructure\Persistence\CustomerRecord`) in your repository adapter. Put
-   `#[ORM\Column]` and `#[Encrypted]` on the record only.
-2. **Domain entities mapped with attributes.** If you already accept `#[ORM\*]` attributes in the domain,
-   `#[Encrypted]` is the same kind of metadata. Make sure setters on encrypted properties do not validate the
-   value, or do not expose a setter (the listener then uses reflection).
-3. **Application-level encryption.** If you need encryption outside Doctrine (e.g. a payload to a queue), depend
-   on `Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface` (default profile) or `EncryptorRegistry::get('profile')`
+1. **Attribute-free domain mapped in XML**: encrypted DBAL types for entity and embeddable fields and value objects,
+   or `encrypted_fields` + `property_access: reflection` for the listener.
+2. **Separate persistence model**: keep the domain free of Doctrine and map it to infrastructure records in your
+   repository adapter; put `#[ORM\Column]` and `#[Encrypted]` (or an encrypted type) on the record only.
+3. **Domain entities mapped with attributes**: `#[Encrypted]` is the same kind of metadata as `#[ORM\*]`. Set
+   `property_access: reflection` if setters validate their input.
+4. **Application-level encryption** (a payload to a queue, a file): depend on
+   `Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface` (default profile) or `EncryptorRegistry::get('profile')`
    behind your own port:
 
 ```php
@@ -322,15 +488,17 @@ final class NowoSecretCipher implements SecretCipher
 ```
 
 - Your own key management or KMS plugs in as a custom `EncryptorInterface` set in
-  `profiles.<name>.encryptor_class` (see [Custom encryptor](custom_encryptor.md)).
+  `profiles.<name>.encryptor_class` (see [Custom encryptor](custom_encryptor.md)); the listener and the types both use
+  it.
 
 ### Known limitations
 
-- No XML/YAML/config field mapping: an attribute-free domain mapped in XML cannot use the listener directly.
-- Embeddables mapped in XML are not followed.
-- Value-object properties are not supported directly; use an embeddable with string fields.
-- Domain setters may receive ciphertext during flush.
+- The raw SQL commands do not cover **listener-encrypted** fields inside embeddables (`#[Encrypted]` or
+  `encrypted_fields` on an embeddable class): `doctrine:encrypt:rotate-keys` would leave them encrypted with the old
+  key. Use an encrypted DBAL type for embeddable fields, or re-save those entities after a rotation.
 - No events are dispatched (decrypt failures are handled by `on_decrypt_failure` and logged).
+- With the default `property_access: auto`, domain setters may receive ciphertext during a flush (unchanged from
+  earlier versions); set `property_access: reflection` or use the DBAL types.
 
 ## Console commands
 
