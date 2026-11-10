@@ -18,10 +18,12 @@ use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\Embedded;
 use Doctrine\Persistence\Mapping\ClassUtils;
 use InvalidArgumentException;
+use LogicException;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Exception\DecryptionFailedException;
+use Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap;
 use Nowo\DoctrineEncryptBundle\Util\EncryptedValue;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -46,7 +48,8 @@ use function sprintf;
  * Doctrine event listener that encrypts entity properties on persist/update and decrypts on load.
  *
  * Listens to postUpdate, preUpdate, postLoad, onFlush, preFlush, postFlush.
- * Only processes properties marked with the Encrypted attribute; supports multiple encryptor configs via registry.
+ * Only processes properties marked with the Encrypted attribute or listed in the `encrypted_fields` configuration
+ * ({@see EncryptedFieldMap}); supports multiple encryptor configs via registry.
  *
  * Intentionally non-final: console commands and unit tests collaborate with this listener via doubles
  * (REQ-PHP-001 exception — designed collaboration/extension point for the command layer).
@@ -84,6 +87,14 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     public const ON_DECRYPT_FAILURE_THROW = 'throw';
 
     public const ON_DECRYPT_FAILURE_MODES = [self::ON_DECRYPT_FAILURE_KEEP, self::ON_DECRYPT_FAILURE_NULL, self::ON_DECRYPT_FAILURE_THROW];
+
+    /** property_access: getter/setter through PropertyAccess when there is one, reflection otherwise (default). */
+    public const PROPERTY_ACCESS_AUTO = 'auto';
+
+    /** property_access: always reflection, so domain getters/setters never see ciphertext during a flush. */
+    public const PROPERTY_ACCESS_REFLECTION = 'reflection';
+
+    public const PROPERTY_ACCESS_MODES = [self::PROPERTY_ACCESS_AUTO, self::PROPERTY_ACCESS_REFLECTION];
 
     private ?EncryptorRegistry $registry = null;
 
@@ -140,19 +151,29 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
 
     private readonly LoggerInterface $logger;
 
+    private readonly EncryptedFieldMap $encryptedFields;
+
     /**
      * @param EncryptorInterface|EncryptorRegistry|null $registryOrEncryptor Registry (normal DI), a single encryptor (BC/tests), or null
      * @param LoggerInterface|null $logger Receives a warning for every value that cannot be decrypted (wrong key, corrupted ciphertext)
      * @param string $onDecryptFailure What a property gets when its value cannot be decrypted: "keep" (ciphertext, default), "null" or "throw"
+     * @param EncryptedFieldMap|null $encryptedFields Fields selected in the bundle configuration besides #[Encrypted] (null = none)
+     * @param string $propertyAccess "auto" (setter/getter when there is one, default) or "reflection" (never call domain accessors)
      */
     public function __construct(
         EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor = null,
         ?LoggerInterface $logger = null,
         private readonly string $onDecryptFailure = self::ON_DECRYPT_FAILURE_KEEP,
+        ?EncryptedFieldMap $encryptedFields = null,
+        private readonly string $propertyAccess = self::PROPERTY_ACCESS_AUTO,
     ) {
         if (!in_array($onDecryptFailure, self::ON_DECRYPT_FAILURE_MODES, true)) {
             throw new InvalidArgumentException(sprintf('Invalid on_decrypt_failure "%s": use one of "%s".', $onDecryptFailure, implode('", "', self::ON_DECRYPT_FAILURE_MODES)));
         }
+        if (!in_array($propertyAccess, self::PROPERTY_ACCESS_MODES, true)) {
+            throw new InvalidArgumentException(sprintf('Invalid property_access "%s": use one of "%s".', $propertyAccess, implode('", "', self::PROPERTY_ACCESS_MODES)));
+        }
+        $this->encryptedFields = $encryptedFields ?? new EncryptedFieldMap();
 
         $this->cachedDecryptions = new WeakMap();
         $this->knownCiphertexts  = new WeakMap();
@@ -503,6 +524,10 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      */
     private function accessMode(object $entity, ReflectionProperty $refProperty): array
     {
+        if ($this->propertyAccess === self::PROPERTY_ACCESS_REFLECTION) {
+            return ['read' => false, 'write' => false];
+        }
+
         $key = $entity::class . '::' . $refProperty->getName();
         if (!isset($this->accessModes[$key])) {
             $pac                     = $this->propertyAccessor ??= PropertyAccess::createPropertyAccessor();
@@ -613,7 +638,60 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
             }
         }
 
-        return $this->fieldMap[$className] = $fields;
+        return $this->fieldMap[$className] = $this->addConfiguredFields($className, $fields);
+    }
+
+    /**
+     * Appends the fields selected in the bundle configuration (encrypted_fields) to the attribute-based ones.
+     * With no configuration the list is returned unchanged.
+     *
+     * @param list<array{ReflectionProperty, Encrypted|null}> $fields
+     *
+     * @return list<array{ReflectionProperty, Encrypted|null}>
+     */
+    private function addConfiguredFields(string $className, array $fields): array
+    {
+        if ($this->encryptedFields->isEmpty()) {
+            return $fields;
+        }
+
+        $configured = $this->encryptedFields->getProperties($className);
+        $embedded   = $this->encryptedFields->getEmbedded($className);
+        if ($configured === [] && $embedded === []) {
+            return $fields;
+        }
+
+        $known = [];
+        foreach ($fields as [$refProperty]) {
+            $known[$refProperty->getName()] = true;
+        }
+
+        $properties = $this->getClassProperties($className);
+        foreach ($embedded as $name) {
+            if (isset($known[$name])) {
+                continue;
+            }
+            $fields[]     = [$this->configuredProperty($properties, $className, $name), null];
+            $known[$name] = true;
+        }
+        foreach ($configured as $name => $profile) {
+            if (isset($known[$name])) {
+                continue;
+            }
+            $fields[]     = [$this->configuredProperty($properties, $className, $name), new Encrypted($profile)];
+            $known[$name] = true;
+        }
+
+        return $fields;
+    }
+
+    /**
+     * @param array<string, ReflectionProperty> $properties
+     */
+    private function configuredProperty(array $properties, string $className, string $name): ReflectionProperty
+    {
+        // Validated at compile time; a class changed without clearing the cache must not silently stay unencrypted.
+        return $properties[$name] ?? throw new LogicException(sprintf('nowo_doctrine_encrypt.encrypted_fields: %s has no property "%s".', $className, $name));
     }
 
     /**

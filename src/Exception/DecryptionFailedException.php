@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * A value carries the encryption marker but cannot be decrypted (wrong or rotated key, corrupted or foreign ciphertext).
  *
- * Thrown by the Doctrine listener when `on_decrypt_failure: throw` is configured, and by
+ * Thrown by the Doctrine listener and the encrypted DBAL types when `on_decrypt_failure: throw` is configured, and by
  * {@see EncryptUtil::decryptStrict()}. The message never contains the value.
  */
 final class DecryptionFailedException extends RuntimeException implements ExceptionInterface
@@ -29,6 +29,20 @@ final class DecryptionFailedException extends RuntimeException implements Except
             $property,
             $config,
             $previous instanceof Throwable ? sprintf(' Cause: %s: %s', $previous::class, $previous->getMessage()) : '',
+        ), 0, $previous);
+    }
+
+    /**
+     * Failure while converting a column of an encrypted DBAL type (encrypted_string, encrypted_text, encrypted_json).
+     */
+    public static function forType(string $typeName, string $config, Throwable $previous): self
+    {
+        return new self(sprintf(
+            'Could not decrypt a value of DBAL type "%s" (config "%s"): wrong or rotated key, or corrupted ciphertext. Cause: %s: %s',
+            $typeName,
+            $config,
+            $previous::class,
+            $previous->getMessage(),
         ), 0, $previous);
     }
 

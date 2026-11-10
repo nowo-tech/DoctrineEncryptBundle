@@ -10,6 +10,7 @@ use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
+use function is_array;
 use function sprintf;
 
 /**
@@ -62,7 +63,58 @@ final class Configuration implements ConfigurationInterface
                     return $config;
                 })
             ->end()
+            ->fixXmlConfig('encrypted_field')
             ->children()
+                ->arrayNode('encrypted_fields')
+                    ->info('Fields to encrypt besides #[Encrypted], per entity or embeddable class (for domains mapped in XML/YAML, without a bundle import in the class). "properties": property => profile alias (~ = default_profile); "embedded": embedded properties the listener follows (like #[ORM\\Embedded]). Entries apply to subclasses. A property must not also carry #[Encrypted] or use an encrypted DBAL type.')
+                    ->useAttributeAsKey('class')
+                    ->normalizeKeys(false)
+                    ->arrayPrototype()
+                        ->fixXmlConfig('property', 'properties')
+                        ->children()
+                            ->arrayNode('properties')
+                                ->useAttributeAsKey('name')
+                                ->normalizeKeys(false)
+                                ->beforeNormalization()
+                                    ->always()
+                                    ->then(static function (mixed $v): mixed {
+                                        // XML: <property name="iban">financial_data</property> or <property name="iban" profile="financial_data"/>
+                                        if (!is_array($v)) {
+                                            return $v;
+                                        }
+                                        $normalized = [];
+                                        foreach ($v as $key => $item) {
+                                            if (is_array($item) && isset($item['name'])) {
+                                                $normalized[(string) $item['name']] = $item['profile'] ?? $item['value'] ?? null;
+                                                continue;
+                                            }
+                                            $normalized[$key] = $item;
+                                        }
+
+                                        return $normalized;
+                                    })
+                                ->end()
+                                ->scalarPrototype()->defaultNull()->end()
+                                ->defaultValue([])
+                            ->end()
+                            ->arrayNode('embedded')
+                                ->beforeNormalization()->ifString()->then(static fn (string $v): array => [$v])->end()
+                                ->scalarPrototype()->cannotBeEmpty()->end()
+                                ->defaultValue([])
+                            ->end()
+                        ->end()
+                    ->end()
+                    ->defaultValue([])
+                ->end()
+                ->enumNode('property_access')
+                    ->values(DoctrineEncryptSubscriber::PROPERTY_ACCESS_MODES)
+                    ->defaultValue(DoctrineEncryptSubscriber::PROPERTY_ACCESS_AUTO)
+                    ->info('How the listener reads and writes encrypted properties: "auto" (default) = getter/one-argument setter when there is one, reflection otherwise; "reflection" = always reflection, so domain setters never receive ciphertext during a flush.')
+                ->end()
+                ->booleanNode('dbal_types')
+                    ->defaultFalse()
+                    ->info('Register the encrypted DBAL types (encrypted_string, encrypted_text, encrypted_json, plus "<type>.<profile>" per profile) in DoctrineBundle. Encryption then happens in the DBAL conversion, without the listener or setters, and works with any mapping driver. Same ciphertext format and keys as #[Encrypted].')
+                ->end()
                 ->arrayNode('connections')
                     ->info('Doctrine DBAL connections whose entity managers get the encrypt/decrypt listener. Empty (default) = every connection. Entities on a connection that is not listed are neither encrypted nor decrypted.')
                     ->beforeNormalization()->ifString()->then(static fn (string $v): array => [$v])->end()

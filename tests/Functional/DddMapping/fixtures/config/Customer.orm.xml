@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="Nowo\DoctrineEncryptBundle\Tests\Functional\DddMapping\fixtures\Domain\Customer" table="ddd_customer">
+        <id name="id" type="integer">
+            <generator strategy="AUTO"/>
+        </id>
+        <field name="email" type="string" length="1024" nullable="true"/>
+        <field name="phone" type="encrypted_string" length="1024" nullable="true"/>
+        <field name="iban" type="encrypted_iban.financial_data" length="1024" nullable="true"/>
+        <field name="notes" type="encrypted_text" nullable="true"/>
+        <field name="preferences" type="encrypted_json" nullable="true"/>
+        <embedded name="address" class="Nowo\DoctrineEncryptBundle\Tests\Functional\DddMapping\fixtures\Domain\Address"/>
+    </entity>
+</doctrine-mapping>

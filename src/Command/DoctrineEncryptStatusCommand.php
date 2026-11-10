@@ -56,12 +56,13 @@ final class DoctrineEncryptStatusCommand extends AbstractCommand
         $totalCount             = 0;
 
         foreach ($metaDataArray as $metaData) {
-            if ($metaData->isMappedSuperclass) {
+            if ($metaData->isMappedSuperclass || $this->isEmbeddable($metaData)) {
                 continue;
             }
 
             $propertiesWithConfig = $this->getEncryptionablePropertiesWithConfig($metaData, $defaultConfigName);
-            $count                = count($propertiesWithConfig);
+            $typeFields           = $this->getEncryptedTypeFields($metaData, $defaultConfigName);
+            $count                = count($propertiesWithConfig) + count($typeFields);
 
             if ($count > 0) {
                 ++$entitiesWithEncryption;
@@ -69,6 +70,9 @@ final class DoctrineEncryptStatusCommand extends AbstractCommand
                 $output->writeln(sprintf('<info>%s</info> has <info>%d</info> encrypted property(ies):', $metaData->name, $count));
                 foreach ($propertiesWithConfig as ['property' => $property, 'config' => $config]) {
                     $output->writeln(sprintf('  - <comment>%s</comment> (config: <comment>%s</comment>)', $property->getName(), $config));
+                }
+                foreach ($typeFields as ['field' => $field, 'config' => $config, 'type' => $type]) {
+                    $output->writeln(sprintf('  - <comment>%s</comment> (config: <comment>%s</comment>, DBAL type <comment>%s</comment>)', $field, $config, $type));
                 }
             } else {
                 $output->writeln(sprintf('<info>%s</info> has no properties which are encrypted.', $metaData->name));
