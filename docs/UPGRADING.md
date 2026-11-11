@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 2.12.1](#to-2121)
 - [To 2.12.0](#to-2120)
 - [To 2.11.0](#to-2110)
 - [To 2.10.1](#to-2101)
@@ -66,6 +67,14 @@
 - [Upgrading from ambta/doctrine-encrypt-bundle or hec-franco/doctrine-encrypt-bundle](#upgrading-from-ambtadoctrine-encrypt-bundle-or-hec-francodoctrine-encrypt-bundle)
 
 ## Unreleased
+
+## To 2.12.1
+
+From **2.12.0**:
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
 
 ## To 2.12.0
 
