@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+  - [To 2.12.0](#to-2120)
 - [To 2.11.0](#to-2110)
 - [To 2.10.1](#to-2101)
 - [To 2.10.0](#to-2100)
@@ -65,6 +66,16 @@
 - [Upgrading from ambta/doctrine-encrypt-bundle or hec-franco/doctrine-encrypt-bundle](#upgrading-from-ambtadoctrine-encrypt-bundle-or-hec-francodoctrine-encrypt-bundle)
 
 ## Unreleased
+
+### To 2.12.0
+
+From **2.11.0**: `composer update nowo-tech/doctrine-encrypt-bundle`. No configuration change is needed.
+
+- With `connections` listed, the closed-manager recovery (`kernel.request`) now resets only the managers on those
+  connections; a closed manager on another connection belongs to the host and is left as it is. With the default
+  `connections: []` every manager stays in scope, as before.
+- Optional: `closed_manager_recovery.entity_managers: [name, …]` pins the managers the bundle may reset;
+  `closed_manager_recovery: false` turns the recovery off (the host then resets closed managers itself).
 
 ## To 2.11.0
 

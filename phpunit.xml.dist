@@ -12,6 +12,7 @@
             <directory suffix="TestCase.php">./tests/Functional/DoctrineEncryptSubscriber</directory>
             <directory suffix="Test.php">./tests/Functional/DddMapping</directory>
             <directory suffix="Test.php">./tests/Functional/EmbeddedRotation</directory>
+            <directory suffix="Test.php">./tests/Functional/Worker</directory>
         </testsuite>
     </testsuites>
 

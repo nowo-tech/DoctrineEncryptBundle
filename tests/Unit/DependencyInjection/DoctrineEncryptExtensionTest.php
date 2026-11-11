@@ -561,6 +561,34 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->assertSame(0o770, $container->getParameter('nowo_doctrine_encrypt.secret_permissions.directory_mode'));
     }
 
+    public function testClosedManagerRecoveryIsScopedToTheListenerConnections(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([['connections' => ['encrypted', 'encrypted']]], $container);
+
+        $definition = $container->getDefinition(ClosedEntityManagerRecoveryListener::class);
+        $this->assertSame(['encrypted'], $definition->getArgument('$connections'));
+        $this->assertSame([], $definition->getArgument('$entityManagers'));
+    }
+
+    public function testClosedManagerRecoveryTakesExplicitEntityManagers(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([['closed_manager_recovery' => ['entity_managers' => 'secrets']]], $container);
+
+        $definition = $container->getDefinition(ClosedEntityManagerRecoveryListener::class);
+        $this->assertSame([], $definition->getArgument('$connections'));
+        $this->assertSame(['secrets'], $definition->getArgument('$entityManagers'));
+    }
+
+    public function testClosedManagerRecoveryCanBeDisabled(): void
+    {
+        $container = $this->createContainer();
+        $this->extension->load([['closed_manager_recovery' => false]], $container);
+
+        $this->assertFalse($container->hasDefinition(ClosedEntityManagerRecoveryListener::class));
+    }
+
     public function testOnDecryptFailureDefaultsToKeep(): void
     {
         $container = $this->createContainer();
