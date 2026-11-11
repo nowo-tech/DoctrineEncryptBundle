@@ -3,7 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
-  - [To 2.12.0](#to-2120)
+- [To 2.12.0](#to-2120)
 - [To 2.11.0](#to-2110)
 - [To 2.10.1](#to-2101)
 - [To 2.10.0](#to-2100)
@@ -67,7 +67,7 @@
 
 ## Unreleased
 
-### To 2.12.0
+## To 2.12.0
 
 From **2.11.0**: `composer update nowo-tech/doctrine-encrypt-bundle`. No configuration change is needed.
 

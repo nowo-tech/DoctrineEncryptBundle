@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Table of contents
 
 - [[Unreleased]](#unreleased)
+- [[2.12.0] - 2026-11-11](#2120---2026-11-11)
 - [[2.11.0] - 2026-11-10](#2110---2026-11-10)
 - [[2.10.1] - 2026-10-31](#2101---2026-10-31)
 - [[2.10.0] - 2026-10-31](#2100---2026-10-31)
@@ -60,7 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Target **2.12.0** (minor: a new public configuration key and a behaviour change on hosts that list `connections`).
+## [2.12.0] - 2026-11-11
+
+Closed-manager recovery resets only the managers on the bundle's connections; new closed_manager_recovery option. See [UPGRADING](https://github.com/nowo-tech/DoctrineEncryptBundle/blob/v2.12.0/docs/UPGRADING.md#to-2120).
+
 
 ### Fixed
 
