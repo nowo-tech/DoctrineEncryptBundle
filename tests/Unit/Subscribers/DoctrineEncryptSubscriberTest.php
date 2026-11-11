@@ -104,8 +104,11 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->assertSame([User::class, WithUser::class], array_keys($map));
         $this->assertSame(['name', 'address'], array_map(static fn (array $f): string => $f[0]->getName(), $map[User::class]));
 
+        // reset() (kernel.reset) drops the class-metadata cache too; it is rebuilt once per class on next use.
         $this->subscriber->reset();
-        $this->assertCount(2, (new ReflectionProperty(DoctrineEncryptSubscriber::class, 'fieldMap'))->getValue($this->subscriber), 'class metadata survives reset()');
+        $this->assertSame([], (new ReflectionProperty(DoctrineEncryptSubscriber::class, 'fieldMap'))->getValue($this->subscriber));
+        $this->subscriber->processFields(new User('Zoe', 'Peru'), true);
+        $this->assertSame([User::class], array_keys((array) (new ReflectionProperty(DoctrineEncryptSubscriber::class, 'fieldMap'))->getValue($this->subscriber)));
     }
 
     public function testProcessFieldsEncrypt(): void

@@ -141,7 +141,8 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     /**
      * Encrypted and embedded properties per class (null config = #[Embedded]), resolved once: postLoad runs for every
      * hydrated entity, so reflecting every property and instantiating #[Encrypted] per row was the hot path.
-     * Class structure does not change while the process runs, so this is not cleared by reset().
+     * Class structure does not change while the process runs, so keeping it across requests is safe (FrankenPHP worker
+     * without the services resetter); reset() still drops it, and it is rebuilt once per class.
      *
      * @var array<string, list<array{ReflectionProperty, Encrypted|null}>>
      */
@@ -255,6 +256,10 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
         $this->encryptorOverrideSet = false;
         $this->decryptCounter       = 0;
         $this->encryptCounter       = 0;
+        // Class-metadata caches (no entity or request data): dropped too, rebuilt once per class on next use.
+        $this->accessModes      = [];
+        $this->fieldMap         = [];
+        $this->propertyAccessor = null;
     }
 
     /**

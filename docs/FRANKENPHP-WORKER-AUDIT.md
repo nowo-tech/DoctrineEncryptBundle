@@ -20,6 +20,7 @@
   - [W-03 — The listener class appears to be registered twice (Low)](#w-03--the-listener-class-appears-to-be-registered-twice-low)
   - [W-04 — Encryption keys are cached for the worker lifetime; missing key files are generated at request time (Info)](#w-04--encryption-keys-are-cached-for-the-worker-lifetime-missing-key-files-are-generated-at-request-time-info)
 - [Usage recommendations in worker mode](#usage-recommendations-in-worker-mode)
+- [Igor findings triage (2026-11-11)](#igor-findings-triage-2026-11-11)
 - [Re-audit triggers](#re-audit-triggers)
 
 ## Execution model assumed
@@ -108,6 +109,20 @@ Worker demo: `demo/symfony8/docker/frankenphp/Caddyfile` declares a `worker` blo
 - Do not call `DoctrineEncryptSubscriber::setEncryptor()` from controllers, listeners or Messenger handlers running in the worker.
 - Restart workers after key rotation or key file changes.
 - Custom encryptors must stay stateless apart from the loaded key (no per-request caches of plaintext).
+
+## Igor findings triage (2026-11-11)
+
+`composer igor` (igor-php 0.10.1) reported 1 warning on `master` (3 properties of `DoctrineEncryptSubscriber`); all
+false positives. Igor now runs in CI (`igor` job) and reports 0 KO / 0 WARN.
+
+| Finding | Verdict | Resolution |
+|---------|---------|------------|
+| `$propertyAccessor` "mutated but not reset in reset()" | False positive | Stateless `PropertyAccessor` created lazily; holds no entity or request data. |
+| `$accessModes` "mutated but not reset in reset()" | False positive | Readable / writable flags per `class::property` (class structure only). |
+| `$fieldMap` "mutated but not reset in reset()" | False positive | Encrypted properties per class from attributes + compile-time `encrypted_fields` config (class metadata only). |
+
+Keeping the three caches across requests (scenario B) is safe. To satisfy igor's reset check, `reset()` now also drops
+them (scenario A); they are rebuilt once per class on next use, so the per-row hot path is unchanged.
 
 ## Re-audit triggers
 
