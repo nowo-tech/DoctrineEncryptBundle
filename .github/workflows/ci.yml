@@ -248,3 +248,25 @@ jobs:
 
 # Maintainer: Héctor Franco Aceituno (@HecFranco)
 # Organization: nowo-tech (https://github.com/nowo-tech)
+
+  igor:
+    name: Igor (FrankenPHP worker audit)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: sodium
+          tools: composer:v2
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Igor worker-state audit (REQ-CS-008)
+        run: composer igor

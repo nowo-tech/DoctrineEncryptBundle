@@ -61,6 +61,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+### Changed
+
+- FrankenPHP worker audit (igor): `DoctrineEncryptSubscriber::reset()` (kernel.reset) also drops the class-metadata caches (`fieldMap`, `accessModes`, the lazy property accessor), rebuilt once per class on next use. The igor warning was a false positive (no entity or request data was kept). See `docs/FRANKENPHP-WORKER-AUDIT.md`.
+- CI: new standalone `igor` job runs `composer igor` (REQ-CS-008).
+
 ## [2.12.0] - 2026-11-11
 
 Closed-manager recovery resets only the managers on the bundle's connections; new closed_manager_recovery option. See [UPGRADING](https://github.com/nowo-tech/DoctrineEncryptBundle/blob/v2.12.0/docs/UPGRADING.md#to-2120).
