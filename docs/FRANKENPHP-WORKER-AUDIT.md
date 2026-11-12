@@ -3,8 +3,8 @@
 | Field | Value |
 |-------|-------|
 | Package | `nowo-tech/doctrine-encrypt-bundle` (`symfony-bundle`) |
-| Audited revision | `v2.3.13` (this release) |
-| Audit date | 2026-09-24 |
+| Audited revision | `v2.12.1` (re-checked 2026-11-12) |
+| Audit date | 2026-09-24, refreshed 2026-11-12 |
 | Method | Manual review of every PHP file under `src/` (Doctrine listener, encryptors, registry, Twig filters, utils, attribute reader, DI extension, `Resources/config/services.yml`); console commands skimmed (CLI only) |
 | **Verdict** | ✅ **Viable under scenario B** — the decryption cache lives only as long as the entities it describes (`WeakMap`), no longer uses plaintext as keys, the listener is registered once and is resettable, and a manager closed by a failed flush is reset at the start of the next main request. Clearing the identity map between requests remains the application's responsibility |
 | Remediation (2026-09-24) | W-01, W-02 and W-03 resolved (W-03 confirmed in `demo/symfony8` with `debug:container --tag=doctrine.event_listener` before the fix); W-04 accepted. Regression tests in `tests/Unit/Subscribers/DoctrineEncryptSubscriberTest.php`, `tests/Unit/EventListener/ClosedEntityManagerRecoveryListenerTest.php`, `tests/Unit/DependencyInjection/DoctrineEncryptExtensionTest.php` |
@@ -65,6 +65,17 @@ Worker demo: `demo/symfony8/docker/frankenphp/Caddyfile` declares a `worker` blo
 | `Twig\DecryptExtension`, `Twig\MaskExtension` | yes | none | ✅ | ✅ |
 | `Util\EncryptUtil`, `Util\MaskUtil` | yes | none | ✅ | ✅ |
 | 5 console commands (`Command\*`) | yes (CLI only) | not used in HTTP workers | N/A | N/A |
+
+## Kept-alive kernel test
+
+`tests/Functional/Worker/WorkerClosedManagerRecoveryTest.php::testAlternatingUsersOverManyRequestsKeepNoStateAndMemoryStaysFlat`
+boots ONE kernel and drives `http_kernel` `handle()` + `terminate()` 1,200 times, alternating two users, never calling
+`services_resetter` or `kernel.reset`. Every other request starts with the bundle's entity manager closed; each
+response carries only its own user, the bundle manager is reset at every main request, the host's default manager
+stays untouched, and memory growth after warm-up stays under 4 MiB (the 20-request recovery test remains).
+
+The bundle is **safe with kernel reset false**. Rule 7: the bundle never clears or resets the host's default entity
+manager; it only resets managers listed in `connections` / `closed_manager_recovery.entity_managers` when closed.
 
 ## Findings
 
