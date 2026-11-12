@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
@@ -46,6 +47,11 @@ final class WorkerTestKernel extends Kernel
         return new Response('ok');
     }
 
+    public function whoami(Request $request): Response
+    {
+        return new Response('user:' . $request->query->getString('user'));
+    }
+
     protected function configureContainer(ContainerBuilder $container, LoaderInterface $loader): void
     {
         $container->loadFromExtension('framework', [
@@ -80,5 +86,6 @@ final class WorkerTestKernel extends Kernel
     protected function configureRoutes(RoutingConfigurator $routes): void
     {
         $routes->add('ping', '/ping')->controller('kernel::ping');
+        $routes->add('whoami', '/whoami')->controller('kernel::whoami');
     }
 }
