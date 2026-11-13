@@ -6,7 +6,9 @@
     "var",
     "coverage",
     ".git",
-    "node_modules"
+    "node_modules",
+    "scripts",
+    ".scripts"
   ],
   "safe_namespaces": [
     "Symfony\\",
