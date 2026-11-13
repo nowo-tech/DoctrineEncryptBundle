@@ -10,13 +10,13 @@ services:
   Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptDatabaseCommand:
     arguments:
       $defaultEncryptor: '@nowo_doctrine_encrypt.encryptor'
-      $encryptorRegistry: '@nowo_doctrine_encrypt.encryptor_registry'
+      $encryptorRegistry: '@Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface'
       $defaultBatchSize: '%nowo_doctrine_encrypt.batch_size%'
 
   Nowo\DoctrineEncryptBundle\Command\DoctrineDecryptDatabaseCommand:
     arguments:
       $defaultEncryptor: '@nowo_doctrine_encrypt.encryptor'
-      $encryptorRegistry: '@nowo_doctrine_encrypt.encryptor_registry'
+      $encryptorRegistry: '@Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface'
       $defaultBatchSize: '%nowo_doctrine_encrypt.batch_size%'
       $kernelEnvironment: '%kernel.environment%'
 
@@ -29,12 +29,12 @@ services:
 
   Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptStatusCommand:
     arguments:
-      $encryptorRegistry: '@nowo_doctrine_encrypt.encryptor_registry'
+      $encryptorRegistry: '@Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface'
       $keyPaths: '%nowo_doctrine_encrypt.key_paths%'
 
   Nowo\DoctrineEncryptBundle\Command\RotateKeysCommand:
     arguments:
-      $encryptorRegistry: '@nowo_doctrine_encrypt.encryptor_registry'
+      $encryptorRegistry: '@Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface'
       $kernel: '@kernel'
       $keyPaths: '%nowo_doctrine_encrypt.key_paths%'
 
@@ -76,7 +76,7 @@ services:
   nowo_doctrine_encrypt.orm_subscriber:
     class: Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber
     # Third (on_decrypt_failure) and fifth (property_access) arguments are set by DoctrineEncryptExtension.
-    arguments: ["@nowo_doctrine_encrypt.encryptor_registry", "@?logger", "keep", "@nowo_doctrine_encrypt.encrypted_field_map", "auto"]
+    arguments: ['@Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface', '@?logger', 'keep', '@nowo_doctrine_encrypt.encrypted_field_map', 'auto']
     tags:
       - { name: 'kernel.reset', method: 'reset' }
       - { name: 'doctrine.event_listener', event: 'postUpdate', priority: 500 }

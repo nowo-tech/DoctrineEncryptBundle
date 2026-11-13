@@ -13,6 +13,7 @@ use Nowo\DoctrineEncryptBundle\DependencyInjection\DoctrineEncryptExtension;
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
 use Nowo\DoctrineEncryptBundle\EventListener\ClosedEntityManagerRecoveryListener;
@@ -315,7 +316,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->assertArrayHasKey('$defaultBatchSize', $args);
         $this->assertInstanceOf(Reference::class, $args['$encryptorRegistry']);
         $this->assertInstanceOf(Reference::class, $args['$defaultEncryptor']);
-        $this->assertSame('nowo_doctrine_encrypt.encryptor_registry', (string) $args['$encryptorRegistry']);
+        $this->assertSame(EncryptorRegistryInterface::class, (string) $args['$encryptorRegistry']);
         $this->assertSame('nowo_doctrine_encrypt.encryptor', (string) $args['$defaultEncryptor']);
         $this->assertSame('%nowo_doctrine_encrypt.batch_size%', $args['$defaultBatchSize']);
     }
@@ -331,7 +332,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->assertArrayHasKey('$encryptorRegistry', $args);
         $this->assertArrayHasKey('$defaultEncryptor', $args);
         $this->assertArrayHasKey('$defaultBatchSize', $args);
-        $this->assertSame('nowo_doctrine_encrypt.encryptor_registry', (string) $args['$encryptorRegistry']);
+        $this->assertSame(EncryptorRegistryInterface::class, (string) $args['$encryptorRegistry']);
         $this->assertSame('nowo_doctrine_encrypt.encryptor', (string) $args['$defaultEncryptor']);
         $this->assertSame('%nowo_doctrine_encrypt.batch_size%', $args['$defaultBatchSize']);
     }
@@ -407,7 +408,7 @@ class DoctrineEncryptExtensionTest extends TestCase
         $this->assertNotEmpty($args);
         $first = $args[0] ?? $args['$registryOrEncryptor'] ?? null;
         $this->assertInstanceOf(Reference::class, $first);
-        $this->assertSame('nowo_doctrine_encrypt.encryptor_registry', (string) $first);
+        $this->assertSame(EncryptorRegistryInterface::class, (string) $first);
     }
 
     public function testEncryptUtilAndDecryptExtensionAreRegisteredAndReceiveRegistry(): void

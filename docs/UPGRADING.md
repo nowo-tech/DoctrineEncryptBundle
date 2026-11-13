@@ -77,7 +77,7 @@ From **2.12.1**: additive, no action needed.
 composer update nowo-tech/doctrine-encrypt-bundle
 ```
 
-`EncryptorRegistry` and `EncryptUtil` now implement `EncryptorRegistryInterface` and `EncryptUtilInterface`, aliased to the default services; the bundle's own services type-hint `EncryptorRegistryInterface`. Type-hint the interfaces in your own services (the class ids keep working). Code that passed a custom object where the bundle expected an `EncryptorRegistry` (for example `EncryptedTypeRuntime::configure()` or the command constructors) can now pass any `EncryptorRegistryInterface`.
+`EncryptorRegistry` and `EncryptUtil` now implement `EncryptorRegistryInterface` and `EncryptUtilInterface`, aliased to the default services; the bundle's own services type-hint `EncryptorRegistryInterface`. Type-hint the interfaces in your own services (the class ids keep working). Code that passed a custom object where the bundle expected an `EncryptorRegistry` (for example `EncryptedTypeRuntime::configure()` or the command constructors) can now pass any `EncryptorRegistryInterface`. The container wiring of the listener, the four commands and the DBAL-type configurator now references the interface alias, so one alias replaces the registry everywhere. The promoted property `AbstractCommand::$encryptorRegistry` is now typed with `EncryptorRegistryInterface`: a command subclass that redeclares it must use the interface.
 
 ## To 2.12.1
 
