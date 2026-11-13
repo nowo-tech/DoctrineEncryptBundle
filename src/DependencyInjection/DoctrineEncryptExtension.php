@@ -12,6 +12,7 @@ use Nowo\DoctrineEncryptBundle\Doctrine\Types\EncryptedStringType;
 use Nowo\DoctrineEncryptBundle\Doctrine\Types\EncryptedTextType;
 use Nowo\DoctrineEncryptBundle\Doctrine\Types\EncryptedTypeRuntimeConfigurator;
 use Nowo\DoctrineEncryptBundle\Encryptors\DefuseEncryptor;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\HaliteEncryptor;
 use Nowo\DoctrineEncryptBundle\Encryptors\MysqlAesEncryptor;
 use Nowo\DoctrineEncryptBundle\EventListener\ClosedEntityManagerRecoveryListener;
@@ -174,7 +175,7 @@ final class DoctrineEncryptExtension extends Extension implements PrependExtensi
 
         $container->register(self::DBAL_TYPE_RUNTIME_SERVICE, EncryptedTypeRuntimeConfigurator::class)
             ->setArguments([
-                new Reference('nowo_doctrine_encrypt.encryptor_registry'),
+                new Reference(EncryptorRegistryInterface::class),
                 $onDecryptFailure,
                 new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE),
             ])

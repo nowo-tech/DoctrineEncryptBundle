@@ -14,7 +14,7 @@ use function sprintf;
  * Arguments are set at compile time by DoctrineEncryptExtension.
  */
 #[AsAlias(id: self::class, public: true)]
-final class EncryptorRegistry
+final class EncryptorRegistry implements EncryptorRegistryInterface
 {
     /**
      * @param array<string, EncryptorInterface> $encryptors map of config alias => encryptor

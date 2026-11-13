@@ -7,7 +7,7 @@ namespace Nowo\DoctrineEncryptBundle\Command;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
-use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Util\EncryptedValue;
@@ -42,7 +42,7 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
      * @param AttributeReader $attributeReader Reads #[Encrypted] properties
      * @param DoctrineEncryptSubscriber $subscriber Encrypt/decrypt Doctrine subscriber
      * @param EncryptorInterface|null $defaultEncryptor Encryptor of the default profile
-     * @param EncryptorRegistry|null $encryptorRegistry Encryptors per profile alias
+     * @param EncryptorRegistryInterface|null $encryptorRegistry Encryptors per profile alias
      * @param int $defaultBatchSize Default batch size (`batch_size` config)
      */
     public function __construct(
@@ -50,7 +50,7 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
         AttributeReader $attributeReader,
         DoctrineEncryptSubscriber $subscriber,
         ?EncryptorInterface $defaultEncryptor,
-        ?EncryptorRegistry $encryptorRegistry,
+        ?EncryptorRegistryInterface $encryptorRegistry,
         private readonly int $defaultBatchSize = 5
     ) {
         parent::__construct($entityManager, $attributeReader, $subscriber, $defaultEncryptor, $encryptorRegistry);
@@ -85,14 +85,14 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
         $defaultConfigName = $registry?->getDefaultName();
 
         if ($configArg !== null && $configArg !== '') {
-            if (!$registry instanceof EncryptorRegistry || !$registry->has($configArg)) {
-                $available = $registry instanceof EncryptorRegistry ? implode(', ', $registry->getConfigNames()) : 'default';
+            if (!$registry instanceof EncryptorRegistryInterface || !$registry->has($configArg)) {
+                $available = $registry instanceof EncryptorRegistryInterface ? implode(', ', $registry->getConfigNames()) : 'default';
                 $output->writeln('<error>Unknown config "' . $configArg . '". Available: ' . $available . '</error>');
 
                 return self::FAILURE;
             }
             $configsToProcess = [$configArg];
-        } elseif (!$registry instanceof EncryptorRegistry) {
+        } elseif (!$registry instanceof EncryptorRegistryInterface) {
             $configsToProcess = $defaultConfigName !== null ? [$defaultConfigName] : [];
         } else {
             $configsToProcess = array_values(array_filter($registry->getConfigNames(), static fn (string $n): bool => $n !== 'default'));
@@ -114,7 +114,7 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
             $totalEntities += count($metaDataArray);
         }
 
-        $encryptor = $registry instanceof EncryptorRegistry ? $registry->get($configsToProcess[0]) : $this->subscriber->getEncryptor();
+        $encryptor = $registry instanceof EncryptorRegistryInterface ? $registry->get($configsToProcess[0]) : $this->subscriber->getEncryptor();
         if (!$encryptor instanceof EncryptorInterface && $this->defaultEncryptor instanceof EncryptorInterface) {
             $encryptor = $this->defaultEncryptor;
         }
@@ -147,7 +147,7 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
         $skippedMarked  = 0;
 
         foreach ($configsToProcess as $configName) {
-            $encryptorForConfig = $registry instanceof EncryptorRegistry ? $registry->get($configName) : $this->defaultEncryptor;
+            $encryptorForConfig = $registry instanceof EncryptorRegistryInterface ? $registry->get($configName) : $this->defaultEncryptor;
             if (!$encryptorForConfig instanceof EncryptorInterface) {
                 continue;
             }

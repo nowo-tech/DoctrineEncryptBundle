@@ -62,6 +62,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Ports (REQ-ARCH-001 rule 1): `EncryptorRegistryInterface` and `EncryptUtilInterface`, implemented by `EncryptorRegistry` and `EncryptUtil` and aliased in the container. The listener, the encrypted DBAL types, the commands, the Twig `decrypt` filter and `EncryptUtil` depend on `EncryptorRegistryInterface`, so a host can resolve encryptors from another source by aliasing it. Additive: the class ids and `nowo_doctrine_encrypt.*` ids still resolve; `EncryptUtil::ENCRYPTION_MARKER` stays on the class.
+- `docs/ARCHITECTURE.md`: public ports, SPI and a "Standard Symfony and DDD hosts" section.
+
 ### Tests
 
 - Kept-alive kernel test (1,200 requests, two users, memory bound) and refreshed `docs/FRANKENPHP-WORKER-AUDIT.md` (REQ-RUNTIME-002).

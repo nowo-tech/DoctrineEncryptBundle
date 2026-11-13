@@ -294,6 +294,10 @@ encrypt a field:
 Both store the same `<ciphertext><ENC>` format with the same profile keys, so a column can move from one to the other
 without migrating data.
 
+### Ports for your own adapters
+
+Autowire `Nowo\DoctrineEncryptBundle\Util\EncryptUtilInterface` (or `Encryptors\EncryptorRegistryInterface`) in an infrastructure adapter that implements your domain port, and swap either through the interface alias. See [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ### Where the coupling is
 
 - With the listener, fields come from `#[Encrypted]` on the property or from `encrypted_fields`. Embeddables are

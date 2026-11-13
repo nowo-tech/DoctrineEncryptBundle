@@ -7,7 +7,7 @@ namespace Nowo\DoctrineEncryptBundle\Doctrine\Types;
 use InvalidArgumentException;
 use LogicException;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
-use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -31,7 +31,7 @@ final class EncryptedTypeRuntime
     // Deliberate process-wide state: DBAL types cannot receive services. Set once per kernel boot from immutable
     // services and configuration (no per-request or per-user data), cleared on kernel shutdown.
     // @igor-ignore - Set once per kernel boot from the container (immutable services), cleared on kernel shutdown.
-    private static ?EncryptorRegistry $registry = null; // @phpstan-ignore frankenphp.worker.noMutableStaticProperty
+    private static ?EncryptorRegistryInterface $registry = null; // @phpstan-ignore frankenphp.worker.noMutableStaticProperty
 
     // @igor-ignore - Set once per kernel boot from the bundle configuration.
     private static string $onDecryptFailure = DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_KEEP; // @phpstan-ignore frankenphp.worker.noMutableStaticProperty
@@ -44,7 +44,7 @@ final class EncryptedTypeRuntime
      *
      * @param string $onDecryptFailure "keep", "null" or "throw" (same values and meaning as the listener option)
      */
-    public static function configure(EncryptorRegistry $registry, string $onDecryptFailure = DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_KEEP, ?LoggerInterface $logger = null): void
+    public static function configure(EncryptorRegistryInterface $registry, string $onDecryptFailure = DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_KEEP, ?LoggerInterface $logger = null): void
     {
         if (!in_array($onDecryptFailure, DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_MODES, true)) {
             throw new InvalidArgumentException(sprintf('Invalid on_decrypt_failure "%s": use one of "%s".', $onDecryptFailure, implode('", "', DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_MODES)));
@@ -62,9 +62,9 @@ final class EncryptedTypeRuntime
      * Forgets the configuration. With $onlyIf, only when that registry is the configured one (a kernel shutting down
      * must not clear the configuration of another kernel booted after it).
      */
-    public static function clear(?EncryptorRegistry $onlyIf = null): void
+    public static function clear(?EncryptorRegistryInterface $onlyIf = null): void
     {
-        if ($onlyIf instanceof EncryptorRegistry && self::$registry !== $onlyIf) {
+        if ($onlyIf instanceof EncryptorRegistryInterface && self::$registry !== $onlyIf) {
             return;
         }
 
@@ -78,7 +78,7 @@ final class EncryptedTypeRuntime
 
     public static function isConfigured(): bool
     {
-        return self::$registry instanceof EncryptorRegistry;
+        return self::$registry instanceof EncryptorRegistryInterface;
     }
 
     /**
@@ -88,7 +88,7 @@ final class EncryptedTypeRuntime
      */
     public static function encryptor(string $profile): EncryptorInterface
     {
-        if (!self::$registry instanceof EncryptorRegistry) {
+        if (!self::$registry instanceof EncryptorRegistryInterface) {
             throw new LogicException('The nowo_doctrine_encrypt DBAL types are not configured: enable nowo_doctrine_encrypt.dbal_types and boot the kernel, or call EncryptedTypeRuntime::configure() (plain Doctrine setups).');
         }
 

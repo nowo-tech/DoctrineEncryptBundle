@@ -6,7 +6,7 @@ namespace Nowo\DoctrineEncryptBundle\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
-use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
@@ -31,7 +31,7 @@ final class DoctrineEncryptStatusCommand extends AbstractCommand
         AttributeReader $attributeReader,
         DoctrineEncryptSubscriber $subscriber,
         ?EncryptorInterface $defaultEncryptor = null,
-        ?EncryptorRegistry $encryptorRegistry = null,
+        ?EncryptorRegistryInterface $encryptorRegistry = null,
         /**
          * Config name => [path, encryptor_class]; used to show encryptor class in configured configs.
          */
@@ -123,7 +123,7 @@ final class DoctrineEncryptStatusCommand extends AbstractCommand
         $output->writeln('');
         $output->writeln('<info>Configured encryptor configs:</info>');
 
-        if (!$this->encryptorRegistry instanceof EncryptorRegistry) {
+        if (!$this->encryptorRegistry instanceof EncryptorRegistryInterface) {
             $output->writeln('  (registry not available)');
 
             return;
