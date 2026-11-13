@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping\ClassMetadata;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Doctrine\Types\AbstractEncryptedType;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
-use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap;
 use Nowo\DoctrineEncryptBundle\Mapping\ListenerFieldResolver;
@@ -52,14 +52,14 @@ abstract class AbstractCommand extends Command
      * @param AttributeReader $attributeReader Reader for Encrypted attributes
      * @param DoctrineEncryptSubscriber $subscriber Encrypt/decrypt event subscriber
      * @param EncryptorInterface|null $defaultEncryptor Used by encrypt/decrypt database commands when using multi-config
-     * @param EncryptorRegistry|null $encryptorRegistry Used by encrypt/decrypt database commands and status command to resolve config names
+     * @param EncryptorRegistryInterface|null $encryptorRegistry Used by encrypt/decrypt database commands and status command to resolve config names
      */
     public function __construct(
         public EntityManagerInterface $entityManager,
         public AttributeReader $attributeReader,
         public DoctrineEncryptSubscriber $subscriber,
         public ?EncryptorInterface $defaultEncryptor = null,
-        public ?EncryptorRegistry $encryptorRegistry = null
+        public ?EncryptorRegistryInterface $encryptorRegistry = null
     ) {
         // @igor-ignore - Container wiring (setter injection below), never per-request state.
         $this->encryptedFieldMap = null;
@@ -158,7 +158,7 @@ abstract class AbstractCommand extends Command
      * Returns encrypted properties with their effective config name (resolves "default" to $defaultConfigName).
      *
      * @param ClassMetadata<object>|object $entityMetaData Doctrine entity metadata (ClassMetadata)
-     * @param string $defaultConfigName Default config name (e.g. from EncryptorRegistry::getDefaultName())
+     * @param string $defaultConfigName Default config name (e.g. from EncryptorRegistryInterface::getDefaultName())
      *
      * @return array<int, array{property: ReflectionProperty, config: string}>
      */

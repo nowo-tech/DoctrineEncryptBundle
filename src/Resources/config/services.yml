@@ -44,6 +44,9 @@ services:
     # Arguments are overwritten by DoctrineEncryptExtension (legacy: one encryptor; configs: map of encryptors)
 
   Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry: '@nowo_doctrine_encrypt.encryptor_registry'
+
+  # Ports (REQ-ARCH-001 rule 1): autowire the interfaces; alias them to your own service to replace the defaults.
+  Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface: '@nowo_doctrine_encrypt.encryptor_registry'
   
   Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface: '@nowo_doctrine_encrypt.encryptor'
 
@@ -111,3 +114,5 @@ services:
 
   Nowo\DoctrineEncryptBundle\Util\:
     resource: '../../Util/*'
+
+  Nowo\DoctrineEncryptBundle\Util\EncryptUtilInterface: '@Nowo\DoctrineEncryptBundle\Util\EncryptUtil'

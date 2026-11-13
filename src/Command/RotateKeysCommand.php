@@ -6,7 +6,7 @@ namespace Nowo\DoctrineEncryptBundle\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
-use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
@@ -44,7 +44,7 @@ final class RotateKeysCommand extends AbstractCommand
         AttributeReader $attributeReader,
         DoctrineEncryptSubscriber $subscriber,
         ?EncryptorInterface $defaultEncryptor,
-        ?EncryptorRegistry $encryptorRegistry,
+        ?EncryptorRegistryInterface $encryptorRegistry,
         private readonly KernelInterface $kernel,
         private readonly array $keyPaths
     ) {

@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Unreleased](#unreleased)
+- [To 2.13.0](#to-2130)
 - [To 2.12.1](#to-2121)
 - [To 2.12.0](#to-2120)
 - [To 2.11.0](#to-2110)
@@ -67,6 +68,16 @@
 - [Upgrading from ambta/doctrine-encrypt-bundle or hec-franco/doctrine-encrypt-bundle](#upgrading-from-ambtadoctrine-encrypt-bundle-or-hec-francodoctrine-encrypt-bundle)
 
 ## Unreleased
+
+## To 2.13.0
+
+From **2.12.1**: additive, no action needed.
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
+`EncryptorRegistry` and `EncryptUtil` now implement `EncryptorRegistryInterface` and `EncryptUtilInterface`, aliased to the default services; the bundle's own services type-hint `EncryptorRegistryInterface`. Type-hint the interfaces in your own services (the class ids keep working). Code that passed a custom object where the bundle expected an `EncryptorRegistry` (for example `EncryptedTypeRuntime::configure()` or the command constructors) can now pass any `EncryptorRegistryInterface`.
 
 ## To 2.12.1
 

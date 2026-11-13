@@ -22,6 +22,7 @@ use LogicException;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Exception\DecryptionFailedException;
 use Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap;
 use Nowo\DoctrineEncryptBundle\Util\EncryptedValue;
@@ -96,7 +97,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
 
     public const PROPERTY_ACCESS_MODES = [self::PROPERTY_ACCESS_AUTO, self::PROPERTY_ACCESS_REFLECTION];
 
-    private ?EncryptorRegistry $registry = null;
+    private ?EncryptorRegistryInterface $registry = null;
 
     /** When set, use this encryptor (or null to disable); when unset, use registry default. */
     private ?EncryptorInterface $encryptorOverride = null;
@@ -155,14 +156,14 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     private readonly EncryptedFieldMap $encryptedFields;
 
     /**
-     * @param EncryptorInterface|EncryptorRegistry|null $registryOrEncryptor Registry (normal DI), a single encryptor (BC/tests), or null
+     * @param EncryptorInterface|EncryptorRegistryInterface|null $registryOrEncryptor Registry (normal DI), a single encryptor (BC/tests), or null
      * @param LoggerInterface|null $logger Receives a warning for every value that cannot be decrypted (wrong key, corrupted ciphertext)
      * @param string $onDecryptFailure What a property gets when its value cannot be decrypted: "keep" (ciphertext, default), "null" or "throw"
      * @param EncryptedFieldMap|null $encryptedFields Fields selected in the bundle configuration besides #[Encrypted] (null = none)
      * @param string $propertyAccess "auto" (setter/getter when there is one, default) or "reflection" (never call domain accessors)
      */
     public function __construct(
-        EncryptorRegistry|EncryptorInterface|null $registryOrEncryptor = null,
+        EncryptorRegistryInterface|EncryptorInterface|null $registryOrEncryptor = null,
         ?LoggerInterface $logger = null,
         private readonly string $onDecryptFailure = self::ON_DECRYPT_FAILURE_KEEP,
         ?EncryptedFieldMap $encryptedFields = null,
@@ -182,7 +183,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
 
         if ($registryOrEncryptor instanceof EncryptorInterface) {
             $this->registry = new EncryptorRegistry(['default' => $registryOrEncryptor], 'default');
-        } elseif ($registryOrEncryptor instanceof EncryptorRegistry) {
+        } elseif ($registryOrEncryptor instanceof EncryptorRegistryInterface) {
             $this->registry = $registryOrEncryptor;
         } else {
             $this->registry = null;
@@ -382,7 +383,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
                 }
             }
 
-            $propertyEncryptor = $this->encryptorOverride instanceof EncryptorInterface || !$this->registry instanceof EncryptorRegistry
+            $propertyEncryptor = $this->encryptorOverride instanceof EncryptorInterface || !$this->registry instanceof EncryptorRegistryInterface
                 ? $encryptor
                 : $this->registry->get($encryptedAttr->config);
 

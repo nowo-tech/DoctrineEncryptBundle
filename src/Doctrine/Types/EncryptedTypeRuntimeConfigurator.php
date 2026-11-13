@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Doctrine\Types;
 
-use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Psr\Log\LoggerInterface;
 
@@ -15,7 +15,7 @@ use Psr\Log\LoggerInterface;
 final readonly class EncryptedTypeRuntimeConfigurator
 {
     public function __construct(
-        private EncryptorRegistry $registry,
+        private EncryptorRegistryInterface $registry,
         private string $onDecryptFailure = DoctrineEncryptSubscriber::ON_DECRYPT_FAILURE_KEEP,
         private ?LoggerInterface $logger = null,
     ) {

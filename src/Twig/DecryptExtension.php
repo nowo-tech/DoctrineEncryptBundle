@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Twig;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
-use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
@@ -29,10 +29,10 @@ use function strlen;
 final class DecryptExtension extends AbstractExtension
 {
     /**
-     * @param EncryptorRegistry $registry Encryptors per profile alias
+     * @param EncryptorRegistryInterface $registry Encryptors per profile alias
      */
     public function __construct(
-        private readonly EncryptorRegistry $registry
+        private readonly EncryptorRegistryInterface $registry
     ) {
     }
 

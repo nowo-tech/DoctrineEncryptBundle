@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Util;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
-use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Exception\DecryptionFailedException;
 use Nowo\DoctrineEncryptBundle\Exception\ValueNotEncryptedException;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
@@ -28,17 +28,17 @@ use function strlen;
  * Type-hint this class to get the util service (alias: nowo_doctrine_encrypt.encrypt_util).
  */
 #[AsAlias(id: self::UTIL_NAME, public: true)]
-final readonly class EncryptUtil
+final readonly class EncryptUtil implements EncryptUtilInterface
 {
     public const UTIL_NAME = 'nowo_doctrine_encrypt.encrypt_util';
 
     public const ENCRYPTION_MARKER = '<ENC>';
 
     /**
-     * @param EncryptorRegistry $registry Encryptors per profile alias
+     * @param EncryptorRegistryInterface $registry Encryptors per profile alias
      */
     public function __construct(
-        private EncryptorRegistry $registry
+        private EncryptorRegistryInterface $registry
     ) {
     }
 
