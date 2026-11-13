@@ -225,7 +225,7 @@ jobs:
         run: |
           echo "🧪 Running tests with coverage..."
           rm -rf .phpunit.cache
-          composer test-coverage
+          composer test-coverage-100
           if [ $? -ne 0 ]; then
             echo "❌ ERROR: Tests failed"
             exit 1
