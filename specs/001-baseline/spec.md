@@ -52,6 +52,12 @@ Encrypt and decrypt Doctrine entity field values at rest using pluggable encrypt
 
 ---
 
+### Requirements added by the inventory sweep (2026-11-16)
+
+Areas introduced by releases after the baseline review; each requirement names the area and what its main source does (class docblock).
+
+- **FR-EXCEPTION-001** `src/Exception/`: A value carries the encryption marker but cannot be decrypted (wrong or rotated key, corrupted or foreign ciphertext).
+
 ## Success Criteria
 
 - **SC-001**: **29/29** production files mapped in inventory.
