@@ -5,29 +5,39 @@ declare(strict_types=1);
 namespace App\Form;
 
 use App\Entity\MysqlAesNote;
+use Nowo\FormKitBundle\Attribute\FormKitConfig;
+use Nowo\FormKitBundle\Form\FormOptionsTrait;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class MysqlAesNoteType extends AbstractType
+/**
+ * REQ-DEMO-015: Doctrine path form (MysqlAes encryptor), a FormKit form (profile `demo`).
+ *
+ * @extends AbstractType<MysqlAesNote>
+ */
+#[FormKitConfig('demo')]
+final class MysqlAesNoteType extends AbstractType
 {
+    use FormOptionsTrait;
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder
-            ->add('title', TextType::class, [
-                'label' => 'Title',
-                'help'  => 'Stored in plain text.',
-                'attr'  => ['class' => 'form-control'],
-            ])
-            ->add('secretOrm', TextareaType::class, [
-                'label'     => 'Secret',
-                'required'  => false,
-                'help'      => 'Encrypted by the bundle (MysqlAes) in column <code>secret_orm</code>.',
-                'help_html' => true,
-                'attr'      => ['rows' => 4, 'class' => 'form-control'],
-            ]);
+        $this->addText($builder, 'title', [
+            'label'              => 'Title',
+            'translation_domain' => false,
+            'placeholder'        => false,
+            'help'               => 'Stored in plain text.',
+        ]);
+        $this->addTextarea($builder, 'secretOrm', [
+            'label'              => 'Secret',
+            'translation_domain' => false,
+            'required'           => false,
+            'placeholder'        => false,
+            'help'               => 'Encrypted by the bundle (MysqlAes) in column <code>secret_orm</code>.',
+            'help_html'          => true,
+            'attr'               => ['rows' => 4],
+        ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

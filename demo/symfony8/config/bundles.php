@@ -1,11 +1,14 @@
 <?php
 
 declare(strict_types=1);
+
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle;
 use Nowo\DoctrineEncryptBundle\NowoDoctrineEncryptBundle;
+use Nowo\FormKitBundle\NowoFormKitBundle;
 use Nowo\HotReloadBundle\NowoHotReloadBundle;
 use Nowo\TwigInspectorBundle\NowoTwigInspectorBundle;
+use Nowo\UiKitBundle\NowoUiKitBundle;
 use Symfony\Bundle\DebugBundle\DebugBundle;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\TwigBundle\TwigBundle;
@@ -23,4 +26,6 @@ return [
     NowoHotReloadBundle::class       => ['dev' => true, 'test' => true],
     NowoTwigInspectorBundle::class   => ['dev' => true, 'test' => true],
     TwigExtraBundle::class           => ['all' => true],
+    NowoFormKitBundle::class         => ['all' => true],
+    NowoUiKitBundle::class           => ['all' => true],
 ];

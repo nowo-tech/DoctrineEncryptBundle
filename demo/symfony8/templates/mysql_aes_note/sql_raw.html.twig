@@ -3,24 +3,24 @@
 {% block title %}Raw AES ciphertext{% endblock %}
 
 {% block body %}
-<div class="card shadow-sm">
-    <div class="card-header"><h2 class="mb-0">HEX(secret_native) — as stored by MySQL</h2></div>
-    <div class="card-body">
-        <table class="table table-sm">
+<div class="nowo-ui-card">
+    <div class="nowo-ui-card__header"><h2>HEX(secret_native) — as stored by MySQL</h2></div>
+    <div class="nowo-ui-card__body">
+        <table class="nowo-ui-table">
             <thead><tr><th>Id</th><th>Title</th><th>secret_native (hex)</th></tr></thead>
             <tbody>
                 {% for row in rows %}
                     <tr>
                         <td>{{ row.id }}</td>
                         <td>{{ row.title }}</td>
-                        <td><code class="small">{{ row.secret_native_hex }}</code></td>
+                        <td><code>{{ row.secret_native_hex }}</code></td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="3" class="text-muted">No rows.</td></tr>
+                    <tr><td colspan="3" class="nowo-ui-muted">No rows.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
-<div class="mt-3"><a href="{{ path('mysql_aes_note_sql_index') }}" class="btn btn-outline-secondary">← Decrypted list</a></div>
+<div><a href="{{ path('mysql_aes_note_sql_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Decrypted list</a></div>
 {% endblock %}

@@ -1,0 +1,4 @@
+# REQ-DEMO-014: UiKit's default theme, unchanged, with UiKit's own semantic stylesheet only (no CSS framework, no CDN).
+nowo_ui_kit:
+    css_framework: custom
+    icon_set: none

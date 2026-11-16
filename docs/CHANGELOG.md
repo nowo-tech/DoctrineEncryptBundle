@@ -63,6 +63,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Demo
+
+- The demo is built on UiKit and FormKit (REQ-DEMO-014 / REQ-DEMO-015): the Bootstrap CDN shell is replaced by UiKit's
+  admin layout with its default theme and `nowo-ui-*` components, and every demo form (secret messages, sensitive
+  records, MySQL AES notes, list filter, CSRF-only deletes) is a FormKit type (profile `demo`). No bundle runtime
+  change.
+
 ### Changed
 
 - Demo `.gitignore` ignores `/.pnpm-store` (REQ-GITIGNORE-003)

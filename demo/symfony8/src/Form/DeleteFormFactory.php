@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use function sprintf;
 
 /**
- * Builds the demo delete forms (REQ-TWIG-005): form name "delete_{id}", CSRF token id "delete{id}" (the id the
+ * Builds the demo delete forms (REQ-TWIG-005 / REQ-DEMO-015): form name "delete_{id}", CSRF token id "delete{id}" (the id the
  * controllers always checked), POST to the entity delete route, confirm prompt on submit.
  */
 final readonly class DeleteFormFactory
@@ -26,7 +26,7 @@ final readonly class DeleteFormFactory
     /**
      * @return FormInterface<null>
      */
-    public function create(string $route, int|string $id, string $confirm = 'Delete?', string $class = 'd-inline'): FormInterface
+    public function create(string $route, int|string $id, string $confirm = 'Delete?', string $class = 'nowo-ui-row-actions__form'): FormInterface
     {
         return $this->formFactory->createNamed('delete_' . $id, CsrfOnlyType::class, null, [
             'action'        => $this->urlGenerator->generate($route, ['id' => $id]),

@@ -5,14 +5,14 @@
             {{ form_row(child) }}
         {% endif %}
     {% endfor %}
-    <div class="col-lg-2 col-md-4 d-grid gap-2 align-self-lg-end">
-        <button type="submit" class="btn btn-primary">Filter</button>
-        <a href="{{ clearPath }}" class="btn btn-outline-secondary">Clear</a>
+    <div>
+        <button type="submit" class="nowo-ui-btn nowo-ui-btn--primary">Filter</button>
+        <a href="{{ clearPath }}" class="nowo-ui-btn nowo-ui-btn--outline">Clear</a>
     </div>
 {{ form_end(filter_form) }}
 {% if queryDescription is defined and queryDescription %}
-    <details class="mb-4">
-        <summary class="text-muted small user-select-none">Query / strategy used</summary>
-        <pre class="small bg-dark text-light p-3 rounded mb-0 mt-2"><code>{{ queryDescription }}</code></pre>
+    <details>
+        <summary class="nowo-ui-muted">Query / strategy used</summary>
+        <pre class="nowo-ui-code-block"><code class="nowo-ui-code">{{ queryDescription }}</code></pre>
     </details>
 {% endif %}

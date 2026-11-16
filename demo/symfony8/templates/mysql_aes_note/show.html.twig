@@ -3,16 +3,16 @@
 {% block title %}MySQL AES note #{{ note.id }}{% endblock %}
 
 {% block body %}
-<div class="mb-3"><a href="{{ path('mysql_aes_note_index') }}" class="btn btn-outline-secondary">← Back</a></div>
-<div class="card shadow-sm">
-    <div class="card-body">
-        <dl class="row mb-0">
-            <dt class="col-sm-3">Title</dt><dd class="col-sm-9">{{ note.title }}</dd>
-            <dt class="col-sm-3">Secret (ORM)</dt><dd class="col-sm-9"><pre class="mb-0">{{ note.secretOrm }}</pre></dd>
+<div><a href="{{ path('mysql_aes_note_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back</a></div>
+<div class="nowo-ui-card">
+    <div class="nowo-ui-card__body">
+        <dl class="nowo-ui-detail-list">
+            <dt>Title</dt><dd>{{ note.title }}</dd>
+            <dt>Secret (ORM)</dt><dd><pre class="nowo-ui-code-block">{{ note.secretOrm }}</pre></dd>
         </dl>
-        <div class="d-flex flex-wrap gap-2 mt-3">
-            <a href="{{ path('mysql_aes_note_edit', { id: note.id }) }}" class="btn btn-primary">Edit</a>
-            <a href="{{ path('mysql_aes_note_db_values') }}" class="btn btn-outline-secondary">View DB values</a>
+        <div class="nowo-ui-row-actions">
+            <a href="{{ path('mysql_aes_note_edit', { id: note.id }) }}" class="nowo-ui-btn nowo-ui-btn--primary">Edit</a>
+            <a href="{{ path('mysql_aes_note_db_values') }}" class="nowo-ui-btn nowo-ui-btn--outline">View DB values</a>
         </div>
     </div>
 </div>

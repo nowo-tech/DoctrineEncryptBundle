@@ -3,22 +3,22 @@
 {% block title %}Sensitive records (raw SQL){% endblock %}
 
 {% block body %}
-<div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h2 class="mb-0">Sensitive records – Raw SQL</h2>
-        <div class="d-flex gap-2">
-            <a href="{{ path('sensitive_record_index') }}" class="btn btn-outline-light btn-sm">View with Doctrine (decrypted)</a>
-            <a href="{{ path('sensitive_record_new') }}" class="btn btn-primary">Create new</a>
+<div class="nowo-ui-card">
+    <div class="nowo-ui-card__header">
+        <h2>Sensitive records – Raw SQL</h2>
+        <div class="nowo-ui-row-actions">
+            <a href="{{ path('sensitive_record_index') }}" class="nowo-ui-btn nowo-ui-btn--sm">View with Doctrine (decrypted)</a>
+            <a href="{{ path('sensitive_record_new') }}" class="nowo-ui-btn nowo-ui-btn--primary">Create new</a>
         </div>
     </div>
-    <div class="card-body">
-        <p class="text-muted small">
+    <div class="nowo-ui-card__body">
+        <p class="nowo-ui-muted">
             Data loaded with <strong>raw SQL</strong>. <strong>personal_note</strong> and <strong>financial_note</strong> show ciphertext as stored (Halite / Defuse).
         </p>
         {% if rows|length > 0 %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
+            <div class="nowo-ui-table-wrap">
+                <table class="nowo-ui-table">
+                    <thead>
                         <tr>
                             <th>Id</th>
                             <th>Personal note (raw)</th>
@@ -30,15 +30,15 @@
                         {% for row in rows %}
                             <tr>
                                 <td>{{ row.id }}</td>
-                                <td><code class="small text-break">{{ row.personal_note is not empty ? (row.personal_note|slice(0, 60)) ~ '…' : '–' }}</code></td>
-                                <td><code class="small text-break">{{ row.financial_note is not empty ? (row.financial_note|slice(0, 60)) ~ '…' : '–' }}</code></td>
+                                <td><code>{{ row.personal_note is not empty ? (row.personal_note|slice(0, 60)) ~ '…' : '–' }}</code></td>
+                                <td><code>{{ row.financial_note is not empty ? (row.financial_note|slice(0, 60)) ~ '…' : '–' }}</code></td>
                                 <td>
-                                    <a href="{{ path('sensitive_record_show', { id: row.id }) }}" class="btn btn-sm btn-outline-secondary">Show</a>
-                                    <a href="{{ path('sensitive_record_edit', { id: row.id }) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    <a href="{{ path('sensitive_record_show', { id: row.id }) }}" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--outline">Show</a>
+                                    <a href="{{ path('sensitive_record_edit', { id: row.id }) }}" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--outline">Edit</a>
                                     {% set delete_form = delete_forms[row.id] %}
                                     {{ form_start(delete_form) }}
                                         {% for child in delete_form %}{% if not child.rendered %}{{ form_row(child) }}{% endif %}{% endfor %}
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        <button type="submit" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--danger">Delete</button>
                                     {{ form_end(delete_form) }}
                                 </td>
                             </tr>
@@ -47,7 +47,7 @@
                 </table>
             </div>
         {% else %}
-            <p class="text-muted mb-0">No rows. <a href="{{ path('sensitive_record_new') }}">Create one</a> or load fixtures.</p>
+            <p class="nowo-ui-muted">No rows. <a href="{{ path('sensitive_record_new') }}">Create one</a> or load fixtures.</p>
         {% endif %}
     </div>
 </div>

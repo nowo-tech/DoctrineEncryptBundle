@@ -3,24 +3,24 @@
 {% block title %}New sensitive record{% endblock %}
 
 {% block body %}
-<div class="mb-3">
-    <a href="{{ path('sensitive_record_index') }}" class="btn btn-outline-secondary">← Back to list</a>
+<div>
+    <a href="{{ path('sensitive_record_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back to list</a>
 </div>
-<div class="card shadow-sm">
-    <div class="card-header bg-primary text-white">
-        <h2 class="mb-0 h5">Create sensitive record</h2>
+<div class="nowo-ui-card">
+    <div class="nowo-ui-card__header">
+        <h2>Create sensitive record</h2>
     </div>
-    <div class="card-body">
-        {{ form_start(form, { attr: { class: 'needs-validation', novalidate: true } }) }}
+    <div class="nowo-ui-card__body">
+        {{ form_start(form, { attr: { novalidate: true } }) }}
         {% for child in form %}
             {% if not child.rendered %}
                 {{ form_row(child) }}
             {% endif %}
         {% endfor %}
-        <hr class="my-4">
-        <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">Create</button>
-            <a href="{{ path('sensitive_record_index') }}" class="btn btn-outline-secondary">Cancel</a>
+        <hr>
+        <div class="nowo-ui-row-actions">
+            <button type="submit" class="nowo-ui-btn nowo-ui-btn--primary">Create</button>
+            <a href="{{ path('sensitive_record_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">Cancel</a>
         </div>
         {{ form_end(form) }}
     </div>
