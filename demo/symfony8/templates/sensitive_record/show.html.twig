@@ -3,29 +3,29 @@
 {% block title %}Sensitive record #{{ sensitive_record.id }}{% endblock %}
 
 {% block body %}
-<div class="mb-3">
-    <a href="{{ path('sensitive_record_index') }}" class="btn btn-outline-secondary">← Back to list</a>
+<div>
+    <a href="{{ path('sensitive_record_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back to list</a>
 </div>
-<div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h2 class="mb-0">Sensitive record #{{ sensitive_record.id }}</h2>
-        <div class="btn-group">
-            <a href="{{ path('sensitive_record_edit', { id: sensitive_record.id }) }}" class="btn btn-primary">Edit</a>
-            <a href="{{ path('sensitive_record_index') }}" class="btn btn-secondary">Back to list</a>
+<div class="nowo-ui-card">
+    <div class="nowo-ui-card__header">
+        <h2>Sensitive record #{{ sensitive_record.id }}</h2>
+        <div>
+            <a href="{{ path('sensitive_record_edit', { id: sensitive_record.id }) }}" class="nowo-ui-btn nowo-ui-btn--primary">Edit</a>
+            <a href="{{ path('sensitive_record_index') }}" class="nowo-ui-btn">Back to list</a>
         </div>
     </div>
-    <div class="card-body">
-        <dl class="row">
-            <dt class="col-sm-3">Id</dt>
-            <dd class="col-sm-9">{{ sensitive_record.id }}</dd>
-            <dt class="col-sm-3">Personal note (Halite)</dt>
-            <dd class="col-sm-9">{{ sensitive_record.personalNote ?? '–' }}</dd>
-            <dt class="col-sm-3">Financial note (Defuse)</dt>
-            <dd class="col-sm-9">{{ sensitive_record.financialNote ?? '–' }}</dd>
+    <div class="nowo-ui-card__body">
+        <dl class="nowo-ui-detail-list">
+            <dt>Id</dt>
+            <dd>{{ sensitive_record.id }}</dd>
+            <dt>Personal note (Halite)</dt>
+            <dd>{{ sensitive_record.personalNote ?? '–' }}</dd>
+            <dt>Financial note (Defuse)</dt>
+            <dd>{{ sensitive_record.financialNote ?? '–' }}</dd>
         </dl>
         {{ form_start(delete_form) }}
             {% for child in delete_form %}{% if not child.rendered %}{{ form_row(child) }}{% endif %}{% endfor %}
-            <button type="submit" class="btn btn-danger">Delete</button>
+            <button type="submit" class="nowo-ui-btn nowo-ui-btn--danger">Delete</button>
         {{ form_end(delete_form) }}
     </div>
 </div>

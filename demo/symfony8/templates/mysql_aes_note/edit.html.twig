@@ -3,16 +3,16 @@
 {% block title %}Edit MySQL AES note{% endblock %}
 
 {% block body %}
-<div class="mb-3">
-    <a href="{{ path('mysql_aes_note_show', { id: note.id }) }}" class="btn btn-outline-secondary">← Back</a>
+<div>
+    <a href="{{ path('mysql_aes_note_show', { id: note.id }) }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back</a>
 </div>
-<div class="card shadow-sm">
-    <div class="card-header">
-        <h2 class="mb-0 h5">Edit note #{{ note.id }}</h2>
+<div class="nowo-ui-card">
+    <div class="nowo-ui-card__header">
+        <h2>Edit note #{{ note.id }}</h2>
     </div>
-    <div class="card-body">
+    <div class="nowo-ui-card__body">
         {{ form_start(form) }}
-        <div class="vstack gap-3">
+        <div>
             {% for child in form %}
                 {% if not child.rendered %}
                     {{ form_row(child) }}
@@ -27,7 +27,7 @@
 
         {{ form_start(delete_form) }}
             {% for child in delete_form %}{% if not child.rendered %}{{ form_row(child) }}{% endif %}{% endfor %}
-            <button type="submit" class="btn btn-outline-danger">Delete</button>
+            <button type="submit" class="nowo-ui-btn nowo-ui-btn--danger">Delete</button>
         {{ form_end(delete_form) }}
     </div>
 </div>

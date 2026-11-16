@@ -3,16 +3,16 @@
 {% block title %}Insert with AES_ENCRYPT{% endblock %}
 
 {% block body %}
-<div class="mb-3">
-    <a href="{{ path('mysql_aes_note_sql_index') }}" class="btn btn-outline-secondary">← Back to SQL list</a>
+<div>
+    <a href="{{ path('mysql_aes_note_sql_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back to SQL list</a>
 </div>
-<div class="card shadow-sm">
-    <div class="card-header">
-        <h2 class="mb-0 h5">Repository: INSERT … AES_ENCRYPT(:plain, :key)</h2>
+<div class="nowo-ui-card">
+    <div class="nowo-ui-card__header">
+        <h2>Repository: INSERT … AES_ENCRYPT(:plain, :key)</h2>
     </div>
-    <div class="card-body">
+    <div class="nowo-ui-card__body">
         {{ form_start(form) }}
-        <div class="vstack gap-3">
+        <div>
             {% for child in form %}
                 {% if not child.rendered %}
                     {{ form_row(child) }}

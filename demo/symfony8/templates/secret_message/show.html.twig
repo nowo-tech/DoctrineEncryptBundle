@@ -3,29 +3,29 @@
 {% block title %}Secret message #{{ secret_message.id }}{% endblock %}
 
 {% block body %}
-<div class="mb-3">
-    <a href="{{ path('secret_message_index') }}" class="btn btn-outline-secondary">← Back to list</a>
+<div>
+    <a href="{{ path('secret_message_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back to list</a>
 </div>
-<div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h2 class="mb-0 h5">Secret message #{{ secret_message.id }}</h2>
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{{ path('secret_message_edit', { id: secret_message.id }) }}" class="btn btn-primary btn-sm">Edit</a>
-            <a href="{{ path('secret_message_db_values') }}" class="btn btn-outline-secondary btn-sm">View DB values</a>
+<div class="nowo-ui-card">
+    <div class="nowo-ui-card__header">
+        <h2>Secret message #{{ secret_message.id }}</h2>
+        <div class="nowo-ui-row-actions">
+            <a href="{{ path('secret_message_edit', { id: secret_message.id }) }}" class="nowo-ui-btn nowo-ui-btn--primary nowo-ui-btn--sm">Edit</a>
+            <a href="{{ path('secret_message_db_values') }}" class="nowo-ui-btn nowo-ui-btn--outline nowo-ui-btn--sm">View DB values</a>
         </div>
     </div>
-    <div class="card-body">
-        <dl class="row mb-0">
-            <dt class="col-sm-3">Id</dt>
-            <dd class="col-sm-9">{{ secret_message.id }}</dd>
-            <dt class="col-sm-3">Title (plain)</dt>
-            <dd class="col-sm-9">{{ secret_message.title ?? '–' }}</dd>
-            <dt class="col-sm-3">Message (decrypted)</dt>
-            <dd class="col-sm-9">{{ secret_message.message ?? '–' }}</dd>
+    <div class="nowo-ui-card__body">
+        <dl class="nowo-ui-detail-list">
+            <dt>Id</dt>
+            <dd>{{ secret_message.id }}</dd>
+            <dt>Title (plain)</dt>
+            <dd>{{ secret_message.title ?? '–' }}</dd>
+            <dt>Message (decrypted)</dt>
+            <dd>{{ secret_message.message ?? '–' }}</dd>
         </dl>
         {{ form_start(delete_form) }}
             {% for child in delete_form %}{% if not child.rendered %}{{ form_row(child) }}{% endif %}{% endfor %}
-            <button type="submit" class="btn btn-outline-danger">Delete</button>
+            <button type="submit" class="nowo-ui-btn nowo-ui-btn--danger">Delete</button>
         {{ form_end(delete_form) }}
     </div>
 </div>

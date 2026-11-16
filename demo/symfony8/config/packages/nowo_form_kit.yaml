@@ -1,0 +1,12 @@
+# REQ-DEMO-015: demo forms are FormKit forms themed by the `demo` profile on top of UiKit's semantic classes.
+nowo_form_kit:
+    default_profile: demo
+    profiles:
+        demo:
+            alias: demo
+            translation_domain: messages
+            defaults:
+                # the `nowo-ui-input` class comes from UiKit's form theme (twig.yaml), so it is not repeated here
+                row_attr:
+                    class: 'nowo-ui-form-row'
+            field_types: {}

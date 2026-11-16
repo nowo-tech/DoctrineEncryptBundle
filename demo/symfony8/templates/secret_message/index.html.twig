@@ -3,23 +3,23 @@
 {% block title %}Secret messages{% endblock %}
 
 {% block body %}
-<div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h2 class="mb-0">Secret messages</h2>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ path('secret_message_db_values') }}" class="btn btn-outline-secondary btn-sm">DB: raw vs decrypted</a>
-            <a href="{{ path('secret_message_new') }}" class="btn btn-primary btn-sm">Create new</a>
+<div class="nowo-ui-card">
+    <div class="nowo-ui-card__header">
+        <h2>Secret messages</h2>
+        <div class="nowo-ui-row-actions">
+            <a href="{{ path('secret_message_db_values') }}" class="nowo-ui-btn nowo-ui-btn--outline nowo-ui-btn--sm">DB: raw vs decrypted</a>
+            <a href="{{ path('secret_message_new') }}" class="nowo-ui-btn nowo-ui-btn--primary nowo-ui-btn--sm">Create new</a>
         </div>
     </div>
-    <div class="card-body">
-        <p class="text-muted small">
+    <div class="nowo-ui-card__body">
+        <p class="nowo-ui-muted">
             <strong>message</strong> is encrypted in the database (Halite). <strong>title</strong> is plain text.
             Create or edit a message to see encryption in action; then check the MySQL database to see ciphertext.
         </p>
         {% if messages|length > 0 %}
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
+            <div class="nowo-ui-table-wrap">
+                <table class="nowo-ui-table">
+                    <thead>
                         <tr>
                             <th>Id</th>
                             <th>Title</th>
@@ -34,12 +34,12 @@
                                 <td>{{ msg.title ?? '–' }}</td>
                                 <td>{{ msg.message ? (msg.message|slice(0, 50)) ~ (msg.message|length > 50 ? '…' : '') : '–' }}</td>
                                 <td>
-                                    <a href="{{ path('secret_message_show', { id: msg.id }) }}" class="btn btn-sm btn-outline-secondary">Show</a>
-                                    <a href="{{ path('secret_message_edit', { id: msg.id }) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    <a href="{{ path('secret_message_show', { id: msg.id }) }}" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--outline">Show</a>
+                                    <a href="{{ path('secret_message_edit', { id: msg.id }) }}" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--outline">Edit</a>
                                     {% set delete_form = delete_forms[msg.id] %}
                                     {{ form_start(delete_form) }}
                                         {% for child in delete_form %}{% if not child.rendered %}{{ form_row(child) }}{% endif %}{% endfor %}
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        <button type="submit" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--danger">Delete</button>
                                     {{ form_end(delete_form) }}
                                 </td>
                             </tr>
@@ -48,7 +48,7 @@
                 </table>
             </div>
         {% else %}
-            <p class="text-muted mb-0">No secret messages yet. <a href="{{ path('secret_message_new') }}">Create the first one</a>.</p>
+            <p class="nowo-ui-muted">No secret messages yet. <a href="{{ path('secret_message_new') }}">Create the first one</a>.</p>
         {% endif %}
     </div>
 </div>

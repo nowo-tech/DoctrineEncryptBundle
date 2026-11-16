@@ -37,11 +37,17 @@
     "nowo-tech/doctrine-encrypt-bundle": {
         "version": "dev-master"
     },
+    "nowo-tech/form-kit-bundle": {
+        "version": "v2.23.0"
+    },
     "nowo-tech/hot-reload-bundle": {
         "version": "v1.3.2"
     },
     "nowo-tech/twig-inspector-bundle": {
         "version": "v1.0.31"
+    },
+    "nowo-tech/ui-kit-bundle": {
+        "version": "v2.52.0"
     },
     "phpunit/phpunit": {
         "version": "11.5",
@@ -152,6 +158,19 @@
             "config/routes.yaml"
         ]
     },
+    "symfony/translation": {
+        "version": "8.1",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "6.3",
+            "ref": "620a1b84865ceb2ba304c8f8bf2a185fbf32a843"
+        },
+        "files": [
+            "config/packages/translation.yaml",
+            "translations/.gitignore"
+        ]
+    },
     "symfony/twig-bundle": {
         "version": "8.0",
         "recipe": {
@@ -163,6 +182,18 @@
         "files": [
             "config/packages/twig.yaml",
             "templates/base.html.twig"
+        ]
+    },
+    "symfony/validator": {
+        "version": "8.1",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "7.0",
+            "ref": "8c1c4e28d26a124b0bb273f537ca8ce443472bfd"
+        },
+        "files": [
+            "config/packages/validator.yaml"
         ]
     },
     "symfony/web-profiler-bundle": {

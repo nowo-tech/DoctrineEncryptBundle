@@ -3,46 +3,40 @@
 {% block title %}Secret messages – DB values{% endblock %}
 
 {% block body %}
-<div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h1 class="h4 mb-0">Database values (encrypted vs decrypted)</h1>
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="{{ path('secret_message_index') }}" class="btn btn-outline-secondary btn-sm">Doctrine list</a>
-            <a href="{{ path('secret_message_new') }}" class="btn btn-primary btn-sm">Create new</a>
+<div class="nowo-ui-card">
+    <div class="nowo-ui-card__header">
+        <h1>Database values (encrypted vs decrypted)</h1>
+        <div class="nowo-ui-row-actions">
+            <a href="{{ path('secret_message_index') }}" class="nowo-ui-btn nowo-ui-btn--outline nowo-ui-btn--sm">Doctrine list</a>
+            <a href="{{ path('secret_message_new') }}" class="nowo-ui-btn nowo-ui-btn--primary nowo-ui-btn--sm">Create new</a>
         </div>
     </div>
-    <div class="card-body">
-        <p class="text-muted small mb-3">
-            Loaded with <strong>raw SQL</strong> on <code>secret_message</code>.
-            <strong>title</strong> is plain text; <strong>message</strong> is stored encrypted (Halite, config <code>personal_data</code>, includes <code>&lt;ENC&gt;</code> marker).
+    <div class="nowo-ui-card__body">
+        <p class="nowo-ui-muted">
+            Loaded with <strong>raw SQL</strong> on <code class="nowo-ui-code">secret_message</code>.
+            <strong>title</strong> is plain text; <strong>message</strong> is stored encrypted (Halite, config <code class="nowo-ui-code">personal_data</code>, includes <code class="nowo-ui-code">&lt;ENC&gt;</code> marker).
         </p>
 
-        <ul class="nav nav-pills mb-4 gap-2">
-            <li class="nav-item">
-                <a class="nav-link{% if mode == 'both' %} active{% endif %}" href="{{ path('secret_message_db_values', { mode: 'both' }) }}">Both</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link{% if mode == 'raw' %} active{% endif %}" href="{{ path('secret_message_db_values', { mode: 'raw' }) }}">Encrypted only</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link{% if mode == 'decrypted' %} active{% endif %}" href="{{ path('secret_message_db_values', { mode: 'decrypted' }) }}">Decrypted only</a>
-            </li>
-        </ul>
+        <nav class="nowo-ui-row-actions" aria-label="Value mode">
+            {% for key, label in {both: 'Both', raw: 'Encrypted only', decrypted: 'Decrypted only'} %}
+                <a class="nowo-ui-btn nowo-ui-btn--sm {{ mode == key ? 'nowo-ui-btn--primary' : 'nowo-ui-btn--outline' }}"{% if mode == key %} aria-current="page"{% endif %} href="{{ path('secret_message_db_values', { mode: key }) }}">{{ label }}</a>
+            {% endfor %}
+        </nav>
 
         {% if rows|length > 0 %}
-            <div class="table-responsive">
-                <table class="table table-sm table-hover align-middle">
-                    <thead class="table-light">
+            <div class="nowo-ui-table-wrap">
+                <table class="nowo-ui-table">
+                    <thead>
                         <tr>
                             <th scope="col">Id</th>
                             <th scope="col">Title</th>
                             {% if mode in ['both', 'raw'] %}
-                                <th scope="col"><code>message</code> (DB)</th>
+                                <th scope="col"><code class="nowo-ui-code">message</code> (DB)</th>
                             {% endif %}
                             {% if mode in ['both', 'decrypted'] %}
-                                <th scope="col"><code>message</code> decrypted</th>
+                                <th scope="col"><code class="nowo-ui-code">message</code> decrypted</th>
                             {% endif %}
-                            <th scope="col" class="text-end">Actions</th>
+                            <th scope="col" class="nowo-ui-cell--end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,20 +45,20 @@
                                 <td>{{ row.id }}</td>
                                 <td>{{ row.title ?? '–' }}</td>
                                 {% if mode in ['both', 'raw'] %}
-                                    <td class="small">
+                                    <td>
                                         {% if row.message_raw %}
-                                            <code class="text-break d-block">{{ row.message_raw|slice(0, 120) }}{{ row.message_raw|length > 120 ? '…' : '' }}</code>
+                                            <code>{{ row.message_raw|slice(0, 120) }}{{ row.message_raw|length > 120 ? '…' : '' }}</code>
                                         {% else %}
-                                            <span class="text-muted">–</span>
+                                            <span class="nowo-ui-muted">–</span>
                                         {% endif %}
                                     </td>
                                 {% endif %}
                                 {% if mode in ['both', 'decrypted'] %}
-                                    <td class="text-break">{{ row.message_decrypted ?? '–' }}</td>
+                                    <td>{{ row.message_decrypted ?? '–' }}</td>
                                 {% endif %}
-                                <td class="text-end text-nowrap">
-                                    <a href="{{ path('secret_message_show', { id: row.id }) }}" class="btn btn-sm btn-outline-secondary">Show</a>
-                                    <a href="{{ path('secret_message_edit', { id: row.id }) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                <td class="nowo-ui-cell--end">
+                                    <a href="{{ path('secret_message_show', { id: row.id }) }}" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--outline">Show</a>
+                                    <a href="{{ path('secret_message_edit', { id: row.id }) }}" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--outline">Edit</a>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -72,11 +66,11 @@
                 </table>
             </div>
         {% else %}
-            <p class="text-muted mb-0">No rows. <a href="{{ path('secret_message_new') }}">Create the first one</a> or run <code>make fixtures</code>.</p>
+            <p class="nowo-ui-muted">No rows. <a href="{{ path('secret_message_new') }}">Create the first one</a> or run <code class="nowo-ui-code">make fixtures</code>.</p>
         {% endif %}
     </div>
 </div>
-<div class="mt-3">
-    <a href="{{ path('secret_message_index') }}" class="btn btn-outline-secondary">← Back</a>
+<div>
+    <a href="{{ path('secret_message_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back</a>
 </div>
 {% endblock %}

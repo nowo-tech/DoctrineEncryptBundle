@@ -1,6 +1,6 @@
-<div class="d-flex flex-wrap gap-2 mt-4 pt-2 border-top">
-    <button type="submit" class="btn btn-primary">{{ submit_label|default('Save') }}</button>
+<div class="nowo-ui-row-actions">
+    <button type="submit" class="nowo-ui-btn nowo-ui-btn--primary">{{ submit_label|default('Save') }}</button>
     {% if cancel_path is defined %}
-        <a href="{{ cancel_path }}" class="btn btn-outline-secondary">Cancel</a>
+        <a href="{{ cancel_path }}" class="nowo-ui-btn nowo-ui-btn--outline">Cancel</a>
     {% endif %}
 </div>
