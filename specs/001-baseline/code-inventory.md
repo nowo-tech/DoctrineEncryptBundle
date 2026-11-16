@@ -2,7 +2,7 @@
 
 **Baseline spec**: [`spec.md`](spec.md)  
 **Package**: `nowo-tech/doctrine-encrypt-bundle`  
-**Last audited**: 2026-10-13
+**Last audited**: 2026-11-16 (sweep: 2026-10-13 baseline + later sources)
 
 Every production artifact under `src/` is listed below (including `src/.gitignore`, which excludes generated paths from VCS).
 
@@ -52,6 +52,34 @@ Every production artifact under `src/` is listed below (including `src/.gitignor
 | --- | --- | --- |
 | `.gitignore` | Ignore generated encryptor artifacts | FR-REPO-001 |
 
+## Sources added after the last baseline review (sweep 2026-11-16)
+
+These 21 `src/` files were added by releases after the last review. Each row maps the file to the requirement already used for its neighbours in the same directory; the description comes from the class docblock. With them, every file under `src/` is listed in this inventory.
+
+| Source file | Spec section | Requirement IDs |
+| --- | --- | --- |
+| `Doctrine/Types/AbstractEncryptedType.php` | Base class of the encrypted DBAL types: the value is encrypted when Doctrine converts it for the database and decrypt... | FR-ORM-001 |
+| `Doctrine/Types/EncryptedJsonType.php` | `encrypted_json` (CLOB/TEXT, not a native JSON column: the stored value is ciphertext): a value JSON-encoded, then en... | FR-ORM-001 |
+| `Doctrine/Types/EncryptedStringType.php` | `encrypted_string` (VARCHAR): a string encrypted with the profile's encryptor. | FR-ORM-001 |
+| `Doctrine/Types/EncryptedTextType.php` | `encrypted_text` (CLOB/TEXT): like `encrypted_string` for long values. | FR-ORM-001 |
+| `Doctrine/Types/EncryptedTypeRuntime.php` | Where the encrypted DBAL types (AbstractEncryptedType) get their encryptors from. | FR-ORM-001 |
+| `Doctrine/Types/EncryptedTypeRuntimeConfigurator.php` | Hands the container's encryptors to EncryptedTypeRuntime when the kernel boots and takes them back when it shuts down. | FR-ORM-001 |
+| `Encryptors/EncryptorRegistryInterface.php` | Port: registry of named encryptors (one per `encryptors` config alias, e.g. personal_data, financial_data). | FR-ENC-002 |
+| `EventListener/EncryptedMappingValidator.php` | Checks the encryption selection against Doctrine metadata when a class's metadata is loaded (first use, or cache:warm... | FR-ORM-001 |
+| `Exception/DecryptionFailedException.php` | A value carries the encryption marker but cannot be decrypted (wrong or rotated key, corrupted or foreign ciphertext). | FR-EXCEPTION-001 |
+| `Exception/ExceptionInterface.php` | Marker interface for the exceptions thrown by this bundle (catch it to handle every bundle failure at once). | FR-EXCEPTION-001 |
+| `Exception/MissingEncryptionKeyException.php` | The key file of a file-based profile does not exist and the bundle is not allowed to generate one (`generate_missing_... | FR-EXCEPTION-001 |
+| `Exception/ValueNotEncryptedException.php` | A value that must be ciphertext does not carry the encryption marker (or has an empty payload). | FR-EXCEPTION-001 |
+| `Mapping/EncryptedFieldMap.php` | Encrypted fields selected in the bundle configuration (`nowo_doctrine_encrypt.encrypted_fields`) instead of the `#[En... | FR-ATTR-002 |
+| `Mapping/ListenerFieldResolver.php` | Which mapped fields the listener encrypts, seen from Doctrine metadata: the same selection as DoctrineEncryptSubscrib... | FR-ATTR-002 |
+| `Resources/translations/NowoDoctrineEncryptBundle.de.yaml` | Configuration `NowoDoctrineEncryptBundle.de.yaml` | FR-FORM-005 |
+| `Resources/translations/NowoDoctrineEncryptBundle.fr.yaml` | Configuration `NowoDoctrineEncryptBundle.fr.yaml` | FR-FORM-005 |
+| `Resources/translations/NowoDoctrineEncryptBundle.it.yaml` | Configuration `NowoDoctrineEncryptBundle.it.yaml` | FR-FORM-005 |
+| `Resources/translations/NowoDoctrineEncryptBundle.nl.yaml` | Configuration `NowoDoctrineEncryptBundle.nl.yaml` | FR-FORM-005 |
+| `Resources/translations/NowoDoctrineEncryptBundle.pt.yaml` | Configuration `NowoDoctrineEncryptBundle.pt.yaml` | FR-FORM-005 |
+| `Util/EncryptUtilInterface.php` | Port: encrypt and decrypt single values outside Doctrine (marker `<ENC>` appended to the ciphertext). | FR-ENC-003 |
+| `Util/EncryptedValue.php` | Helpers for stored values in the "ciphertext + EncryptUtil::ENCRYPTION_MARKER" format. | FR-ENC-003 |
+
 ## Coverage summary
 
 | Category | Files | Mapped |
@@ -59,4 +87,4 @@ Every production artifact under `src/` is listed below (including `src/.gitignor
 | PHP classes | 25 | 25 |
 | YAML config / translations | 3 | 3 |
 | Repository metadata | 1 | 1 |
-| **Total production sources** | **29** | **29** |
+| **Total production sources** | **50** | **50** |

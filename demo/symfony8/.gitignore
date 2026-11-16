@@ -40,3 +40,6 @@
 *.db
 *.sqlite
 *.sqlite3
+
+# pnpm local store (REQ-GITIGNORE-003): never commit it
+/.pnpm-store
