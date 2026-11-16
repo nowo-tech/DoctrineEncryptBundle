@@ -10,7 +10,7 @@
     "to-webp": "node scripts/to-webp.mjs"
   },
   "devDependencies": {
-    "@playwright/test": "~1.63.0",
-    "sharp": "^0.34.4"
+    "@playwright/test": "~1.65.0",
+    "sharp": "^0.35.5"
   }
 }
