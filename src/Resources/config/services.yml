@@ -5,7 +5,7 @@ services:
 
   Nowo\DoctrineEncryptBundle\Command\:
     resource: '../../Command/*'
-    exclude: '../../Command/AbstractCommand.php'
+    exclude: ['../../Command/AbstractCommand.php', '../../Command/ChunkedRun.php']
 
   Nowo\DoctrineEncryptBundle\Command\DoctrineEncryptDatabaseCommand:
     arguments:

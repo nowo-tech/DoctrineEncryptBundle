@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Command;
 
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\ORM\EntityManagerInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
+use Nowo\DoctrineEncryptBundle\Exception\ChunkLockConflictException;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -76,6 +79,9 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
         if (!$def->hasOption('force')) {
             $this->addOption('force', null, InputOption::VALUE_NONE, 'Do not ask for confirmation (use with --no-interaction).');
         }
+        if (!$def->hasOption('lock-timeout')) {
+            $this->addOption('lock-timeout', null, InputOption::VALUE_REQUIRED, 'Seconds a chunk waits for the row locks held by the application before it is retried (0 = the database server setting).', (string) ChunkedRun::DEFAULT_LOCK_TIMEOUT_SECONDS);
+        }
         if (!$def->hasOption('allow-prod')) {
             $this->addOption('allow-prod', null, InputOption::VALUE_NONE, 'Allow mass decrypt when kernel environment is prod (dangerous; prefer restoring from backup).');
         }
@@ -94,6 +100,12 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
         $batchSize = $this->resolveBatchSize($input, $this->defaultBatchSize);
         if ($batchSize === null) {
             $output->writeln('<error>The batchSize argument must be a positive integer.</error>');
+
+            return self::FAILURE;
+        }
+        $lockTimeout = $this->resolveLockTimeout($input);
+        if ($lockTimeout === null) {
+            $output->writeln('<error>The --lock-timeout option must be zero or a positive integer (seconds).</error>');
 
             return self::FAILURE;
         }
@@ -161,12 +173,49 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
 
         $output->writeln('' . PHP_EOL . 'Decrypting all fields with raw SQL (no Doctrine events). This can take several minutes depending on the database size.');
 
-        $conn         = $this->entityManager->getConnection();
-        $platform     = $conn->getDatabasePlatform();
-        $valueCounter = 0;
-        /** @var list<string> $failures One entry per value that could not be decrypted (no value content) */
-        $failures = [];
+        $conn     = $this->entityManager->getConnection();
+        $platform = $conn->getDatabasePlatform();
+        $run      = new ChunkedRun($lockTimeout);
 
+        try {
+            $this->decryptConfigs($configsToProcess, $registry, $defaultConfigName, $conn, $platform, $batchSize, $run, $output);
+        } catch (ChunkLockConflictException $conflict) {
+            $this->reportChunkConflict($output, $conflict);
+            $output->writeln('Values decrypted before the conflict: <info>' . $run->total('decrypted') . '</info>.');
+
+            return self::FAILURE;
+        }
+
+        $valueCounter = $run->total('decrypted');
+        // One entry per value that could not be decrypted (no value content).
+        $failures = $run->records('failures');
+        if ($failures !== []) {
+            $output->writeln('' . PHP_EOL . '<error>' . count($failures) . ' value(s) could not be decrypted and were left unchanged (still encrypted):</error>');
+            foreach (array_slice($failures, 0, self::MAX_REPORTED_FAILURES) as $failure) {
+                $output->writeln('  - ' . $failure);
+            }
+            if (count($failures) > self::MAX_REPORTED_FAILURES) {
+                $output->writeln(sprintf('  ... and %d more', count($failures) - self::MAX_REPORTED_FAILURES));
+            }
+            $output->writeln('Decryption finished with errors. Values decrypted: <info>' . $valueCounter . '</info>, failed: <error>' . count($failures) . '</error>. Check the encryptor / key of the listed values.');
+
+            return self::FAILURE;
+        }
+
+        $output->writeln('' . PHP_EOL . 'Decryption finished. Values decrypted: <info>' . $valueCounter . '</info>.' . PHP_EOL . 'All values are now decrypted (raw SQL, no Doctrine events).');
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * Decrypts the encrypted values of every config, table by table, in locked chunks.
+     *
+     * @param list<string> $configsToProcess
+     *
+     * @throws ChunkLockConflictException When a chunk stays in a lock conflict after all its attempts
+     */
+    private function decryptConfigs(array $configsToProcess, ?EncryptorRegistryInterface $registry, string $defaultConfigName, Connection $conn, AbstractPlatform $platform, int $batchSize, ChunkedRun $run, OutputInterface $output): void
+    {
         foreach ($configsToProcess as $configName) {
             $encryptorForConfig = $registry instanceof EncryptorRegistryInterface ? $registry->get($configName) : $this->defaultEncryptor;
             if (!$encryptorForConfig instanceof EncryptorInterface) {
@@ -190,22 +239,22 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
                 $quotedIdCols  = array_map($platform->quoteIdentifier(...), $idColumns);
                 $quotedEncCols = array_map($platform->quoteIdentifier(...), $encColumns);
 
-                // Select only ID columns + encrypted columns for this config (each config is independent),
-                // in chunks of batchSize rows, one transaction per chunk.
+                // Select only ID columns + encrypted columns for this config (each config is independent), in locked
+                // chunks of batchSize rows, one transaction per chunk: an application write to a row of the chunk
+                // waits for its commit instead of being overwritten (REQ-RUNTIME-003).
                 $selectCols = array_merge($quotedIdCols, $quotedEncCols);
                 $totalCount = $this->countTableRows($conn, $quotedTable);
 
                 $output->writeln(sprintf('  Processing <comment>%s</comment> (%s)', $metaData->name, $table));
                 $progressBar = new ProgressBar($output, $totalCount);
+                $run->onChunkCommitted($progressBar->advance(...));
 
-                $this->processTableInBatches($conn, $quotedTable, $selectCols, $quotedIdCols, $batchSize, function (array $row) use ($idColumns, $tableInfo, $encryptorForConfig, $conn, $platform, $quotedTable, $progressBar, $table, &$valueCounter, &$failures): void {
+                $this->processTableInBatches($conn, $quotedTable, $selectCols, $quotedIdCols, $batchSize, function (array $row) use ($idColumns, $tableInfo, $encryptorForConfig, $conn, $platform, $quotedTable, $table, $run): void {
                     $idValues = [];
                     foreach ($idColumns as $idCol) {
                         $idValues[$idCol] = $this->getRowValue($row, $idCol);
                     }
                     if (in_array(null, $idValues, true)) {
-                        $progressBar->advance(1);
-
                         return;
                     }
                     $updates = [];
@@ -226,14 +275,14 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
                         } catch (Throwable $e) {
                             // Never write the stripped ciphertext back as "plain" (a later encrypt run would
                             // encrypt the ciphertext): keep the stored value, <ENC> marker included, and report it.
-                            $failures[] = sprintf('%s.%s (%s) [%s]', $table, $col, $this->formatIdValues($idValues), $e::class);
+                            $run->record('failures', sprintf('%s.%s (%s) [%s]', $table, $col, $this->formatIdValues($idValues), $e::class));
 
                             continue;
                         }
                         $updates[] = $platform->quoteIdentifier($col) . ' = ?';
                         $params[]  = $plain;
                         $types[]   = ParameterType::STRING;
-                        ++$valueCounter;
+                        $run->add('decrypted');
                     }
                     if ($updates !== []) {
                         $setClause  = implode(', ', $updates);
@@ -246,30 +295,12 @@ final class DoctrineDecryptDatabaseCommand extends AbstractCommand
                         $sqlUpdate = 'UPDATE ' . $quotedTable . ' SET ' . $setClause . ' WHERE ' . implode(' AND ', $whereParts);
                         $conn->executeStatement($sqlUpdate, $params, $types);
                     }
-                    $progressBar->advance(1);
-                });
+                }, $run);
 
                 $progressBar->finish();
                 $output->writeln('');
             }
         }
-
-        if ($failures !== []) {
-            $output->writeln('' . PHP_EOL . '<error>' . count($failures) . ' value(s) could not be decrypted and were left unchanged (still encrypted):</error>');
-            foreach (array_slice($failures, 0, self::MAX_REPORTED_FAILURES) as $failure) {
-                $output->writeln('  - ' . $failure);
-            }
-            if (count($failures) > self::MAX_REPORTED_FAILURES) {
-                $output->writeln(sprintf('  ... and %d more', count($failures) - self::MAX_REPORTED_FAILURES));
-            }
-            $output->writeln('Decryption finished with errors. Values decrypted: <info>' . $valueCounter . '</info>, failed: <error>' . count($failures) . '</error>. Check the encryptor / key of the listed values.');
-
-            return self::FAILURE;
-        }
-
-        $output->writeln('' . PHP_EOL . 'Decryption finished. Values decrypted: <info>' . $valueCounter . '</info>.' . PHP_EOL . 'All values are now decrypted (raw SQL, no Doctrine events).');
-
-        return self::SUCCESS;
     }
 
     /**

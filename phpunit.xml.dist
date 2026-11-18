@@ -14,6 +14,10 @@
             <directory suffix="Test.php">./tests/Functional/EmbeddedRotation</directory>
             <directory suffix="Test.php">./tests/Functional/Worker</directory>
         </testsuite>
+        <!-- Real MySQL / MariaDB / PostgreSQL race tests (REQ-RUNTIME-003): DE_MYSQL_URL, DE_MARIADB_URL, DE_POSTGRES_URL. -->
+        <testsuite name="database">
+            <directory suffix="Test.php">./tests/Database</directory>
+        </testsuite>
     </testsuites>
 
     <source>
