@@ -69,6 +69,26 @@
 
 ## Unreleased
 
+Minor release; no configuration change needed.
+
+```bash
+composer update nowo-tech/doctrine-encrypt-bundle
+```
+
+- New dependency: `nowo-tech/transaction-doctrine` `^1.6` (with `nowo-tech/transaction-contract` `^1.0`). It needs no
+  bundle registration: the database commands use its connection runner directly.
+- `doctrine:encrypt:database` and `doctrine:decrypt:database` now lock each chunk of rows (`SELECT … FOR UPDATE`) and
+  bound the lock wait with `--lock-timeout` (default 10 seconds). On a live application a chunk can wait for an
+  application transaction; a chunk still blocked after 3 attempts stops the command with exit code `1` and
+  `CONFLICT_001` / `CONFLICT_002` in the message. Running the command again resumes it. Scripts that check the exit
+  code need no change; add `--lock-timeout=0` to keep the server's own lock wait.
+- `doctrine:encrypt:rotate-keys` needs maintenance mode (writers and workers stopped): it was documented as optional.
+- Command subclasses: `AbstractCommand::processTableInBatches()` gained an optional last argument (`?ChunkedRun`),
+  throws `InvalidArgumentException` without identifier columns, and may call the row callback twice for a row when a
+  chunk is replayed after a lock conflict. Count through `ChunkedRun::add()` / `record()` instead of local counters.
+  The transaction-doctrine runner is used with the connection only (`forConnection()`): it never touches the host
+  entity manager.
+
 ## To 2.13.0
 
 From **2.12.1**: additive, no action needed.

@@ -70,8 +70,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   records, MySQL AES notes, list filter, CSRF-only deletes) is a FormKit type (profile `demo`). No bundle runtime
   change.
 
+### Added
+
+- `--lock-timeout=SECONDS` option on `doctrine:encrypt:database`, `doctrine:decrypt:database` and
+  `doctrine:encrypt:rotate-keys` (default `10`, `0` = the server setting): how long a chunk waits for row locks
+  (MySQL / MariaDB `innodb_lock_wait_timeout` for the session, restored afterwards; PostgreSQL `SET LOCAL
+  lock_timeout`).
+- `ChunkLockConflictException` (bundle `ExceptionInterface`): a chunk still in a lock conflict after 3 attempts stops
+  the command with exit code `1` and `CONFLICT_001` (nothing changed) or `CONFLICT_002` (earlier chunks committed: run
+  the command again to resume), the REQ-RUNTIME-003 codes.
+- `docs/CONCURRENCY.md`: write paths, controls, conflict codes, host options and residual risks.
+- CI: a required "Databases" job runs the race tests on MySQL 8.4, MariaDB 11.4 and PostgreSQL 16 (DBAL 3 and 4).
+- Dependency `nowo-tech/transaction-doctrine` `^1.6` (and `nowo-tech/transaction-contract`): the chunk transactions
+  run through its runner (savepoint-aware rollback, lock conflicts classified).
+
+### Fixed
+
+- **Lost writes when the database commands ran on a live application.** `doctrine:encrypt:database`,
+  `doctrine:decrypt:database` and `doctrine:encrypt:rotate-keys` read each chunk with a plain `SELECT` outside its
+  transaction and then wrote every row back by id, so an application write to a row between the read and the
+  `UPDATE` was overwritten with the encrypted (or decrypted) old value. Each chunk now re-reads its rows by id with
+  `SELECT … FOR UPDATE` (SQL Server: `WITH (UPDLOCK, ROWLOCK)`; SQLite locks the database file) inside its
+  transaction: an application write either commits before and is seen, or waits for the chunk's commit and lands
+  after it. Tested with two processes on MySQL 8.4, MariaDB 11.4 and PostgreSQL 16. Runtime writes (the listener and
+  the encrypted DBAL types inside the host's own flush) were never affected.
+- The chunks are paged by keyset (identifier greater than the last one) instead of `OFFSET`: rows deleted while a
+  command ran no longer shift the pages, which could skip a row (left unencrypted or not decrypted until the next run).
+- A deadlock, lock wait timeout or serialization failure in a chunk rolls the chunk back and replays it (3 attempts)
+  instead of stopping the command with a raw driver exception; the value counters and the decrypt failure report count
+  only committed chunks.
+
 ### Changed
 
+- `doctrine:encrypt:rotate-keys` and `docs/KEY_ROTATION.md` now require maintenance mode (no writes, workers stopped)
+  for a rotation instead of calling it optional: between the decrypt and re-encrypt steps the data is in plain text,
+  and a process that still holds the old key writes values the new key cannot read. The command prints the warning.
+- `AbstractCommand::processTableInBatches()` takes an optional `ChunkedRun` (lock timeout, attempts, committed
+  counters), needs at least one identifier column, and may call the row callback more than once for a row when a chunk
+  is replayed.
 - Demo `.gitignore` ignores `/.pnpm-store` (REQ-GITIGNORE-003)
 - Dependabot watches the demo Playwright `e2e/` npm manifest (REQ-GH-002)
 - Spec Kit: the 21 `src/` files added since the baseline review are mapped in `code-inventory.md` (REQ-SPECKIT-001 / REQ-SPECKIT-003)

@@ -37,6 +37,8 @@
         "php": ">=8.2 <8.6",
         "doctrine/doctrine-bundle": "^2.13 || ^3.0",
         "doctrine/orm": "^3.7",
+        "nowo-tech/transaction-contract": "^1.0",
+        "nowo-tech/transaction-doctrine": "^1.6",
         "paragonie/halite": "^5.1",
         "paragonie/sodium_compat": "^1.20 || ^2.0",
         "psr/log": "^1.1 || ^2.0 || ^3.0",

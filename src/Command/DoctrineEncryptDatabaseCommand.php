@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Command;
 
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\ParameterType;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\ORM\EntityManagerInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
+use Nowo\DoctrineEncryptBundle\Exception\ChunkLockConflictException;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Util\EncryptedValue;
@@ -68,6 +71,9 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
         if (!$def->hasOption('force')) {
             $this->addOption('force', null, InputOption::VALUE_NONE, 'Do not ask for confirmation (use with --no-interaction).');
         }
+        if (!$def->hasOption('lock-timeout')) {
+            $this->addOption('lock-timeout', null, InputOption::VALUE_REQUIRED, 'Seconds a chunk waits for the row locks held by the application before it is retried (0 = the database server setting).', (string) ChunkedRun::DEFAULT_LOCK_TIMEOUT_SECONDS);
+        }
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -77,6 +83,12 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
         $batchSize = $this->resolveBatchSize($input, $this->defaultBatchSize);
         if ($batchSize === null) {
             $output->writeln('<error>The batchSize argument must be a positive integer.</error>');
+
+            return self::FAILURE;
+        }
+        $lockTimeout = $this->resolveLockTimeout($input);
+        if ($lockTimeout === null) {
+            $output->writeln('<error>The --lock-timeout option must be zero or a positive integer (seconds).</error>');
 
             return self::FAILURE;
         }
@@ -141,11 +153,38 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
 
         $output->writeln('' . PHP_EOL . 'Encrypting all fields with raw SQL (no Doctrine events). This can take several minutes depending on the database size.');
 
-        $conn           = $this->entityManager->getConnection();
-        $platform       = $conn->getDatabasePlatform();
-        $encryptCounter = 0;
-        $skippedMarked  = 0;
+        $conn     = $this->entityManager->getConnection();
+        $platform = $conn->getDatabasePlatform();
+        $run      = new ChunkedRun($lockTimeout);
 
+        try {
+            $this->encryptConfigs($configsToProcess, $registry, $defaultConfigName, $conn, $platform, $batchSize, $run, $output);
+        } catch (ChunkLockConflictException $conflict) {
+            $this->reportChunkConflict($output, $conflict);
+            $output->writeln('Values encrypted before the conflict: <info>' . $run->total('encrypted') . '</info>.');
+
+            return self::FAILURE;
+        }
+
+        $encryptCounter = $run->total('encrypted');
+        $skippedMarked  = $run->total('skipped_marked');
+        $output->writeln('Encryption finished. Values encrypted: <info>' . $encryptCounter . ' values</info>.' . PHP_EOL . 'All values are now encrypted (raw SQL, no Doctrine events).');
+        if ($skippedMarked > 0) {
+            $output->writeln(sprintf('<comment>%d value(s) end with %s but do not decrypt with their config (wrong key, or plaintext ending with the marker). They were left unchanged: check them.</comment>', $skippedMarked, self::ENCRYPTION_MARKER));
+        }
+
+        return self::SUCCESS;
+    }
+
+    /**
+     * Encrypts the plain values of every config, table by table, in locked chunks.
+     *
+     * @param list<string> $configsToProcess
+     *
+     * @throws ChunkLockConflictException When a chunk stays in a lock conflict after all its attempts
+     */
+    private function encryptConfigs(array $configsToProcess, ?EncryptorRegistryInterface $registry, string $defaultConfigName, Connection $conn, AbstractPlatform $platform, int $batchSize, ChunkedRun $run, OutputInterface $output): void
+    {
         foreach ($configsToProcess as $configName) {
             $encryptorForConfig = $registry instanceof EncryptorRegistryInterface ? $registry->get($configName) : $this->defaultEncryptor;
             if (!$encryptorForConfig instanceof EncryptorInterface) {
@@ -169,21 +208,21 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
                 $quotedIdCols  = array_map($platform->quoteIdentifier(...), $idColumns);
                 $quotedEncCols = array_map($platform->quoteIdentifier(...), $encColumns);
 
-                // Read in chunks of batchSize rows (never the whole table), one transaction per chunk.
+                // Locked chunks of batchSize rows (never the whole table), one transaction per chunk: an application
+                // write to a row of the chunk waits for its commit instead of being overwritten (REQ-RUNTIME-003).
                 $selectCols = array_merge($quotedIdCols, $quotedEncCols);
                 $totalCount = $this->countTableRows($conn, $quotedTable);
 
                 $output->writeln(sprintf('  Processing <comment>%s</comment> (%s)', $metaData->name, $table));
                 $progressBar = new ProgressBar($output, $totalCount);
+                $run->onChunkCommitted($progressBar->advance(...));
 
-                $this->processTableInBatches($conn, $quotedTable, $selectCols, $quotedIdCols, $batchSize, function (array $row) use ($idColumns, $tableInfo, $encryptorForConfig, $conn, $platform, $quotedTable, $progressBar, &$encryptCounter, &$skippedMarked): void {
+                $this->processTableInBatches($conn, $quotedTable, $selectCols, $quotedIdCols, $batchSize, function (array $row) use ($idColumns, $tableInfo, $encryptorForConfig, $conn, $platform, $quotedTable, $run): void {
                     $idValues = [];
                     foreach ($idColumns as $idCol) {
                         $idValues[$idCol] = $this->getRowValue($row, $idCol);
                     }
                     if (in_array(null, $idValues, true)) {
-                        $progressBar->advance(1);
-
                         return;
                     }
                     $updates = [];
@@ -199,7 +238,7 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
                             // Already encrypted, or marked but not decryptable with this config (wrong key, or a
                             // plaintext that ends with the marker): never encrypt twice, report it instead.
                             if (!EncryptedValue::isDecryptable((string) $value, $encryptorForConfig)) {
-                                ++$skippedMarked;
+                                $run->add('skipped_marked');
                             }
                             continue;
                         }
@@ -207,7 +246,7 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
                         $updates[] = $platform->quoteIdentifier($col) . ' = ?';
                         $params[]  = $encrypted;
                         $types[]   = ParameterType::STRING;
-                        ++$encryptCounter;
+                        $run->add('encrypted');
                     }
                     if ($updates !== []) {
                         $setClause  = implode(', ', $updates);
@@ -220,19 +259,11 @@ final class DoctrineEncryptDatabaseCommand extends AbstractCommand
                         $sqlUpdate = 'UPDATE ' . $quotedTable . ' SET ' . $setClause . ' WHERE ' . implode(' AND ', $whereParts);
                         $conn->executeStatement($sqlUpdate, $params, $types);
                     }
-                    $progressBar->advance(1);
-                });
+                }, $run);
 
                 $progressBar->finish();
                 $output->writeln('');
             }
         }
-
-        $output->writeln('Encryption finished. Values encrypted: <info>' . $encryptCounter . ' values</info>.' . PHP_EOL . 'All values are now encrypted (raw SQL, no Doctrine events).');
-        if ($skippedMarked > 0) {
-            $output->writeln(sprintf('<comment>%d value(s) end with %s but do not decrypt with their config (wrong key, or plaintext ending with the marker). They were left unchanged: check them.</comment>', $skippedMarked, self::ENCRYPTION_MARKER));
-        }
-
-        return self::SUCCESS;
     }
 }

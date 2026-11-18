@@ -63,6 +63,8 @@ class DoctrineEncryptDatabaseCommandTest extends TestCase
     {
         $result = $this->createMock(Result::class);
         $result->method('fetchAllAssociative')->willReturn($rows);
+        // Chunk identifiers (keyset read), then the locked rows (fetchAllAssociative).
+        $result->method('fetchAllNumeric')->willReturn(array_map(static fn (array $row): array => [$row['id'] ?? null], $rows));
         $platform = $this->createMock(AbstractPlatform::class);
         $platform->method('quoteIdentifier')->willReturnCallback(static fn (string $s): string => '"' . $s . '"');
         $conn = $this->createMock(Connection::class);

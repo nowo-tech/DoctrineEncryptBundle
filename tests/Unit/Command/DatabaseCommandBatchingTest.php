@@ -57,7 +57,8 @@ final class DatabaseCommandBatchingTest extends TestCase
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $this->assertStringContainsString('Values encrypted: 7 values', $tester->getDisplay());
         $this->assertSame(3, $this->countLimitedSelects(3), 'ceil(7 / 3) = 3 chunked SELECTs with LIMIT 3');
-        $this->assertSame(0, $this->countQueries(static fn (string $sql): bool => str_starts_with($sql, 'SELECT') && str_contains($sql, 'FROM "user"') && !str_contains($sql, 'LIMIT') && !str_contains($sql, 'COUNT(*)')), 'The whole table must never be selected without LIMIT');
+        $this->assertSame(0, $this->countQueries(static fn (string $sql): bool => str_starts_with($sql, 'SELECT') && str_contains($sql, 'FROM "user"') && !str_contains($sql, 'LIMIT') && !str_contains($sql, 'COUNT(*)') && !str_contains($sql, ' WHERE "id" IN (')), 'The whole table must never be selected without LIMIT (the locked re-read is by identifier)');
+        $this->assertSame(3, $this->countQueries(static fn (string $sql): bool => str_starts_with($sql, 'SELECT "id", "name"') && str_contains($sql, 'WHERE "id" IN (')), 'Each chunk re-reads its rows by identifier inside its transaction');
         $this->assertSame(3, $this->countMessages('Committing transaction'));
         foreach ($this->names() as $i => $name) {
             $this->assertSame('enc:plain' . $i . self::MARKER, $name);

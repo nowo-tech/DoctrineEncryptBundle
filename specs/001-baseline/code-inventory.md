@@ -2,7 +2,7 @@
 
 **Baseline spec**: [`spec.md`](spec.md)  
 **Package**: `nowo-tech/doctrine-encrypt-bundle`  
-**Last audited**: 2026-11-16 (sweep: 2026-10-13 baseline + later sources)
+**Last audited**: 2026-11-18 (sweep: 2026-10-13 baseline + later sources)
 
 Every production artifact under `src/` is listed below (including `src/.gitignore`, which excludes generated paths from VCS).
 
@@ -30,6 +30,7 @@ Every production artifact under `src/` is listed below (including `src/.gitignor
 | `EventListener/ClosedEntityManagerRecoveryListener.php` | Resets a closed entity manager between worker requests (FrankenPHP) | FR-ORM-001 |
 | `EventListener/SecretKeyPermissionsListener.php` | Key permission hardening (console + throttled HTTP) | FR-SEC-001 |
 | `Command/AbstractCommand.php` | CLI base | FR-CLI-001 |
+| `Command/ChunkedRun.php` | State of one database-command run: lock timeout, attempts, committed counters of the locked chunks ([CONCURRENCY](../../docs/CONCURRENCY.md)) | FR-CLI-002 |
 | `Command/DoctrineEncryptDatabaseCommand.php` | Bulk encrypt CLI | FR-CLI-002 |
 | `Command/DoctrineDecryptDatabaseCommand.php` | Bulk decrypt CLI | FR-CLI-002 |
 | `Command/DoctrineEncryptStatusCommand.php` | Encryption status CLI | FR-CLI-002 |
@@ -67,6 +68,7 @@ These 21 `src/` files were added by releases after the last review. Each row map
 | `Encryptors/EncryptorRegistryInterface.php` | Port: registry of named encryptors (one per `encryptors` config alias, e.g. personal_data, financial_data). | FR-ENC-002 |
 | `EventListener/EncryptedMappingValidator.php` | Checks the encryption selection against Doctrine metadata when a class's metadata is loaded (first use, or cache:warm... | FR-ORM-001 |
 | `Exception/DecryptionFailedException.php` | A value carries the encryption marker but cannot be decrypted (wrong or rotated key, corrupted or foreign ciphertext). | FR-EXCEPTION-001 |
+| `Exception/ChunkLockConflictException.php` | A database-command chunk stayed in a lock conflict after its attempts (CONFLICT_001 / CONFLICT_002). | FR-EXCEPTION-001, FR-CLI-002 |
 | `Exception/ExceptionInterface.php` | Marker interface for the exceptions thrown by this bundle (catch it to handle every bundle failure at once). | FR-EXCEPTION-001 |
 | `Exception/MissingEncryptionKeyException.php` | The key file of a file-based profile does not exist and the bundle is not allowed to generate one (`generate_missing_... | FR-EXCEPTION-001 |
 | `Exception/ValueNotEncryptedException.php` | A value that must be ciphertext does not carry the encryption marker (or has an empty payload). | FR-EXCEPTION-001 |

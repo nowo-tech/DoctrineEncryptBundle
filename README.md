@@ -218,6 +218,7 @@ Run tests and QA with Docker: `make up && make install && make test` (or `make t
 - [Custom encryptor](docs/custom_encryptor.md)
 - [MySQL AES_ENCRYPT / AES_DECRYPT (MysqlAes)](docs/MYSQL_AES.md)
 - [Performance (encryptors, LIKE, scalability)](docs/PERFORMANCE.md)
+- [Concurrency (operator commands, row locks, conflict codes)](docs/CONCURRENCY.md)
 - [Coverage policy](docs/COVERAGE.md)
 - [PHPStan level and baseline](docs/PHPSTAN.md)
 

@@ -51,7 +51,7 @@ The bundle does not support “in-place” re-encryption with a new key; decrypt
    - Single config (e.g. `default`): e.g. `.Halite.default.key` or `.Defuse.default.key` in that config’s `secret_directory_path`.  
    - Multiple configs: one file per config, e.g. `.Halite.personal_data.key`, `.Defuse.financial_data.key`.
 
-3. **Optional:** Put the application in maintenance mode or read-only so no new encrypted data is written during the rotation.
+3. **Required:** Put the application in maintenance mode or read-only, and stop its long-running processes (FrankenPHP workers, Messenger consumers), so nothing is written during the rotation. The commands lock each chunk of rows, so a concurrent write is never overwritten, but a process that still holds the old key writes values the new key cannot read, and between steps 2 and 4 the data is in plain text. See [Concurrency](CONCURRENCY.md).
 
 ## Step 2: Decrypt the database
 

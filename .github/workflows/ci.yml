@@ -112,6 +112,71 @@ jobs:
           fi
           echo "✅ Coverage generated"
 
+  databases:
+    # REQ-RUNTIME-003: two-connection race tests of the database commands (row locks, replay, CONFLICT_001/002).
+    name: Databases (MySQL 8.4, MariaDB 11.4, PostgreSQL 16) - ${{ matrix.deps }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - deps: 'DBAL 4'
+            dbal: '^4.0'
+          - deps: 'DBAL 3'
+            dbal: '^3.8.2'
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: dencrypt
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot" --health-interval=5s --health-timeout=5s --health-retries=30
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: dencrypt
+        ports: ['3307:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=5s --health-timeout=5s --health-retries=30
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: root
+          POSTGRES_DB: dencrypt
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready -U postgres" --health-interval=5s --health-timeout=5s --health-retries=30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: json, sodium, pdo_mysql, pdo_pgsql, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Pin DBAL major
+        run: composer require "doctrine/dbal:${{ matrix.dbal }}" --no-update --no-interaction
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-progress --no-interaction --with-all-dependencies
+
+      - name: Real-database race tests (none may be skipped)
+        env:
+          DE_MYSQL_URL: mysql://root:root@127.0.0.1:3306/dencrypt
+          DE_MARIADB_URL: mysql://root:root@127.0.0.1:3307/dencrypt
+          DE_POSTGRES_URL: pgsql://postgres:root@127.0.0.1:5432/dencrypt
+        run: vendor/bin/phpunit --testsuite database --no-coverage --fail-on-skipped
+
   phpstan:
     name: PHPStan
     runs-on: ubuntu-latest

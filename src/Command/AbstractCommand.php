@@ -4,31 +4,46 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Command;
 
+use Closure;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ParameterType;
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
+use Doctrine\DBAL\Platforms\SQLServerPlatform;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use InvalidArgumentException;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Doctrine\Types\AbstractEncryptedType;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
+use Nowo\DoctrineEncryptBundle\Exception\ChunkLockConflictException;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap;
 use Nowo\DoctrineEncryptBundle\Mapping\ListenerFieldResolver;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
+use Nowo\TransactionContract\TransientStorageFailure;
+use Nowo\TransactionDoctrine\DoctrineTransactionRunner;
 use ReflectionClass;
 use ReflectionProperty;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Contracts\Service\Attribute\Required;
 use Throwable;
 
 use function array_column;
+use function array_fill;
 use function array_key_exists;
+use function array_values;
 use function count;
 use function ctype_digit;
+use function implode;
 use function in_array;
 use function is_int;
+use function is_numeric;
 use function is_string;
 use function sprintf;
 
@@ -456,44 +471,248 @@ abstract class AbstractCommand extends Command
     }
 
     /**
-     * Processes a table in chunks of $batchSize rows, ordered by the identifier columns (offset pagination),
-     * so the whole table is never loaded in memory. Each chunk runs inside its own transaction: it is
-     * committed once $processRow has been called for every row of the chunk, and rolled back on error.
+     * Reads the --lock-timeout option (seconds a chunk waits for a row lock; 0 = the server's own setting).
      *
-     * Identifier columns are never modified by the callers, so the ordering stays stable across chunks.
+     * @return int|null Timeout in seconds, or null when the option is not a non-negative integer
+     */
+    protected function resolveLockTimeout(InputInterface $input): ?int
+    {
+        if (!$input->hasOption('lock-timeout')) {
+            return ChunkedRun::DEFAULT_LOCK_TIMEOUT_SECONDS;
+        }
+        $raw = $input->getOption('lock-timeout') ?? ChunkedRun::DEFAULT_LOCK_TIMEOUT_SECONDS;
+        if (is_string($raw) && ctype_digit($raw)) {
+            $raw = (int) $raw;
+        }
+
+        return is_int($raw) && $raw >= 0 ? $raw : null;
+    }
+
+    /**
+     * Writes the answer to a chunk that could not be locked: what was committed and what to do next.
+     */
+    protected function reportChunkConflict(OutputInterface $output, ChunkLockConflictException $conflict): void
+    {
+        $output->writeln('');
+        $output->writeln('<error>' . $conflict->getMessage() . '</error>');
+        if ($conflict->conflictCode->retrySafe()) {
+            $output->writeln('Nothing was changed. Run the command again when the application writes less (or in maintenance mode).');
+
+            return;
+        }
+        $output->writeln('Earlier chunks are committed and this chunk was rolled back. Run the command again to resume: values already processed are skipped.');
+    }
+
+    /**
+     * Processes a table in chunks of $batchSize rows, so the whole table is never loaded in memory, one transaction
+     * per chunk (REQ-RUNTIME-003 rules 1, 4 and 9):
+     *
+     * 1. the identifiers of the next chunk are read without locks, by keyset (identifier columns greater than the last
+     *    identifier of the previous chunk, in identifier order), so rows inserted or deleted meanwhile never shift the
+     *    chunks;
+     * 2. inside the chunk transaction the rows are read again by identifier with SELECT ... FOR UPDATE (in identifier
+     *    order; WITH (UPDLOCK, ROWLOCK) on SQL Server; SQLite locks the whole database file), and $processRow sees the
+     *    current, locked values: an application write either commits before the read (and is seen) or waits for the
+     *    chunk's commit (and lands after it). No application write is overwritten;
+     * 3. the lock wait is bounded by the run's lock timeout (MySQL / MariaDB innodb_lock_wait_timeout for the session,
+     *    restored afterwards; PostgreSQL SET LOCAL lock_timeout);
+     * 4. a lock conflict (deadlock, lock wait timeout, serialization failure) rolls the chunk back and replays it, up to
+     *    the run's attempts, then throws ChunkLockConflictException (CONFLICT_001 / CONFLICT_002). Any other failure
+     *    rolls the chunk back and is rethrown unchanged. Earlier chunks stay committed.
+     *
+     * $processRow may therefore run more than once for a row: it must count through $run (ChunkedRun::add() / record()).
+     *
+     * Identifier columns are never modified by the callers, so the keyset stays stable across chunks.
      *
      * @param array<int, string> $selectCols Quoted columns to select
-     * @param array<int, string> $quotedIdCols Quoted identifier columns (ORDER BY)
-     * @param callable(array<string, mixed>): void $processRow Called for each row
+     * @param array<int, string> $quotedIdCols Quoted identifier columns (keyset, ORDER BY, row lookup)
+     * @param callable(array<string, mixed>): void $processRow Called for each locked row
+     * @param ChunkedRun|null $run Lock timeout, attempts and committed counters of the run (default: a new run)
+     *
+     * @throws ChunkLockConflictException When a chunk stays in a lock conflict after all its attempts
+     * @throws InvalidArgumentException When no identifier column is given
      */
-    protected function processTableInBatches(Connection $conn, string $quotedTable, array $selectCols, array $quotedIdCols, int $batchSize, callable $processRow): void
+    protected function processTableInBatches(Connection $conn, string $quotedTable, array $selectCols, array $quotedIdCols, int $batchSize, callable $processRow, ?ChunkedRun $run = null): void
     {
-        $sqlSelect = 'SELECT ' . implode(', ', $selectCols) . ' FROM ' . $quotedTable;
-        if ($quotedIdCols !== []) {
-            $sqlSelect .= ' ORDER BY ' . implode(', ', $quotedIdCols);
+        if ($quotedIdCols === []) {
+            throw new InvalidArgumentException('Chunked processing needs the identifier columns of the table.');
         }
+        $run ??= new ChunkedRun();
         $platform = $conn->getDatabasePlatform();
-        $offset   = 0;
+        $idList   = implode(', ', $quotedIdCols);
+        $after    = null;
+        $restore  = $this->applySessionLockTimeout($conn, $run->lockTimeoutSeconds);
 
-        do {
-            $rows = $conn->executeQuery($platform->modifyLimitQuery($sqlSelect, $batchSize, $offset))->fetchAllAssociative();
-            if ($rows === []) {
-                break;
-            }
-
-            $conn->beginTransaction();
-            try {
-                foreach ($rows as $row) {
-                    $processRow($row);
+        try {
+            do {
+                [$where, $params] = $this->keysetCondition($quotedIdCols, $after);
+                $sqlIds           = 'SELECT ' . $idList . ' FROM ' . $quotedTable . $where . ' ORDER BY ' . $idList;
+                $ids              = $conn->executeQuery($platform->modifyLimitQuery($sqlIds, $batchSize), $params, array_fill(0, count($params), ParameterType::STRING))->fetchAllNumeric();
+                if ($ids === []) {
+                    break;
                 }
-                $conn->commit();
+
+                $this->processChunk($conn, $quotedTable, $selectCols, $quotedIdCols, $ids, $processRow, $run);
+                $after = $ids[count($ids) - 1];
+            } while (count($ids) >= $batchSize);
+        } finally {
+            $restore();
+        }
+    }
+
+    /**
+     * Runs one chunk in its own transaction (transaction-doctrine runner: savepoint-aware rollback to the entry level,
+     * transient failures classified), replaying it after a lock conflict.
+     *
+     * @param array<int, string> $selectCols
+     * @param array<int, string> $quotedIdCols
+     * @param non-empty-list<list<mixed>> $ids Identifier values of the chunk's rows, in identifier order
+     * @param callable(array<string, mixed>): void $processRow
+     */
+    private function processChunk(Connection $conn, string $quotedTable, array $selectCols, array $quotedIdCols, array $ids, callable $processRow, ChunkedRun $run): void
+    {
+        $runner         = DoctrineTransactionRunner::forConnection($conn, null);
+        [$sql, $params] = $this->lockedChunkSelect($conn, $quotedTable, $selectCols, $quotedIdCols, $ids);
+        $types          = array_fill(0, count($params), ParameterType::STRING);
+
+        for ($attempt = 1;; ++$attempt) {
+            $run->beginAttempt();
+            try {
+                $rowCount = $runner->run(function () use ($conn, $sql, $params, $types, $processRow, $run): int {
+                    $this->applyTransactionLockTimeout($conn, $run->lockTimeoutSeconds);
+                    $rows = $conn->executeQuery($sql, $params, $types)->fetchAllAssociative();
+                    foreach ($rows as $row) {
+                        $processRow($row);
+                    }
+
+                    return count($rows);
+                });
+            } catch (TransientStorageFailure $failure) {
+                $run->beginAttempt();
+                if ($attempt >= $run->maxAttempts) {
+                    throw ChunkLockConflictException::afterAttempts($quotedTable, $attempt, $run->committedChunks() > 0, $failure);
+                }
+                $run->backoff($attempt);
+
+                continue;
             } catch (Throwable $e) {
-                $conn->rollBack();
+                $run->beginAttempt();
 
                 throw $e;
             }
 
-            $offset += $batchSize;
-        } while (count($rows) >= $batchSize);
+            $run->commitAttempt($rowCount);
+
+            return;
+        }
+    }
+
+    /**
+     * The keyset condition "identifier after $after" (row-value comparison expanded, so every platform runs it):
+     * (a > ?) OR (a = ? AND b > ?) ...
+     *
+     * @param array<int, string> $quotedIdCols
+     * @param list<mixed>|null $after Identifier values of the last row of the previous chunk (null = first chunk)
+     *
+     * @return array{string, list<mixed>} The " WHERE ..." clause (empty for the first chunk) and its parameters
+     */
+    private function keysetCondition(array $quotedIdCols, ?array $after): array
+    {
+        if ($after === null) {
+            return ['', []];
+        }
+        $quotedIdCols = array_values($quotedIdCols);
+        $disjuncts    = [];
+        $params       = [];
+        foreach ($quotedIdCols as $i => $column) {
+            $parts = [];
+            for ($j = 0; $j < $i; ++$j) {
+                $parts[]  = $quotedIdCols[$j] . ' = ?';
+                $params[] = $after[$j] ?? null;
+            }
+            $parts[]     = $column . ' > ?';
+            $params[]    = $after[$i] ?? null;
+            $disjuncts[] = '(' . implode(' AND ', $parts) . ')';
+        }
+
+        return [' WHERE ' . implode(' OR ', $disjuncts), $params];
+    }
+
+    /**
+     * SELECT of the chunk's rows by identifier, in identifier order, locked for update.
+     *
+     * @param array<int, string> $selectCols
+     * @param array<int, string> $quotedIdCols
+     * @param non-empty-list<list<mixed>> $ids
+     *
+     * @return array{string, list<mixed>}
+     */
+    private function lockedChunkSelect(Connection $conn, string $quotedTable, array $selectCols, array $quotedIdCols, array $ids): array
+    {
+        $platform     = $conn->getDatabasePlatform();
+        $quotedIdCols = array_values($quotedIdCols);
+        $params       = [];
+        if (count($quotedIdCols) === 1) {
+            foreach ($ids as $id) {
+                $params[] = $id[0] ?? null;
+            }
+            $where = $quotedIdCols[0] . ' IN (' . implode(', ', array_fill(0, count($ids), '?')) . ')';
+        } else {
+            $disjuncts = [];
+            foreach ($ids as $id) {
+                $parts = [];
+                foreach ($quotedIdCols as $i => $column) {
+                    $parts[]  = $column . ' = ?';
+                    $params[] = $id[$i] ?? null;
+                }
+                $disjuncts[] = '(' . implode(' AND ', $parts) . ')';
+            }
+            $where = implode(' OR ', $disjuncts);
+        }
+
+        $from = $quotedTable;
+        $lock = ' FOR UPDATE';
+        if ($platform instanceof SQLServerPlatform) {
+            $from .= ' WITH (UPDLOCK, ROWLOCK)';
+            $lock = '';
+        } elseif ($platform instanceof SQLitePlatform) {
+            // SQLite has no row locks: a write transaction locks the database file, and a concurrent writer gets
+            // SQLITE_BUSY (a lock wait timeout) instead of overwriting the chunk.
+            $lock = '';
+        }
+
+        return ['SELECT ' . implode(', ', $selectCols) . ' FROM ' . $from . ' WHERE ' . $where . ' ORDER BY ' . implode(', ', $quotedIdCols) . $lock, $params];
+    }
+
+    /**
+     * MySQL / MariaDB: sets innodb_lock_wait_timeout for the session and returns the callback that restores it.
+     *
+     * @return Closure(): void
+     */
+    private function applySessionLockTimeout(Connection $conn, int $seconds): Closure
+    {
+        if ($seconds === 0 || !$conn->getDatabasePlatform() instanceof AbstractMySQLPlatform) {
+            return static function (): void {
+            };
+        }
+
+        $previous = $conn->fetchOne('SELECT @@SESSION.innodb_lock_wait_timeout');
+        $conn->executeStatement('SET SESSION innodb_lock_wait_timeout = ' . $seconds);
+
+        return static function () use ($conn, $previous): void {
+            if (is_numeric($previous) && $conn->isConnected()) {
+                $conn->executeStatement('SET SESSION innodb_lock_wait_timeout = ' . (int) $previous);
+            }
+        };
+    }
+
+    /**
+     * PostgreSQL: SET LOCAL lock_timeout for the current chunk transaction.
+     */
+    private function applyTransactionLockTimeout(Connection $conn, int $seconds): void
+    {
+        if ($seconds > 0 && $conn->getDatabasePlatform() instanceof PostgreSQLPlatform) {
+            $conn->executeStatement("SET LOCAL lock_timeout = '" . $seconds . "s'");
+        }
     }
 }

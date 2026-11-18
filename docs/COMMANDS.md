@@ -53,6 +53,7 @@ Optional arguments:
 Options:
 
 - **`--force`** — Do not ask for confirmation (useful with `--no-interaction` or when called from scripts).
+- **`--lock-timeout=SECONDS`** — Seconds a chunk waits for the row locks held by the application before the chunk is retried (default `10`; `0` keeps the database server setting). Each chunk locks its rows (`SELECT … FOR UPDATE`), so an application write to one of them waits for the chunk's commit instead of being overwritten. A chunk still in a lock conflict after 3 attempts stops the command with exit code `1` and `CONFLICT_001` (nothing changed) or `CONFLICT_002` (earlier chunks committed: run the command again to resume). See [Concurrency](CONCURRENCY.md).
 
 Examples:
 
@@ -80,6 +81,7 @@ Values that cannot be decrypted (wrong key, corrupted data) are **left unchanged
 Options:
 
 - **`--force`** — Do not ask for confirmation (useful with `--no-interaction` or when called from scripts).
+- **`--lock-timeout=SECONDS`** — Seconds a chunk waits for the row locks held by the application before the chunk is retried (default `10`; `0` keeps the database server setting). Each chunk locks its rows (`SELECT … FOR UPDATE`), so an application write to one of them waits for the chunk's commit instead of being overwritten. A chunk still in a lock conflict after 3 attempts stops the command with exit code `1` and `CONFLICT_001` (nothing changed) or `CONFLICT_002` (earlier chunks committed: run the command again to resume). See [Concurrency](CONCURRENCY.md).
 
 Examples:
 
@@ -123,6 +125,9 @@ php bin/console doctrine:encrypt:rotate-keys --backup --backup-db-cmd=app:backup
   - **MySQL / PostgreSQL:** use **`--backup-db-cmd=your:command`** to run a Symfony command that dumps the DB (e.g. a custom `app:backup-db` that runs `mysqldump` or `pg_dump`). Without it, the command only backs up key files and reminds you to back up the DB manually.
 - **`--backup-db-cmd=COMMAND`** — Symfony command name to run for database backup (only used when `--backup` is set). Your command should dump the database to a file (e.g. under `var/`).
 - **`--no-interaction`** — Do not ask for confirmation; run all steps (backup if `--backup`, then decrypt, change keys, re-encrypt).
+- **`--lock-timeout=SECONDS`** — Passed to the decrypt and re-encrypt steps (see above).
+
+**Maintenance mode is required for a rotation.** Between the decrypt and re-encrypt steps the data is in plain text, and every running process (PHP-FPM, FrankenPHP workers, Messenger consumers) still holds the old key: a value it writes meanwhile is encrypted with the old key and cannot be read with the new one (the re-encrypt step leaves it unchanged and reports it). Stop the writers before step 1 and restart them after the last step. See [Concurrency](CONCURRENCY.md).
 
 Inside the backup directory you get: `database.sqlite.gz` (for SQLite, gzip-compressed) and a `keys/` subdirectory with the key files (e.g. `keys/personal_data_.Halite.personal_data.key`).
 

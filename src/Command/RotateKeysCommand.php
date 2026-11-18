@@ -57,6 +57,9 @@ final class RotateKeysCommand extends AbstractCommand
         if (!$def->hasOption('backup')) {
             $this->addOption('backup', null, InputOption::VALUE_NONE, 'Back up database and current key files to a timestamped directory before rotating.');
         }
+        if (!$def->hasOption('lock-timeout')) {
+            $this->addOption('lock-timeout', null, InputOption::VALUE_REQUIRED, 'Seconds a chunk of the decrypt / re-encrypt steps waits for row locks before it is retried (0 = the database server setting).', (string) ChunkedRun::DEFAULT_LOCK_TIMEOUT_SECONDS);
+        }
         if (!$def->hasOption('backup-db-cmd')) {
             $this->addOption('backup-db-cmd', null, InputOption::VALUE_REQUIRED, 'Symfony command to run for DB backup (e.g. app:backup-db). Only used when --backup is set. For SQLite the DB file is copied automatically.');
         }
@@ -69,6 +72,14 @@ final class RotateKeysCommand extends AbstractCommand
         $backupDbCmd   = $input->getOption('backup-db-cmd');
         $projectDir    = $this->kernel->getProjectDir();
 
+        $lockSeconds = $this->resolveLockTimeout($input);
+        if ($lockSeconds === null) {
+            $output->writeln('<error>The --lock-timeout option must be zero or a positive integer (seconds).</error>');
+
+            return self::FAILURE;
+        }
+        $lockTimeout = (string) $lockSeconds;
+
         $resolved    = $this->resolveKeyPaths($projectDir);
         $configNames = $this->encryptorRegistry?->getConfigNames() ?? [];
         $configNames = array_values(array_filter($configNames, static fn (string $n): bool => $n !== 'default' || count($configNames) === 1));
@@ -80,6 +91,7 @@ final class RotateKeysCommand extends AbstractCommand
         }
 
         $output->writeln('<info>Key rotation has 4 steps. You will be asked to confirm before each step so you can verify the result.</info>');
+        $output->writeln('<comment>Put the application in maintenance mode (no writes, workers stopped) before rotating: between the decrypt and re-encrypt steps the data is in plain text, and a running process still holds the old key, so a value it writes meanwhile is encrypted with that key and cannot be read with the new one. See docs/CONCURRENCY.md.</comment>');
         $output->writeln('');
         if ($doBackup) {
             $output->writeln('  Step 1: Back up database and key file(s).');
@@ -113,7 +125,7 @@ final class RotateKeysCommand extends AbstractCommand
             return self::SUCCESS;
         }
         $output->writeln('<info>Decrypting database (decrypt only, no re-encryption)...</info>');
-        $exitCode = $this->runCommand($input, $output, 'doctrine:decrypt:database', ['--no-interaction' => true, '--force' => true]);
+        $exitCode = $this->runCommand($input, $output, 'doctrine:decrypt:database', ['--no-interaction' => true, '--force' => true, '--lock-timeout' => $lockTimeout]);
         if ($exitCode !== self::SUCCESS) {
             $output->writeln('<error>Decrypt failed. Aborting.</error>');
 
@@ -189,7 +201,7 @@ final class RotateKeysCommand extends AbstractCommand
 
         // Step 4: Re-encrypt only
         $output->writeln('<info>Re-encrypting database (encrypt only, with the new keys)...</info>');
-        $exitCode = $this->runCommand($input, $output, 'doctrine:encrypt:database', ['--no-interaction' => true, '--force' => true]);
+        $exitCode = $this->runCommand($input, $output, 'doctrine:encrypt:database', ['--no-interaction' => true, '--force' => true, '--lock-timeout' => $lockTimeout]);
         if ($exitCode !== self::SUCCESS) {
             $output->writeln('<error>Re-encrypt failed. Restore key backup and run doctrine:decrypt:database if needed.</error>');
 
