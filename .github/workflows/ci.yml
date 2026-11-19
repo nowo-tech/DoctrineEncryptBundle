@@ -265,6 +265,44 @@ jobs:
       - name: Check code style
         run: composer cs-check
 
+  # Dependency floor: the code must work with the LOWEST nowo-tech/transaction-* versions composer.json allows (a host
+  # can run `composer update` for this bundle without updating them), and the demo lock must install what the bundle
+  # requires (the demo installs from its lock, so a requirement added later is never installed and the demo fails with
+  # "class not found").
+  deps-floor:
+    name: Dependency floor (nowo-tech/transaction-* lowest, demo lock)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Demo lock satisfies the bundle's nowo-tech requirements
+        run: python3 .scripts/check-demo-lock.py . --only 'nowo-tech/*'
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: |
+          composer config platform.php 8.2.0
+          composer update --prefer-dist --no-progress --no-interaction
+
+      - name: Downgrade nowo-tech/transaction-* to the lowest allowed versions
+        run: |
+          composer update 'nowo-tech/transaction-*' --prefer-lowest --prefer-dist --no-progress --no-interaction
+          composer show 'nowo-tech/transaction-*'
+
+      - name: PHPStan at the floor
+        run: composer phpstan
+
+      - name: Test suites at the floor (no databases)
+        timeout-minutes: 10
+        run: vendor/bin/phpunit --no-coverage --testsuite unit,functional
+
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
