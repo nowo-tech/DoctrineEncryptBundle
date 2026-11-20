@@ -36,7 +36,11 @@ abstract class AbstractBasicQueryTestCase extends AbstractFunctionalTestCase
         $this->entityManager->persist($user);
         $this->entityManager->flush();
         $deltaAfterFirstFlush = $this->getCurrentQueryCount() - $baseCount;
-        $this->assertGreaterThanOrEqual(2, $deltaAfterFirstFlush, 'At least begin + insert (or + commit)');
+        // The INSERT itself is the only statement every DBAL version logs here: the flush's own transaction is nested in
+        // ours, and whether a nested transaction logs a statement (savepoint) differs between DBAL 3 and 4.
+        $this->assertGreaterThanOrEqual(1, $deltaAfterFirstFlush, 'At least the insert');
+        $this->assertNotNull($this->getLatestInsertQuery());
+        $this->assertNull($this->getLatestUpdateQuery());
 
         $afterFirstFlush = $this->getCurrentQueryCount();
 
@@ -58,6 +62,7 @@ abstract class AbstractBasicQueryTestCase extends AbstractFunctionalTestCase
         $user->setSecret('top secret information change');
         $this->entityManager->flush();
         $this->assertGreaterThanOrEqual(1, $this->getCurrentQueryCount() - $afterFirstFlush);
+        $this->assertNotNull($this->getLatestUpdateQuery());
         $this->assertEquals('top secret information change', $user->getSecret());
 
         $this->entityManager->rollback();
