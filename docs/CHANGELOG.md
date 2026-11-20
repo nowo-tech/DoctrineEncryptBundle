@@ -66,6 +66,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- CI runs the unit and functional suites on the DBAL 3 and DBAL 4 database cells too (they ran on the lockfile's DBAL only), and `testNoUpdateOnReadEncrypted` no longer depends on whether a nested transaction logs a statement, which differs between DBAL 3 and 4 (it failed on DBAL 3 for that reason only; reading an encrypted entity issues no UPDATE on either version).
+
 ## [2.15.1] - 2026-11-20
 
 ### Fixed

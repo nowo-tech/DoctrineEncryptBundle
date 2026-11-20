@@ -261,6 +261,10 @@ jobs:
         if: env.HEAVY == 'true'
         run: composer update --prefer-dist --no-progress --no-interaction --with-all-dependencies
 
+      - name: Unit and functional suites on this DBAL (no database needed)
+        if: env.HEAVY == 'true'
+        run: vendor/bin/phpunit --testsuite unit,functional --no-coverage
+
       - name: Real-database race tests (none may be skipped)
         if: env.HEAVY == 'true'
         env:
