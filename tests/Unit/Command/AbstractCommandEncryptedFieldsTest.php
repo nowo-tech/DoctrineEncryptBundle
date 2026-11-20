@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Command;
 
-use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Nowo\DoctrineEncryptBundle\Doctrine\Types\EncryptedStringType;
 use Nowo\DoctrineEncryptBundle\Mapping\AttributeReader;
 use Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
+use Nowo\DoctrineEncryptBundle\Tests\Support\DbalTypeFixtures;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Command\fixtures\EncryptedFieldsExposingCommand;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\PlainProfile;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\PlainProfileChild;
@@ -23,13 +23,6 @@ use stdClass;
  */
 final class AbstractCommandEncryptedFieldsTest extends TestCase
 {
-    public static function setUpBeforeClass(): void
-    {
-        if (!Type::hasType('encrypted_string')) {
-            Type::addType('encrypted_string', EncryptedStringType::class);
-        }
-    }
-
     public function testConfiguredPropertiesAreAddedAfterAttributeOnesWithoutDuplicates(): void
     {
         $command = $this->command();
@@ -58,6 +51,7 @@ final class AbstractCommandEncryptedFieldsTest extends TestCase
         $metadata->mapField(['fieldName' => 'setterCalls', 'type' => 'type_that_is_not_registered']);
 
         $command = $this->command();
+        self::assertSame([], DbalTypeFixtures::deprecationsRaisedBy(static fn () => $command->typeFields($metadata)));
         self::assertSame([['field' => 'taxId', 'config' => 'default_profile', 'type' => 'encrypted_string']], $command->typeFields($metadata));
         self::assertSame([], $command->typeFields($this->metadata(PlainProfile::class)));
         self::assertFalse($command->embeddable($metadata));
@@ -77,6 +71,9 @@ final class AbstractCommandEncryptedFieldsTest extends TestCase
 
     private function command(): EncryptedFieldsExposingCommand
     {
-        return new EncryptedFieldsExposingCommand($this->createMock(EntityManagerInterface::class), new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class));
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->method('getConnection')->willReturn(DbalTypeFixtures::connection(['encrypted_string' => EncryptedStringType::class]));
+
+        return new EncryptedFieldsExposingCommand($entityManager, new AttributeReader(), $this->createMock(DoctrineEncryptSubscriber::class));
     }
 }

@@ -65,6 +65,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- No longer calls the static `Type::hasType()`, `Type::getType()` and `Type::getTypeRegistry()` that doctrine/dbal 4.6 deprecates (the encrypted-type listing in the commands, the mapping validation and the type's registered-name lookup): with doctrine/dbal 4.6 or newer the connection's type provider is asked, older versions keep reading the static registry. Unknown type names are handled as before.
+
 ## [2.15.0] - 2026-11-20
 
 ### Changed
