@@ -11,6 +11,7 @@ How the bundle stays correct when the same rows are written at the same time (RE
 - [Host options](#host-options)
 - [Maintenance mode](#maintenance-mode)
 - [Residual risks](#residual-risks)
+  - [Listener limitations](#listener-limitations)
 - [Tests and CI](#tests-and-ci)
 - [History](#history)
 
@@ -31,7 +32,7 @@ How the bundle stays correct when the same rows are written at the same time (RE
 
 | Path | Transaction | Concurrency control (rule 4) | Conflict answer (rule 6) |
 | --- | --- | --- | --- |
-| Listener: encrypt on `onFlush` / `preUpdate`, decrypt on `postLoad` / `postUpdate` / `postFlush` | The host's flush | The host's (version column, locks). The bundle changes values only, never the write set | The host's |
+| Listener: encrypt on `preFlush` / `onFlush` / `prePersist` (during a flush) / `preUpdate`, decrypt on `postLoad` / `postUpdate` / `postFlush` | The host's flush | The host's (version column, locks). The bundle changes values, and keeps the unit of work's view of them consistent: the original data follows the swapped values (plaintext after a decryption, the stored ciphertext of the old value for a changed field), so an untouched decrypted entity is never written and a host-pending check (`UnitOfWork::computeChangeSets()`) sees only the application's changes. An entity whose change set was computed before the flush is recomputed in `preFlush` (merged), so its other changes are kept and its encrypted entries hold ciphertext | The host's |
 | Encrypted DBAL types (`encrypted_string`, `encrypted_text`, `encrypted_json`) | The host's flush | The host's | The host's |
 | `doctrine:encrypt:database` | One per chunk (`batch_size` rows), through transaction-doctrine's `DoctrineTransactionRunner::forConnection()` | Keyset page of ids (no lock), then `SELECT … FOR UPDATE` of the chunk's rows by id, in id order, inside the transaction; the value is re-checked under the lock (already marked values are skipped) | Replay of the chunk (3 attempts), then exit code `1` with `CONFLICT_001` / `CONFLICT_002` |
 | `doctrine:decrypt:database` | Same | Same (values without the marker are skipped) | Same |
@@ -113,6 +114,31 @@ command skips them.
 - **Platforms without CI.** SQL Server (`UPDLOCK, ROWLOCK` hint) and Oracle / DB2 (`FOR UPDATE`) are covered by
   unit tests of the generated SQL only; the lock timeout option does not apply to them.
 - **Key rotation** needs maintenance mode, see above. This is a documented precondition, not a lock.
+
+### Listener limitations
+
+- **A plaintext set through `PreUpdateEventArgs::setNewValue()` is stored as is.** The bundle encrypts before
+  `preUpdate` runs; a host `preUpdate` listener that sets a new value for an encrypted field must set ciphertext
+  (`EncryptUtil`) or change the entity before the flush instead.
+- **After a failed flush the entities hold ciphertext in memory** (values encrypted in `preFlush` / `onFlush` are only
+  decrypted again in `postFlush`). Retrying the flush on the same manager is correct (ciphertext is recognised and not
+  encrypted twice); code that reads the entities after the failure without a retry sees ciphertext. Doctrine closes the
+  manager on a failure inside the commit; the host resets it as usual. After a failure in a host `onFlush` listener
+  (the manager stays open), an entity persisted before the next flush holds ciphertext until that flush's `postFlush`.
+- **An entity persisted from a host `postUpdate` / `postPersist` listener is not inserted**: Doctrine drops an
+  insertion scheduled while it commits, with or without this bundle. The bundle decrypts such an entity in `postFlush`,
+  so it holds the plaintext again, but it is never written.
+- **After a rollback of an outer transaction the rolled-back value is not written again.** The flush inside the
+  transaction succeeded, so the unit of work considers the entity clean; this is Doctrine's normal behaviour for every
+  field, not specific to encrypted ones. Refresh or clear the entity after the rollback.
+- **A new entity whose change sets are computed twice before the flush with a change in between** (`persist()`,
+  `UnitOfWork::computeChangeSets()`, a change, `computeChangeSets()` again) fails to insert in Doctrine ORM 3 itself,
+  with or without this bundle: its insertion change set is replaced by the difference. Flush between the two
+  computations.
+- **Listener order.** Entities persisted by a host `onFlush` listener that runs after the bundle's (lower priority) are
+  encrypted when they are persisted (`prePersist`, between the bundle's `onFlush` and `postFlush`); a listener that runs
+  before it needs nothing. The bundle registers `prePersist` for this; if you register the listener yourself, register
+  that event too.
 
 ## Tests and CI
 

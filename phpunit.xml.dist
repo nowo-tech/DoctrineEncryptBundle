@@ -12,6 +12,7 @@
             <directory suffix="TestCase.php">./tests/Functional/DoctrineEncryptSubscriber</directory>
             <directory suffix="Test.php">./tests/Functional/DddMapping</directory>
             <directory suffix="Test.php">./tests/Functional/EmbeddedRotation</directory>
+            <directory suffix="Test.php">./tests/Functional/CleanChangeSet</directory>
             <directory suffix="Test.php">./tests/Functional/Worker</directory>
         </testsuite>
         <!-- Real MySQL / MariaDB / PostgreSQL race tests (REQ-RUNTIME-003): DE_MYSQL_URL, DE_MARIADB_URL, DE_POSTGRES_URL. -->

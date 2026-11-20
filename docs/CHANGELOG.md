@@ -68,6 +68,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Requires `nowo-tech/transaction-doctrine` ^1.8.1 (fixes GHSA-9wh3-m3m5-jffx and GHSA-65w2-9r4h-848g).
 
+### Fixed
+
+- **Decrypted entities looked changed to the unit of work (2.14.0 and earlier).** The listener decrypts in `postLoad`
+  but the unit of work's original data kept the ciphertext, so `UnitOfWork::computeChangeSets()` outside a flush
+  reported every decrypted field as changed (an untouched entity with an encrypted `secret` gave the change set
+  `["secret"]`). Guards that refuse to run while the host's entity manager has pending changes (for example
+  transaction-doctrine's `DoctrineTransactionRunner::forHostEntityManager()`) therefore refused every write in a request
+  that had loaded an encrypted entity, and flushing first did not help because `postFlush` decrypts again. After every
+  decryption (`postLoad`, `postUpdate`, `postFlush`) the original data now holds the plaintext, so an untouched
+  decrypted entity has an empty change set; in `preFlush` an unchanged value gets its stored ciphertext back with that
+  ciphertext as original data, so no `UPDATE` is issued for it. A changed value is still detected (the comparison is on
+  the plaintext, so the randomised ciphertext never hides or fakes a change), only the changed fields are in the change
+  set, and the `UPDATE` writes the new ciphertext. A value changed back to its original plaintext issues no `UPDATE`.
+  Embeddables (nested ones included), inheritance, lazily initialised proxies and `refresh()` are covered.
+- **Changes lost when the change sets were computed before the flush (2.14.0 and earlier).** When
+  `UnitOfWork::computeChangeSets()` ran outside a flush (a host-pending check, transaction-doctrine's `WriteUnit`, the
+  flush after a guard's refusal) and the entity had decrypted values, the flush replaced its change set with only the
+  re-encrypted fields: changes to other fields, an encrypted value set to `null` and to-one association changes were not
+  written, and an insertion computed early (SEQUENCE or assigned identifiers) lost its other columns or failed. The
+  change set of such an entity is now recomputed (merged) in `preFlush`: every change is kept, and its encrypted
+  entries hold ciphertext.
+- **Plaintext written after `refresh()` (2.14.0 and earlier).** When `UnitOfWork::computeChangeSets()` ran outside a
+  flush while an encrypted value differed, and the entity was then refreshed, the next flush wrote the discarded value
+  in plaintext: the unit of work kept the earlier change set, which held the plaintext. Such an entry is now replaced
+  by a fresh ciphertext of the current value. To find and re-encrypt values stored in plaintext, see
+  [UPGRADING: Remediation](UPGRADING.md#remediation-values-stored-in-plaintext).
+- **Plaintext insert of an entity persisted by a later `onFlush` listener (2.14.0 and earlier).** An entity persisted
+  (and computed) by a host `onFlush` listener running after the bundle's was inserted in plaintext. The listener now
+  also listens to `prePersist` and encrypts entities persisted between its `onFlush` and its `postFlush`. See
+  [UPGRADING: Remediation](UPGRADING.md#remediation-values-stored-in-plaintext) for values already stored.
+- Flush listeners (`onFlush`, `preUpdate`) see the stored ciphertext as the old value of a changed or cleared encrypted
+  field, never the old plaintext, for every decrypted entity: inheritance subclasses, entities whose encrypted fields
+  are all in embeddables and initialised proxies included (`preFlush` matches decrypted entities by identity, not by
+  the identity map's root class name).
+- **Plaintext insert of a decrypted entity persisted again as new (2.14.0 and earlier).** An entity that had been
+  decrypted, then detached (or cleared) and persisted again as a new entity reached `onFlush` with its cached
+  ciphertext: the value was written back to the property without encrypting, the insertion's change set was not
+  recomputed, and the `INSERT` stored the plaintext. The insertion is now recomputed whenever a value is swapped.
+- An entity encrypted on persist that the flush did not insert (persisted from a `postUpdate` / `postPersist`
+  listener, which Doctrine drops, or after a failed flush) holds the plaintext again after `postFlush`, and the
+  listener forgets its cached values, so persisting it again (after `clear()`, or in another entity manager) inserts
+  it encrypted.
+- `preFlush` and `postFlush` no longer initialise uninitialised proxies of encrypted classes (one `SELECT` per proxy on
+  every flush): a proxy that was never loaded holds nothing to encrypt or decrypt.
+- Tested on SQLite, MySQL 8.4, MariaDB 11.4 and PostgreSQL 16 (DBAL 3 and 4).
+
 ## [2.14.0] - 2026-11-18
 
 ### Demo

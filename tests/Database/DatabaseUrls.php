@@ -36,8 +36,26 @@ final class DatabaseUrls
 
     public static function connect(string $url): Connection
     {
-        $params = (new DsnParser(['mysql' => 'pdo_mysql', 'mariadb' => 'pdo_mysql', 'pgsql' => 'pdo_pgsql', 'postgres' => 'pdo_pgsql']))->parse($url);
+        return DriverManager::getConnection(self::parse($url));
+    }
 
-        return DriverManager::getConnection($params);
+    /**
+     * Connection parameters from a DE_*_URL variable, or null when it is not set.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function params(string $variable): ?array
+    {
+        $url = getenv($variable);
+
+        return is_string($url) && $url !== '' ? self::parse($url) : null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function parse(string $url): array
+    {
+        return (new DsnParser(['mysql' => 'pdo_mysql', 'mariadb' => 'pdo_mysql', 'pgsql' => 'pdo_pgsql', 'postgres' => 'pdo_pgsql']))->parse($url);
     }
 }

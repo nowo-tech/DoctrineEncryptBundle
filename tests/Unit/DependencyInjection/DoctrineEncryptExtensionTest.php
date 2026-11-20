@@ -364,13 +364,13 @@ class DoctrineEncryptExtensionTest extends TestCase
 
         $tags = $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber')->getTag('doctrine.event_listener');
 
-        $this->assertCount(6, $tags);
+        $this->assertCount(7, $tags);
         foreach ($tags as $tag) {
             $this->assertArrayNotHasKey('connection', $tag);
             $this->assertSame(500, $tag['priority']);
         }
         $this->assertSame(
-            ['postUpdate', 'preUpdate', 'postLoad', 'onFlush', 'preFlush', 'postFlush'],
+            ['postUpdate', 'preUpdate', 'postLoad', 'onFlush', 'preFlush', 'postFlush', 'prePersist'],
             array_column($tags, 'event'),
         );
     }
@@ -382,8 +382,8 @@ class DoctrineEncryptExtensionTest extends TestCase
 
         $tags = $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber')->getTag('doctrine.event_listener');
 
-        $this->assertCount(12, $tags);
-        $this->assertSame(['default' => 6, 'customer' => 6], array_count_values(array_column($tags, 'connection')));
+        $this->assertCount(14, $tags);
+        $this->assertSame(['default' => 7, 'customer' => 7], array_count_values(array_column($tags, 'connection')));
         $this->assertContains(['event' => 'postLoad', 'priority' => 500, 'connection' => 'customer'], $tags);
     }
 
@@ -394,7 +394,7 @@ class DoctrineEncryptExtensionTest extends TestCase
 
         $tags = $container->getDefinition('nowo_doctrine_encrypt.orm_subscriber')->getTag('doctrine.event_listener');
 
-        $this->assertSame(array_fill(0, 6, 'legacy'), array_column($tags, 'connection'));
+        $this->assertSame(array_fill(0, 7, 'legacy'), array_column($tags, 'connection'));
     }
 
     public function testSubscriberReceivesEncryptorRegistry(): void

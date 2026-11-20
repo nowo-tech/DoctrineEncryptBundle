@@ -285,6 +285,8 @@ class DoctrineEncryptSubscriberTest extends TestCase
             ->method('getScheduledEntityInsertions')
             ->willReturn([$user])
         ;
+        // At onFlush every insertion has its computed data.
+        $uow->method('getOriginalEntityData')->willReturn(['name' => 'David', 'address' => 'Switzerland']);
         $em = $this->createMock(EntityManagerInterface::class);
         $em->expects($this->any())
             ->method('getUnitOfWork')
@@ -525,6 +527,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $uow->expects($this->any())
             ->method('getScheduledEntityInsertions')
             ->willReturn([$user]);
+        $uow->method('getOriginalEntityData')->willReturn(['name' => 'David', 'address' => 'Switzerland']);
         $classMetaData = $this->createMock(ClassMetadata::class);
         $em            = $this->createMock(EntityManagerInterface::class);
         $em->expects($this->any())
