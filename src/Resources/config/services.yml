@@ -85,6 +85,7 @@ services:
       - { name: 'doctrine.event_listener', event: 'onFlush', priority: 500 }
       - { name: 'doctrine.event_listener', event: 'preFlush', priority: 500 }
       - { name: 'doctrine.event_listener', event: 'postFlush', priority: 500 }
+      - { name: 'doctrine.event_listener', event: 'prePersist', priority: 500 }
 
   # Checks encrypted_fields and listener/type double selection against Doctrine metadata (loadClassMetadata).
   # The "connection" attribute is set by DoctrineEncryptExtension, like the listener's.

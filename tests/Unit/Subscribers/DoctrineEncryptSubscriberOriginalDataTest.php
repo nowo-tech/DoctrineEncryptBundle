@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Event\PostLoadEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Event\PreFlushEventArgs;
+use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\FieldMapping;
+use Doctrine\ORM\UnitOfWork;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\FakeUnitOfWork;
@@ -131,21 +134,111 @@ final class DoctrineEncryptSubscriberOriginalDataTest extends TestCase
 
         $this->assertSame('encrypted-David<ENC>', $user->name);
         $this->assertSame('encrypted-Peru<ENC>', $user->getAddress());
-        // The unchanged value is not dirty any more; the changed one keeps its old plaintext, so the change is seen.
-        $this->assertSame(['name' => 'encrypted-David<ENC>', 'address' => 'Switzerland'], $uow->original[spl_object_id($user)]);
+        // The unchanged value is not dirty any more; the changed one has the old value's stored ciphertext as original.
+        $this->assertSame(['name' => 'encrypted-David<ENC>', 'address' => 'encrypted-Switzerland<ENC>'], $uow->original[spl_object_id($user)]);
+        $this->assertSame(0, $uow->recomputed);
     }
 
-    public function testPreFlushLeavesAnEntityAlreadyScheduledForUpdateToTheFlush(): void
+    public function testPreFlushKeepsTheStoredCiphertextOfAClearedValueAsOriginalData(): void
+    {
+        $user = new User('encrypted-David<ENC>', 'encrypted-Switzerland<ENC>');
+        $this->subscriber->processFields($user, false);
+        $user->setAddress(null);
+        $uow = $this->unitOfWork([spl_object_id($user) => ['name' => 'David', 'address' => 'Switzerland']], [User::class => ['id1' => $user]]);
+
+        $this->subscriber->preFlush(new PreFlushEventArgs($this->entityManager($uow, $this->metadata(['name', 'address']))));
+
+        $this->assertNull($user->getAddress());
+        $this->assertSame(['name' => 'encrypted-David<ENC>', 'address' => 'encrypted-Switzerland<ENC>'], $uow->original[spl_object_id($user)]);
+    }
+
+    public function testPreFlushNewValueWithoutStoredCiphertextKeepsItsOriginalData(): void
+    {
+        $user = new User('David', null);
+        $uow  = $this->unitOfWork([spl_object_id($user) => ['name' => null]], [User::class => ['id1' => $user]]);
+        // The class must have a decrypted instance for preFlush to look at it.
+        $other = new User('encrypted-Other<ENC>', null);
+        $this->subscriber->processFields($other, false);
+
+        $this->subscriber->preFlush(new PreFlushEventArgs($this->entityManager($uow, $this->metadata(['name']))));
+
+        $this->assertSame('encrypted-David<ENC>', $user->name);
+        $this->assertSame(['name' => null], $uow->original[spl_object_id($user)]);
+    }
+
+    public function testPreFlushRecomputesAnEntityThatAlreadyHasAChangeSet(): void
+    {
+        $user = new User('encrypted-David<ENC>', 'encrypted-Switzerland<ENC>');
+        $this->subscriber->processFields($user, false);
+        $uow                   = $this->unitOfWork([spl_object_id($user) => ['name' => 'Temp', 'address' => 'Switzerland']], [User::class => ['id1' => $user]]);
+        $uow->scheduledUpdates = true;
+        // computeChangeSets() ran while name was "Temp": the pending entry holds that plaintext.
+        $uow->changeSet = ['name' => ['David', 'Temp']];
+        $before         = $this->subscriber->encryptCounter;
+
+        $this->subscriber->preFlush(new PreFlushEventArgs($this->entityManager($uow, $this->metadata(['name', 'address']))));
+
+        // name gets a fresh ciphertext (so the merge replaces the plaintext entry), address follows its ciphertext.
+        $this->assertSame($before + 1, $this->subscriber->encryptCounter);
+        $this->assertSame('encrypted-David<ENC>', $user->name);
+        $this->assertSame(['name' => 'encrypted-David<ENC>', 'address' => 'encrypted-Switzerland<ENC>'], $uow->original[spl_object_id($user)]);
+        $this->assertSame(1, $uow->recomputed);
+    }
+
+    public function testPreFlushRecomputesAnInsertionComputedEarly(): void
+    {
+        $user                 = new User('David', null);
+        $uow                  = $this->unitOfWork([spl_object_id($user) => ['name' => 'David']], [User::class => ['id1' => $user]]);
+        $uow->scheduledInsert = true;
+        $uow->changeSet       = ['name' => [null, 'David']];
+        $other                = new User('encrypted-Other<ENC>', null);
+        $this->subscriber->processFields($other, false);
+
+        $this->subscriber->preFlush(new PreFlushEventArgs($this->entityManager($uow, $this->metadata(['name']))));
+
+        $this->assertSame('encrypted-David<ENC>', $user->name);
+        $this->assertSame(1, $uow->recomputed);
+    }
+
+    public function testPreFlushDoesNotRecomputeAnEntityThatIsNotManaged(): void
     {
         $user = new User('encrypted-David<ENC>', null);
         $this->subscriber->processFields($user, false);
         $uow                   = $this->unitOfWork([spl_object_id($user) => ['name' => 'David']], [User::class => ['id1' => $user]]);
         $uow->scheduledUpdates = true;
+        $uow->state            = UnitOfWork::STATE_REMOVED;
 
         $this->subscriber->preFlush(new PreFlushEventArgs($this->entityManager($uow, $this->metadata(['name']))));
 
-        $this->assertSame('encrypted-David<ENC>', $user->name);
-        $this->assertSame(['name' => 'David'], $uow->original[spl_object_id($user)]);
+        $this->assertSame(0, $uow->recomputed);
+        $this->assertSame(['name' => 'encrypted-David<ENC>'], $uow->original[spl_object_id($user)]);
+    }
+
+    public function testPrePersistEncryptsOnlyBetweenOnFlushAndPostFlush(): void
+    {
+        $uow = $this->unitOfWork([]);
+        $em  = $this->entityManager($uow, $this->metadata(['name']));
+
+        $outside = new User('plain', null);
+        $this->subscriber->prePersist(new PrePersistEventArgs($outside, $em));
+        $this->assertSame('plain', $outside->name);
+
+        $this->subscriber->onFlush(new OnFlushEventArgs($em));
+        $inside = new User('late', null);
+        $this->subscriber->prePersist(new PrePersistEventArgs($inside, $em));
+        $this->assertSame('encrypted-late<ENC>', $inside->name);
+
+        $this->subscriber->postFlush(new PostFlushEventArgs($em));
+        $after = new User('after', null);
+        $this->subscriber->prePersist(new PrePersistEventArgs($after, $em));
+        $this->assertSame('after', $after->name);
+
+        // A flush that failed after onFlush: the next flush's preFlush closes the window too.
+        $this->subscriber->onFlush(new OnFlushEventArgs($em));
+        $this->subscriber->preFlush(new PreFlushEventArgs($em));
+        $next = new User('next', null);
+        $this->subscriber->prePersist(new PrePersistEventArgs($next, $em));
+        $this->assertSame('next', $next->name);
     }
 
     public function testFlushEventsSkipUninitializedObjects(): void
@@ -197,7 +290,7 @@ final class DoctrineEncryptSubscriberOriginalDataTest extends TestCase
     public function testResetClearsTheCollector(): void
     {
         $property = new ReflectionProperty(DoctrineEncryptSubscriber::class, 'swappedValues');
-        $property->setValue($this->subscriber, [['name', 'a', 'b']]);
+        $property->setValue($this->subscriber, [['kind' => 'decrypted', 'property' => 'name', 'before' => 'a', 'after' => 'b', 'stored' => null, 'reencrypt' => null]]);
 
         $this->subscriber->reset();
 

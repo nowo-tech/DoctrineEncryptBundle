@@ -6,6 +6,7 @@ namespace Nowo\DoctrineEncryptBundle\Subscribers;
 
 // use Doctrine\Common\EventSubscriber;
 // events
+use Closure;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\OnFlushEventArgs;
@@ -13,10 +14,12 @@ use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Event\PostLoadEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Event\PreFlushEventArgs;
+use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
-use Doctrine\ORM\Events;
 // encryptorInterface
+use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\Embedded;
+use Doctrine\ORM\UnitOfWork;
 use Doctrine\Persistence\Mapping\ClassUtils;
 use InvalidArgumentException;
 use LogicException;
@@ -51,7 +54,7 @@ use function sprintf;
 /**
  * Doctrine event listener that encrypts entity properties on persist/update and decrypts on load.
  *
- * Listens to postUpdate, preUpdate, postLoad, onFlush, preFlush, postFlush.
+ * Listens to postUpdate, preUpdate, postLoad, onFlush, preFlush, postFlush and prePersist (only during a flush).
  * Only processes properties marked with the Encrypted attribute or listed in the `encrypted_fields` configuration
  * ({@see EncryptedFieldMap}); supports multiple encryptor configs via registry.
  *
@@ -64,6 +67,7 @@ use function sprintf;
 #[AsDoctrineListener(event: Events::onFlush, priority: 500, connection: 'default')]
 #[AsDoctrineListener(event: Events::preFlush, priority: 500, connection: 'default')]
 #[AsDoctrineListener(event: Events::postFlush, priority: 500, connection: 'default')]
+#[AsDoctrineListener(event: Events::prePersist, priority: 500, connection: 'default')]
 class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSubscriber */
 {
     /**
@@ -155,13 +159,27 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     private ?PropertyAccessorInterface $propertyAccessor = null; // @igor-ignore - Stateless accessor, created once.
 
     /**
-     * Values this listener swapped in the properties during the current event (decrypt: ciphertext => plaintext;
-     * preFlush: unchanged plaintext => its stored ciphertext), so the unit of work's original data can follow them.
-     * Null outside an event that collects them; every event restores the previous value, so it never outlives the call.
+     * Values this listener swapped in the properties during the current event, so the unit of work's original data
+     * can follow them ({@see syncOriginalData()}). Null outside an event that collects them; every event restores the
+     * previous value, so it never outlives the call.
      *
-     * @var list<array{string, mixed, mixed}>|null [property name, value before, value after]
+     * - decrypted: ciphertext => plaintext (postLoad, postUpdate, postFlush);
+     * - restored: unchanged plaintext => its stored ciphertext (preFlush), with a callback that encrypts it afresh;
+     * - changed: new plaintext => new ciphertext, or a value cleared to null / "" (preFlush), with the stored
+     *   ciphertext of the old value.
+     *
+     * @var list<array{kind: 'changed'|'decrypted'|'restored', property: string, before: mixed, after: mixed, stored: string|null, reencrypt: (Closure(): string)|null}>|null
      */
     private ?array $swappedValues = null; // @igor-ignore - Scoped to one event call (saved and restored around it), reset() clears it.
+
+    /**
+     * Entity managers between this listener's onFlush and its postFlush: an entity persisted then (by a host onFlush
+     * listener that runs after this one) is encrypted when it is persisted, since the insertions were already
+     * encrypted. Entries disappear with the manager.
+     *
+     * @var WeakMap<object, true>
+     */
+    private WeakMap $flushingManagers; // @igor-ignore - Set and cleared within one flush (preFlush clears it too), reset() clears it.
 
     private readonly LoggerInterface $logger;
 
@@ -191,6 +209,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
 
         $this->cachedDecryptions = new WeakMap();
         $this->knownCiphertexts  = new WeakMap();
+        $this->flushingManagers  = new WeakMap();
         $this->logger            = $logger ?? new NullLogger();
 
         if ($registryOrEncryptor instanceof EncryptorInterface) {
@@ -270,6 +289,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
         $this->decryptCounter       = 0;
         $this->encryptCounter       = 0;
         $this->swappedValues        = null;
+        $this->flushingManagers     = new WeakMap();
         // Class-metadata caches (no entity or request data): dropped too, rebuilt once per class on next use.
         $this->accessModes      = [];
         $this->fieldMap         = [];
@@ -322,7 +342,8 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
         // by every connection it is registered on, and another manager's decrypted entities still need
         // their cached ciphertext (otherwise unchanged secrets are re-encrypted and rewritten).
         $entityManager = $preFlushEventArgs->getObjectManager();
-        $unitOfWOrk    = $entityManager->getUnitOfWork();
+        unset($this->flushingManagers[$entityManager]);
+        $unitOfWOrk = $entityManager->getUnitOfWork();
         foreach ($unitOfWOrk->getIdentityMap() as $entityName => $entityArray) {
             if (isset($decryptedClasses[$entityName])) {
                 foreach ($entityArray as $instance) {
@@ -343,14 +364,28 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      */
     public function onFlush(OnFlushEventArgs $onFlushEventArgs): void
     {
-        $unitOfWork = $onFlushEventArgs->getObjectManager()->getUnitOfWork();
+        $entityManager                          = $onFlushEventArgs->getObjectManager();
+        $this->flushingManagers[$entityManager] = true;
+        $unitOfWork                             = $entityManager->getUnitOfWork();
         foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
             $encryptCounterBefore = $this->encryptCounter;
             $this->processFields($entity);
-            if ($this->encryptCounter > $encryptCounterBefore) {
-                $classMetadata = $onFlushEventArgs->getObjectManager()->getClassMetadata($entity::class);
-                $unitOfWork->recomputeSingleEntityChangeSet($classMetadata, $entity);
+            if ($this->encryptCounter > $encryptCounterBefore && $unitOfWork->getOriginalEntityData($entity) !== []) {
+                $unitOfWork->recomputeSingleEntityChangeSet($entityManager->getClassMetadata($entity::class), $entity);
             }
+        }
+    }
+
+    /**
+     * Listen to prePersist: an entity persisted after this listener's onFlush (by a host onFlush listener that runs
+     * later and calls UnitOfWork::computeChangeSet(), as Doctrine requires) would otherwise be inserted in plaintext.
+     * It is encrypted here, before that change set is computed; postFlush decrypts it. Outside that window nothing
+     * happens (onFlush encrypts the insertions).
+     */
+    public function prePersist(PrePersistEventArgs $args): void
+    {
+        if (isset($this->flushingManagers[$args->getObjectManager()])) {
+            $this->processFields($args->getObject());
         }
     }
 
@@ -361,7 +396,8 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     public function postFlush(PostFlushEventArgs $postFlushEventArgs): void
     {
         $entityManager = $postFlushEventArgs->getObjectManager();
-        $unitOfWork    = $entityManager->getUnitOfWork();
+        unset($this->flushingManagers[$entityManager]);
+        $unitOfWork = $entityManager->getUnitOfWork();
         foreach ($unitOfWork->getIdentityMap() as $entityMap) {
             foreach ($entityMap as $entity) {
                 if ($unitOfWork->isUninitializedObject($entity)) {
@@ -374,22 +410,25 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
 
     /**
      * Encrypts or decrypts a managed entity, then makes the unit of work's original data follow the values this
-     * listener swapped, so the change set only shows what the application changed:
+     * listener swapped, so the change set only shows what the application changed and never holds a plaintext that
+     * was not in the database:
      *
      * - after a decryption (postLoad, postUpdate, postFlush) the original data holds the plaintext, so an untouched
      *   decrypted entity has an empty change set, also when UnitOfWork::computeChangeSets() runs outside a flush;
      * - in preFlush, an unchanged value gets its stored ciphertext back and the original data holds that ciphertext,
-     *   so no UPDATE is issued for it. A changed value is encrypted and keeps the old plaintext as original data, so
-     *   the change is detected (and the new ciphertext written) even though the ciphertext is randomised.
+     *   so no UPDATE is issued for it. A changed (or cleared) value gets the stored ciphertext of the old value as
+     *   original data: the change is detected (ciphertexts are randomised) and listeners of the flush see the old
+     *   ciphertext, never the old plaintext.
      *
      * Only a field whose original value is exactly the value replaced (and whose current value is exactly the value
-     * written) is touched: anything else (a getter or setter that transforms the value, a value the application
-     * changed meanwhile) keeps the unit of work's own data.
+     * written) follows a decryption or an unchanged value: anything else (a getter or setter that transforms the
+     * value, a value the application changed meanwhile) keeps the unit of work's own data.
      *
-     * In preFlush nothing is touched on an entity already scheduled for update, which happens when
-     * UnitOfWork::computeChangeSets() ran outside the flush while a value differed. That change set holds plaintext
-     * and the unit of work keeps it when the flush finds no difference, so the flush must see the ciphertext as a
-     * change and replace it (at worst the same ciphertext is written again).
+     * In preFlush, an entity that already has a change set (UnitOfWork::computeChangeSets() ran outside the flush, or
+     * an insertion was computed early) keeps it: the flush's own computation would replace it with only the swapped
+     * fields, losing the other changes. Its change set is recomputed here instead, which merges: an entry holding a
+     * plaintext for an unchanged encrypted value gets a fresh ciphertext of that value (old value: the stored
+     * ciphertext), the other entries stay, and the original data moves to the current values.
      */
     private function processManagedEntity(EntityManagerInterface $entityManager, object $entity, bool $isEncryptOperation): void
     {
@@ -408,27 +447,35 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
             return;
         }
 
-        if ($isEncryptOperation && $entityManager->getUnitOfWork()->isScheduledForUpdate($entity)) {
+        $unitOfWork = $entityManager->getUnitOfWork();
+        if ($unitOfWork->getOriginalEntityData($entity) === []) {
             return;
         }
 
-        $this->syncOriginalData($entityManager, $entity, $swapped);
+        $pending = $isEncryptOperation && $unitOfWork->getEntityState($entity) === UnitOfWork::STATE_MANAGED && (
+            $unitOfWork->isScheduledForUpdate($entity)
+            || $unitOfWork->isScheduledForInsert($entity)
+        );
+
+        $this->syncOriginalData($entityManager, $entity, $swapped, $pending ? $unitOfWork->getEntityChangeSet($entity) : []);
+
+        if ($pending) {
+            $unitOfWork->recomputeSingleEntityChangeSet($entityManager->getClassMetadata($entity::class), $entity);
+        }
     }
 
     /**
-     * @param list<array{string, mixed, mixed}> $swapped [property name, value before, value after]
+     * @param list<array{kind: 'changed'|'decrypted'|'restored', property: string, before: mixed, after: mixed, stored: string|null, reencrypt: (Closure(): string)|null}> $swapped
+     * @param array<string, mixed> $pendingChangeSet Change set the entity already has (preFlush), by field
      */
-    private function syncOriginalData(EntityManagerInterface $entityManager, object $entity, array $swapped): void
+    private function syncOriginalData(EntityManagerInterface $entityManager, object $entity, array $swapped, array $pendingChangeSet): void
     {
         $unitOfWork = $entityManager->getUnitOfWork();
         $original   = $unitOfWork->getOriginalEntityData($entity);
-        if ($original === []) {
-            return;
-        }
 
         $byProperty = [];
-        foreach ($swapped as [$property, $before, $after]) {
-            $byProperty[$property][] = [$before, $after];
+        foreach ($swapped as $swap) {
+            $byProperty[$swap['property']][] = $swap;
         }
 
         $classMetadata = $entityManager->getClassMetadata($entity::class);
@@ -441,9 +488,27 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
             }
 
             $current = $classMetadata->getFieldValue($entity, $field);
-            foreach ($byProperty[$property] as [$before, $after]) {
-                if ($original[$field] === $before && $current === $after) {
-                    $unitOfWork->setOriginalEntityProperty($oid, $field, $after);
+            foreach ($byProperty[$property] as $swap) {
+                if ($current !== $swap['after']) {
+                    continue;
+                }
+
+                if ($swap['kind'] === 'changed') {
+                    if ($swap['stored'] !== null) {
+                        $unitOfWork->setOriginalEntityProperty($oid, $field, $swap['stored']);
+                    }
+                    break;
+                }
+
+                if ($swap['kind'] === 'restored' && array_key_exists($field, $pendingChangeSet) && $swap['reencrypt'] instanceof Closure) {
+                    // The pending change set holds a plaintext for this field: replace it with a fresh ciphertext.
+                    ($swap['reencrypt'])();
+                    $unitOfWork->setOriginalEntityProperty($oid, $field, $swap['after']);
+                    break;
+                }
+
+                if ($original[$field] === $swap['before']) {
+                    $unitOfWork->setOriginalEntityProperty($oid, $field, $swap['after']);
                     break;
                 }
             }
@@ -451,7 +516,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     }
 
     /**
-     * @return list<array{string, mixed, mixed}>
+     * @return list<array{kind: 'changed'|'decrypted'|'restored', property: string, before: mixed, after: mixed, stored: string|null, reencrypt: (Closure(): string)|null}>
      */
     private function collectedSwaps(): array
     {
@@ -461,10 +526,14 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     /**
      * Records a value swapped in a property while an event collects them ({@see processManagedEntity()}).
      */
-    private function recordSwap(string $property, mixed $before, mixed $after): void
+    /**
+     * @param 'changed'|'decrypted'|'restored' $kind
+     * @param (Closure(): string)|null $reencrypt
+     */
+    private function recordSwap(string $kind, string $property, mixed $before, mixed $after, ?string $stored = null, ?Closure $reencrypt = null): void
     {
         if ($this->swappedValues !== null) {
-            $this->swappedValues[] = [$property, $before, $after];
+            $this->swappedValues[] = ['kind' => $kind, 'property' => $property, 'before' => $before, 'after' => $after, 'stored' => $stored, 'reencrypt' => $reencrypt];
         }
     }
 
@@ -515,7 +584,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
                     }
                     $currentPropValue = $this->decryptValue($entity, $refProperty, $encryptedAttr->config, $propertyEncryptor, $value);
                     $this->writeProperty($entity, $refProperty, $currentPropValue, $encryptedAttr->config);
-                    $this->recordSwap($name, $value, $currentPropValue);
+                    $this->recordSwap('decrypted', $name, $value, $currentPropValue);
                     $cached                           = $this->cachedDecryptions[$entity] ?? [];
                     $cached[$name]                    = ['plaintext' => $currentPropValue, 'ciphertext' => $value];
                     $this->cachedDecryptions[$entity] = $cached;
@@ -529,12 +598,24 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
                 // Unchanged since it was decrypted (or could not be decrypted): write the stored ciphertext back as-is.
                 $this->writeProperty($entity, $refProperty, $cached['ciphertext'], $encryptedAttr->config);
                 $this->rememberCiphertext($entity, $name, $cached['ciphertext']);
-                $this->recordSwap($name, $value, $cached['ciphertext']);
+                $config = $encryptedAttr->config;
+                $this->recordSwap('restored', $name, $value, $cached['ciphertext'], $cached['ciphertext'], function () use ($entity, $refProperty, $config, $propertyEncryptor, $name, $value): string {
+                    ++$this->encryptCounter;
+                    $fresh = $propertyEncryptor->encrypt((string) $value) . self::ENCRYPTION_MARKER;
+                    $this->writeProperty($entity, $refProperty, $fresh, $config);
+                    $this->rememberCiphertext($entity, $name, $fresh);
+
+                    return $fresh;
+                });
             } elseif ($value !== null && $value !== '' && !$this->isCiphertext($entity, $name, (string) $value, $propertyEncryptor)) {
                 ++$this->encryptCounter;
                 $currentPropValue = $propertyEncryptor->encrypt((string) $value) . self::ENCRYPTION_MARKER;
                 $this->writeProperty($entity, $refProperty, $currentPropValue, $encryptedAttr->config);
                 $this->rememberCiphertext($entity, $name, $currentPropValue);
+                $this->recordSwap('changed', $name, $value, $currentPropValue, $cached['ciphertext'] ?? null);
+            } elseif ($cached !== null && ($value === null || $value === '')) {
+                // Cleared: no ciphertext to write, but the old value's ciphertext stays the original data.
+                $this->recordSwap('changed', $name, $value, $value, $cached['ciphertext']);
             }
         }
 

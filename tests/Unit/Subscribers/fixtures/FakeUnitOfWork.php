@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures;
 
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\UnitOfWork;
 
 use function in_array;
@@ -26,6 +27,16 @@ final class FakeUnitOfWork extends UnitOfWork
     public array $uninitialized;
 
     public bool $scheduledUpdates;
+
+    public bool $scheduledInsert = false;
+
+    /** @var UnitOfWork::STATE_* */
+    public int $state = UnitOfWork::STATE_MANAGED;
+
+    /** @var array<string, array{mixed, mixed}> */
+    public array $changeSet = [];
+
+    public int $recomputed = 0;
 
     public function getOriginalEntityData(object $entity): array
     {
@@ -50,5 +61,28 @@ final class FakeUnitOfWork extends UnitOfWork
     public function isScheduledForUpdate(object $entity): bool
     {
         return $this->scheduledUpdates;
+    }
+
+    public function isScheduledForInsert(object $entity): bool
+    {
+        return $this->scheduledInsert;
+    }
+
+    public function getEntityState(object $entity, ?int $assume = null): int
+    {
+        return $this->state;
+    }
+
+    /**
+     * @return array<string, array{mixed, mixed}>
+     */
+    public function &getEntityChangeSet(object $entity): array
+    {
+        return $this->changeSet;
+    }
+
+    public function recomputeSingleEntityChangeSet(ClassMetadata $class, object $entity): void
+    {
+        ++$this->recomputed;
     }
 }
