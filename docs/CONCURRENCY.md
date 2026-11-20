@@ -123,7 +123,11 @@ command skips them.
 - **After a failed flush the entities hold ciphertext in memory** (values encrypted in `preFlush` / `onFlush` are only
   decrypted again in `postFlush`). Retrying the flush on the same manager is correct (ciphertext is recognised and not
   encrypted twice); code that reads the entities after the failure without a retry sees ciphertext. Doctrine closes the
-  manager on a failure inside the commit; the host resets it as usual.
+  manager on a failure inside the commit; the host resets it as usual. After a failure in a host `onFlush` listener
+  (the manager stays open), an entity persisted before the next flush holds ciphertext until that flush's `postFlush`.
+- **An entity persisted from a host `postUpdate` / `postPersist` listener is not inserted**: Doctrine drops an
+  insertion scheduled while it commits, with or without this bundle. The bundle decrypts such an entity in `postFlush`,
+  so it holds the plaintext again, but it is never written.
 - **After a rollback of an outer transaction the rolled-back value is not written again.** The flush inside the
   transaction succeeded, so the unit of work considers the entity clean; this is Doctrine's normal behaviour for every
   field, not specific to encrypted ones. Refresh or clear the entity after the rollback.

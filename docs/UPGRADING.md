@@ -2,7 +2,8 @@
 
 ## Table of contents
 
-- [Unreleased](#unreleased)
+- [To 2.15.0](#to-2150)
+  - [Remediation: values stored in plaintext](#remediation-values-stored-in-plaintext)
 - [To 2.14.0](#to-2140)
 - [To 2.13.0](#to-2130)
 - [To 2.12.1](#to-2121)
@@ -68,9 +69,9 @@
 - [Upgrading to 1.0.0](#upgrading-to-100)
 - [Upgrading from ambta/doctrine-encrypt-bundle or hec-franco/doctrine-encrypt-bundle](#upgrading-from-ambtadoctrine-encrypt-bundle-or-hec-francodoctrine-encrypt-bundle)
 
-## Unreleased
+## To 2.15.0
 
-No configuration change needed.
+Not released yet. No configuration change needed.
 
 - The unit of work's original data of a decrypted entity now holds the **plaintext** (it held the ciphertext). Code
   that compares `UnitOfWork::getOriginalEntityData()` outside a flush with the stored ciphertext must compare with the
@@ -87,6 +88,51 @@ No configuration change needed.
   [CONCURRENCY.md](CONCURRENCY.md#listener-limitations).
 - The database commands (`doctrine:encrypt:database`, `doctrine:decrypt:database`, `doctrine:encrypt:rotate-keys`)
   write through DBAL and never relied on the change set: they re-encrypt every value they select, unchanged.
+
+### Remediation: values stored in plaintext
+
+Up to 2.14.0, two sequences could store a value of an encrypted field (`#[Encrypted]` or `encrypted_fields`) **in
+plaintext**:
+
+- `UnitOfWork::computeChangeSets()` ran outside a flush while an encrypted value differed (a host-pending check, for
+  example), the entity was then refreshed, and the next flush wrote the discarded value;
+- a host `onFlush` listener running after the bundle's persisted a new entity with encrypted fields.
+
+Columns mapped with the encrypted DBAL types (`encrypted_string`, `encrypted_text`, `encrypted_json`) were not
+affected. After upgrading, check the listener-encrypted columns:
+
+1. **Find the affected rows.** List the encrypted fields and their columns with `php bin/console
+   doctrine:encrypt:status` (embedded fields are stored in the owner's table, e.g. `address_street`). Every value the
+   bundle writes ends with the marker `<ENC>` (`DoctrineEncryptSubscriber::ENCRYPTION_MARKER`), so for each column:
+
+   ```sql
+   SELECT id FROM my_table
+   WHERE my_column IS NOT NULL AND my_column <> '' AND my_column NOT LIKE '%<ENC>';
+   ```
+
+   Any row returned holds a plaintext value.
+2. **Re-encrypt them.** `doctrine:encrypt:database` encrypts every value without the marker and skips the others, so it
+   only touches the affected rows. On a live application keep the row-lock timeout bounded:
+
+   ```bash
+   php bin/console doctrine:encrypt:database --force --lock-timeout=10
+   # or one profile at a time:
+   php bin/console doctrine:encrypt:database personal_data --force --lock-timeout=10
+   ```
+
+   Exit code `1` with `CONFLICT_002` means earlier chunks were committed: run the command again to resume. Run the
+   query of step 1 again afterwards; it must return no rows.
+3. **Copies outside the table still hold the plaintext.** Re-encrypting the rows does not change what was copied
+   before:
+   - **backups and dumps** taken while the value was in plaintext: delete them or restore-and-re-encrypt them, within
+     your retention policy;
+   - **replicas** receive the re-encrypted value through replication, but their own backups and snapshots do not;
+   - **binary logs / WAL archives** (MySQL / MariaDB binlogs, PostgreSQL archived WAL) contain the statements or
+     pages that wrote the plaintext: purge or expire them (`PURGE BINARY LOGS`, archive retention) once no replica or
+     point-in-time recovery needs them;
+   - logs or exports of the application that copied the value.
+
+   If the exposed values are credentials, tokens or keys, rotate them: re-encryption does not undo an exposure.
 
 ## To 2.14.0
 

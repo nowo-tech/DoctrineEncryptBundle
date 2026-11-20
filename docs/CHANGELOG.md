@@ -92,12 +92,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plaintext written after `refresh()` (2.14.0 and earlier).** When `UnitOfWork::computeChangeSets()` ran outside a
   flush while an encrypted value differed, and the entity was then refreshed, the next flush wrote the discarded value
   in plaintext: the unit of work kept the earlier change set, which held the plaintext. Such an entry is now replaced
-  by a fresh ciphertext of the current value.
+  by a fresh ciphertext of the current value. To find and re-encrypt values stored in plaintext, see
+  [UPGRADING: Remediation](UPGRADING.md#remediation-values-stored-in-plaintext).
 - **Plaintext insert of an entity persisted by a later `onFlush` listener (2.14.0 and earlier).** An entity persisted
   (and computed) by a host `onFlush` listener running after the bundle's was inserted in plaintext. The listener now
-  also listens to `prePersist` and encrypts entities persisted between its `onFlush` and its `postFlush`.
+  also listens to `prePersist` and encrypts entities persisted between its `onFlush` and its `postFlush`. See
+  [UPGRADING: Remediation](UPGRADING.md#remediation-values-stored-in-plaintext) for values already stored.
 - Flush listeners (`onFlush`, `preUpdate`) see the stored ciphertext as the old value of a changed or cleared encrypted
-  field, never the old plaintext.
+  field, never the old plaintext, for every decrypted entity: inheritance subclasses, entities whose encrypted fields
+  are all in embeddables and initialised proxies included (`preFlush` matches decrypted entities by identity, not by
+  the identity map's root class name).
+- An entity encrypted on persist that the flush did not insert (persisted from a `postUpdate` / `postPersist`
+  listener, which Doctrine drops, or after a failed flush) holds the plaintext again after `postFlush`.
 - `preFlush` and `postFlush` no longer initialise uninitialised proxies of encrypted classes (one `SELECT` per proxy on
   every flush): a proxy that was never loaded holds nothing to encrypt or decrypt.
 - Tested on SQLite, MySQL 8.4, MariaDB 11.4 and PostgreSQL 16 (DBAL 3 and 4).
