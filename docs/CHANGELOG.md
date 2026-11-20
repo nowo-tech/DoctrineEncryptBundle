@@ -64,6 +64,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Decrypted entities looked changed to the unit of work (2.14.0 and earlier).** The listener decrypts in `postLoad`
+  but the unit of work's original data kept the ciphertext, so `UnitOfWork::computeChangeSets()` outside a flush
+  reported every decrypted field as changed (an untouched entity with an encrypted `secret` gave the change set
+  `["secret"]`). Guards that refuse to run while the host's entity manager has pending changes (for example
+  transaction-doctrine's `DoctrineTransactionRunner::forHostEntityManager()`) therefore refused every write in a request
+  that had loaded an encrypted entity, and flushing first did not help because `postFlush` decrypts again. After every
+  decryption (`postLoad`, `postUpdate`, `postFlush`) the original data now holds the plaintext, so an untouched
+  decrypted entity has an empty change set; in `preFlush` an unchanged value gets its stored ciphertext back with that
+  ciphertext as original data, so no `UPDATE` is issued for it. A changed value is still detected (the comparison is on
+  the plaintext, so the randomised ciphertext never hides or fakes a change), only the changed fields are in the change
+  set, and the `UPDATE` writes the new ciphertext. A value changed back to its original plaintext issues no `UPDATE`.
+  Embeddables (nested ones included), inheritance, lazily initialised proxies and `refresh()` are covered. Tested on
+  SQLite, MySQL 8.4, MariaDB 11.4 and PostgreSQL 16 (DBAL 3 and 4).
+- **Plaintext written after `refresh()` (2.14.0 and earlier).** When `UnitOfWork::computeChangeSets()` ran outside a
+  flush while an encrypted value differed, and the entity was then refreshed, the next flush wrote the discarded value
+  in plaintext: the unit of work keeps a change set it computed earlier when the flush finds no difference, and that
+  change set held the plaintext. The flush now always replaces such a change set with the ciphertext.
+- `preFlush` and `postFlush` no longer initialise uninitialised proxies of encrypted classes (one `SELECT` per proxy on
+  every flush): a proxy that was never loaded holds nothing to encrypt or decrypt.
+
 ## [2.14.0] - 2026-11-18
 
 ### Demo

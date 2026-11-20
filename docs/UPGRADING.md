@@ -70,6 +70,18 @@
 
 ## Unreleased
 
+No configuration change needed.
+
+- The unit of work's original data of a decrypted entity now holds the **plaintext** (it held the ciphertext). Code
+  that compares `UnitOfWork::getOriginalEntityData()` or a change set's old value with the stored ciphertext must
+  compare with the plaintext instead; a `preUpdate` listener now sees the old plaintext as the old value of a changed
+  encrypted field. Change sets computed outside a flush only list the fields the application changed.
+- An untouched decrypted entity no longer causes an `UPDATE` on flush, and a flush no longer loads uninitialised
+  proxies of encrypted classes. Lifecycle callbacks or listeners that relied on that spurious `UPDATE` (a
+  `preUpdate` / `postUpdate` on every flush of a loaded entity) no longer run for untouched entities.
+- The database commands (`doctrine:encrypt:database`, `doctrine:decrypt:database`, `doctrine:encrypt:rotate-keys`)
+  write through DBAL and never relied on the change set: they re-encrypt every value they select, unchanged.
+
 ## To 2.14.0
 
 From **2.13.0**:

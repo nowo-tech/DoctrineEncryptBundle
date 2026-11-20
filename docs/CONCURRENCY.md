@@ -31,7 +31,7 @@ How the bundle stays correct when the same rows are written at the same time (RE
 
 | Path | Transaction | Concurrency control (rule 4) | Conflict answer (rule 6) |
 | --- | --- | --- | --- |
-| Listener: encrypt on `onFlush` / `preUpdate`, decrypt on `postLoad` / `postUpdate` / `postFlush` | The host's flush | The host's (version column, locks). The bundle changes values only, never the write set | The host's |
+| Listener: encrypt on `preFlush` / `onFlush` / `preUpdate`, decrypt on `postLoad` / `postUpdate` / `postFlush` | The host's flush | The host's (version column, locks). The bundle changes values only, never the write set: the unit of work's original data follows the swapped values (plaintext after a decryption), so an untouched decrypted entity is never written and a host-pending check (`UnitOfWork::computeChangeSets()`) sees only the application's changes | The host's |
 | Encrypted DBAL types (`encrypted_string`, `encrypted_text`, `encrypted_json`) | The host's flush | The host's | The host's |
 | `doctrine:encrypt:database` | One per chunk (`batch_size` rows), through transaction-doctrine's `DoctrineTransactionRunner::forConnection()` | Keyset page of ids (no lock), then `SELECT … FOR UPDATE` of the chunk's rows by id, in id order, inside the transaction; the value is re-checked under the lock (already marked values are skipped) | Replay of the chunk (3 attempts), then exit code `1` with `CONFLICT_001` / `CONFLICT_002` |
 | `doctrine:decrypt:database` | Same | Same (values without the marker are skipped) | Same |
