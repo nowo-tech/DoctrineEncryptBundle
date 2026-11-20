@@ -8,7 +8,67 @@ on:
   pull_request:
     branches: [main, master]
 
+# Superseded PR runs are cancelled. Push runs (main/master) get their own group (run_id), so a main run is never
+# cancelled, not even while pending: tag_when_green.sh needs a completed run on every release commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  # Light mode (docs/GITHUB_CI.md#light-mode-for-deps-and-docs-only-prs): one representative cell plus the cheap
+  # gates. The org (or repo) Actions variable NOWO_CI_PR_MODE picks the PR mode: light = every PR light; full = every
+  # PR full; auto / unset = light only when the PR touches nothing but composer.json / composer.lock (root or demo),
+  # docs/**, *.md, .github/ISSUE_TEMPLATE/**, specs/** or .cursor/**. push, tags, workflow_dispatch and schedule are
+  # always full. Fail-closed: any error, unknown value or empty output means full (jobs reduce only on 'light').
+  changes:
+    name: Change scope (light or full)
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.classify.outputs.mode }}
+    steps:
+      - name: Checkout code (PR merge commit and its base parent)
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Classify the change
+        id: classify
+        env:
+          EVENT: ${{ github.event_name }}
+          SWITCH: ${{ vars.NOWO_CI_PR_MODE }}
+          LIGHT: '^((demo/([^/]+/)?)?composer\.(json|lock)|docs/.*|specs/.*|\.cursor/.*|\.github/ISSUE_TEMPLATE/.*|.*\.md)$'
+        run: |
+          mode=full; paths=""
+          if [ "$EVENT" != pull_request ]; then
+            reason="event '$EVENT' always runs full"
+          else
+            case "$SWITCH" in
+              light) mode=light; reason="NOWO_CI_PR_MODE=light: every PR is light" ;;
+              full) reason="NOWO_CI_PR_MODE=full: every PR is full" ;;
+              ''|auto)
+                if files=$(git diff --name-only --no-renames HEAD^1 HEAD); then
+                  mode=light; reason="NOWO_CI_PR_MODE=${SWITCH:-unset} (auto): only deps/docs paths changed"
+                  while IFS= read -r f; do
+                    [ -n "$f" ] || continue
+                    if ! printf '%s\n' "$f" | grep -Eq "$LIGHT"; then mode=full; paths="$paths $f"; fi
+                  done <<< "$files"
+                  [ "$mode" = light ] || reason="NOWO_CI_PR_MODE=${SWITCH:-unset} (auto): non deps/docs paths changed:$paths"
+                else
+                  reason="NOWO_CI_PR_MODE=${SWITCH:-unset} (auto): git diff failed, fail-closed"
+                fi ;;
+              *) reason="NOWO_CI_PR_MODE='$SWITCH' is not light/auto/full, fail-closed" ;;
+            esac
+          fi
+          echo "mode=$mode ($reason)"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          {
+            echo "### CI mode: \`$mode\`"
+            echo ""
+            echo "$reason"
+            if [ "$EVENT" = pull_request ] && [ -n "${files:-}" ]; then echo ""; echo "Changed paths:"; echo '```'; echo "$files" | head -200; echo '```'; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
   git-hygiene:
     name: Git history (no Cursor co-author)
     runs-on: ubuntu-latest
@@ -26,6 +86,9 @@ jobs:
   test:
     name: PHP ${{ matrix.php }} - Symfony ${{ matrix.symfony }}
     runs-on: ubuntu-latest
+    needs: changes
+    # Never skip this job: a skipped matrix job reports its un-expanded name and the required contexts never appear.
+    if: ${{ !cancelled() }}
 
     strategy:
       fail-fast: false
@@ -39,11 +102,19 @@ jobs:
           - php: '8.3'
             symfony: '8.1'
 
+    env:
+      HEAVY: ${{ needs.changes.outputs.mode != 'light' || (matrix.php == '8.5' && matrix.symfony == '8.1') }}
     steps:
+      - name: Light mode (deps/docs-only PR) - covered by PHP 8.5 - Symfony 8.1
+        if: env.HEAVY != 'true'
+        run: echo "Light mode, this cell has nothing to do."
+
       - name: Checkout code
+        if: env.HEAVY == 'true'
         uses: actions/checkout@v7
 
       - name: Setup PHP
+        if: env.HEAVY == 'true'
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -52,13 +123,16 @@ jobs:
           tools: composer:v2
 
       - name: Validate composer.json
+        if: env.HEAVY == 'true'
         run: composer validate --strict
 
       - name: Get Composer cache directory
+        if: env.HEAVY == 'true'
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
+        if: env.HEAVY == 'true'
         uses: actions/cache@v6
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
@@ -68,9 +142,11 @@ jobs:
             ${{ runner.os }}-php-${{ matrix.php }}-composer-
 
       - name: Override Composer platform PHP (composer.json pins the minimum PHP for the lock)
+        if: env.HEAVY == 'true'
         run: composer config platform.php "${{ matrix.php }}.99"
 
       - name: Install dependencies with Symfony ${{ matrix.symfony }}
+        if: env.HEAVY == 'true'
         env:
           SYMFONY: ${{ matrix.symfony }}
         run: |
@@ -88,10 +164,12 @@ jobs:
             --no-interaction --no-update
           composer update --with-all-dependencies --no-interaction --prefer-dist --no-progress
       - name: Composer audit (Critical/High)
+        if: env.HEAVY == 'true'
         run: composer audit --locked
 
 
       - name: Run tests
+        if: env.HEAVY == 'true'
         run: |
           echo "🧪 Running tests on PHP ${{ matrix.php }} with Symfony ${{ matrix.symfony }}..."
           composer test
@@ -102,7 +180,7 @@ jobs:
           echo "✅ All tests passed successfully"
 
       - name: Run tests with coverage (PHP 8.2 + Symfony 7.4 only)
-        if: matrix.php == '8.2' && matrix.symfony == '7.4'
+        if: env.HEAVY == 'true' && (matrix.php == '8.2' && matrix.symfony == '7.4')
         run: |
           echo "📊 Generating coverage report..."
           composer test-coverage
@@ -116,6 +194,9 @@ jobs:
     # REQ-RUNTIME-003: two-connection race tests of the database commands (row locks, replay, CONFLICT_001/002).
     name: Databases (MySQL 8.4, MariaDB 11.4, PostgreSQL 16) - ${{ matrix.deps }}
     runs-on: ubuntu-latest
+    needs: changes
+    # Never skip this job: a skipped matrix job reports its un-expanded name and the required contexts never appear.
+    if: ${{ !cancelled() }}
 
     strategy:
       fail-fast: false
@@ -128,7 +209,7 @@ jobs:
 
     services:
       mysql:
-        image: mysql:8.4
+        image: ${{ needs.changes.outputs.mode != 'light' && 'mysql:8.4' || '' }}
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: dencrypt
@@ -136,7 +217,7 @@ jobs:
         options: >-
           --health-cmd="mysqladmin ping -h 127.0.0.1 -proot" --health-interval=5s --health-timeout=5s --health-retries=30
       mariadb:
-        image: mariadb:11.4
+        image: ${{ needs.changes.outputs.mode != 'light' && 'mariadb:11.4' || '' }}
         env:
           MARIADB_ROOT_PASSWORD: root
           MARIADB_DATABASE: dencrypt
@@ -144,7 +225,7 @@ jobs:
         options: >-
           --health-cmd="healthcheck.sh --connect --innodb_initialized" --health-interval=5s --health-timeout=5s --health-retries=30
       postgres:
-        image: postgres:16-alpine
+        image: ${{ needs.changes.outputs.mode != 'light' && 'postgres:16-alpine' || '' }}
         env:
           POSTGRES_PASSWORD: root
           POSTGRES_DB: dencrypt
@@ -152,11 +233,19 @@ jobs:
         options: >-
           --health-cmd="pg_isready -U postgres" --health-interval=5s --health-timeout=5s --health-retries=30
 
+    env:
+      HEAVY: ${{ needs.changes.outputs.mode != 'light' }}
     steps:
+      - name: Light mode (deps/docs-only PR) - no database run
+        if: env.HEAVY != 'true'
+        run: echo "Light mode, this cell has nothing to do."
+
       - name: Checkout code
+        if: env.HEAVY == 'true'
         uses: actions/checkout@v7
 
       - name: Setup PHP
+        if: env.HEAVY == 'true'
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -165,12 +254,15 @@ jobs:
           tools: composer:v2
 
       - name: Pin DBAL major
+        if: env.HEAVY == 'true'
         run: composer require "doctrine/dbal:${{ matrix.dbal }}" --no-update --no-interaction
 
       - name: Install dependencies
+        if: env.HEAVY == 'true'
         run: composer update --prefer-dist --no-progress --no-interaction --with-all-dependencies
 
       - name: Real-database race tests (none may be skipped)
+        if: env.HEAVY == 'true'
         env:
           DE_MYSQL_URL: mysql://root:root@127.0.0.1:3306/dencrypt
           DE_MARIADB_URL: mysql://root:root@127.0.0.1:3307/dencrypt
@@ -306,6 +398,9 @@ jobs:
   coverage:
     name: Code Coverage
     runs-on: ubuntu-latest
+    # Light mode: skipped (a skipped non-matrix job reports its own name with success for branch protection).
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.mode != 'light' }}
 
     steps:
       - name: Checkout code
@@ -355,6 +450,9 @@ jobs:
   igor:
     name: Igor (FrankenPHP worker audit)
     runs-on: ubuntu-latest
+    # Light mode: skipped (a skipped non-matrix job reports its own name with success for branch protection).
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.mode != 'light' }}
 
     steps:
       - name: Checkout code
