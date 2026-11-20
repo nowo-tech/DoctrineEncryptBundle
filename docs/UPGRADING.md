@@ -73,12 +73,18 @@
 No configuration change needed.
 
 - The unit of work's original data of a decrypted entity now holds the **plaintext** (it held the ciphertext). Code
-  that compares `UnitOfWork::getOriginalEntityData()` or a change set's old value with the stored ciphertext must
-  compare with the plaintext instead; a `preUpdate` listener now sees the old plaintext as the old value of a changed
-  encrypted field. Change sets computed outside a flush only list the fields the application changed.
+  that compares `UnitOfWork::getOriginalEntityData()` outside a flush with the stored ciphertext must compare with the
+  plaintext instead. Change sets computed outside a flush only list the fields the application changed.
+- During a flush, the old value of a changed (or cleared) encrypted field in the change set (`onFlush`, `preUpdate`)
+  is the **stored ciphertext** of the old value, and the new value is the new ciphertext, as before.
 - An untouched decrypted entity no longer causes an `UPDATE` on flush, and a flush no longer loads uninitialised
   proxies of encrypted classes. Lifecycle callbacks or listeners that relied on that spurious `UPDATE` (a
   `preUpdate` / `postUpdate` on every flush of a loaded entity) no longer run for untouched entities.
+- The listener is also registered for `prePersist` (encrypts entities persisted by a later `onFlush` listener). If you
+  register `DoctrineEncryptSubscriber` yourself instead of through the bundle, add that event.
+- After a rollback of an outer transaction around a successful flush, the rolled-back value is not written again
+  (Doctrine's normal behaviour): refresh or clear the entity. See
+  [CONCURRENCY.md](CONCURRENCY.md#listener-limitations).
 - The database commands (`doctrine:encrypt:database`, `doctrine:decrypt:database`, `doctrine:encrypt:rotate-keys`)
   write through DBAL and never relied on the change set: they re-encrypt every value they select, unchanged.
 

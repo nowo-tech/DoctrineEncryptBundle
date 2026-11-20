@@ -81,14 +81,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ciphertext as original data, so no `UPDATE` is issued for it. A changed value is still detected (the comparison is on
   the plaintext, so the randomised ciphertext never hides or fakes a change), only the changed fields are in the change
   set, and the `UPDATE` writes the new ciphertext. A value changed back to its original plaintext issues no `UPDATE`.
-  Embeddables (nested ones included), inheritance, lazily initialised proxies and `refresh()` are covered. Tested on
-  SQLite, MySQL 8.4, MariaDB 11.4 and PostgreSQL 16 (DBAL 3 and 4).
+  Embeddables (nested ones included), inheritance, lazily initialised proxies and `refresh()` are covered.
+- **Changes lost when the change sets were computed before the flush (2.14.0 and earlier).** When
+  `UnitOfWork::computeChangeSets()` ran outside a flush (a host-pending check, transaction-doctrine's `WriteUnit`, the
+  flush after a guard's refusal) and the entity had decrypted values, the flush replaced its change set with only the
+  re-encrypted fields: changes to other fields, an encrypted value set to `null` and to-one association changes were not
+  written, and an insertion computed early (SEQUENCE or assigned identifiers) lost its other columns or failed. The
+  change set of such an entity is now recomputed (merged) in `preFlush`: every change is kept, and its encrypted
+  entries hold ciphertext.
 - **Plaintext written after `refresh()` (2.14.0 and earlier).** When `UnitOfWork::computeChangeSets()` ran outside a
   flush while an encrypted value differed, and the entity was then refreshed, the next flush wrote the discarded value
-  in plaintext: the unit of work keeps a change set it computed earlier when the flush finds no difference, and that
-  change set held the plaintext. The flush now always replaces such a change set with the ciphertext.
+  in plaintext: the unit of work kept the earlier change set, which held the plaintext. Such an entry is now replaced
+  by a fresh ciphertext of the current value.
+- **Plaintext insert of an entity persisted by a later `onFlush` listener (2.14.0 and earlier).** An entity persisted
+  (and computed) by a host `onFlush` listener running after the bundle's was inserted in plaintext. The listener now
+  also listens to `prePersist` and encrypts entities persisted between its `onFlush` and its `postFlush`.
+- Flush listeners (`onFlush`, `preUpdate`) see the stored ciphertext as the old value of a changed or cleared encrypted
+  field, never the old plaintext.
 - `preFlush` and `postFlush` no longer initialise uninitialised proxies of encrypted classes (one `SELECT` per proxy on
   every flush): a proxy that was never loaded holds nothing to encrypt or decrypt.
+- Tested on SQLite, MySQL 8.4, MariaDB 11.4 and PostgreSQL 16 (DBAL 3 and 4).
 
 ## [2.14.0] - 2026-11-18
 

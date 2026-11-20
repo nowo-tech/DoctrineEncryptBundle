@@ -522,6 +522,13 @@ final class NowoSecretCipher implements SecretCipher
 - No events are dispatched (decrypt failures are handled by `on_decrypt_failure` and logged).
 - With the default `property_access: auto`, domain setters may receive ciphertext during a flush (unchanged from
   earlier versions); set `property_access: reflection` or use the DBAL types.
+- A plaintext set for an encrypted field through `PreUpdateEventArgs::setNewValue()` in a host `preUpdate` listener
+  is stored as is: set ciphertext there, or change the entity before the flush.
+- After a failed flush the entities hold ciphertext in memory until the next successful flush (a retry is correct).
+- After a rollback of an outer transaction the rolled-back value is not written again (Doctrine considers the entity
+  clean); refresh or clear it.
+- Flush listeners (`onFlush`, `preUpdate`) see the stored ciphertext as the old value of a changed encrypted field,
+  never the old plaintext. See [CONCURRENCY.md](CONCURRENCY.md#listener-limitations) for listener ordering.
 
 ## Console commands
 
