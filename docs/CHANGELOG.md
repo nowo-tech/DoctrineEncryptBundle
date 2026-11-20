@@ -102,8 +102,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   field, never the old plaintext, for every decrypted entity: inheritance subclasses, entities whose encrypted fields
   are all in embeddables and initialised proxies included (`preFlush` matches decrypted entities by identity, not by
   the identity map's root class name).
+- **Plaintext insert of a decrypted entity persisted again as new (2.14.0 and earlier).** An entity that had been
+  decrypted, then detached (or cleared) and persisted again as a new entity reached `onFlush` with its cached
+  ciphertext: the value was written back to the property without encrypting, the insertion's change set was not
+  recomputed, and the `INSERT` stored the plaintext. The insertion is now recomputed whenever a value is swapped.
 - An entity encrypted on persist that the flush did not insert (persisted from a `postUpdate` / `postPersist`
-  listener, which Doctrine drops, or after a failed flush) holds the plaintext again after `postFlush`.
+  listener, which Doctrine drops, or after a failed flush) holds the plaintext again after `postFlush`, and the
+  listener forgets its cached values, so persisting it again (after `clear()`, or in another entity manager) inserts
+  it encrypted.
 - `preFlush` and `postFlush` no longer initialise uninitialised proxies of encrypted classes (one `SELECT` per proxy on
   every flush): a proxy that was never loaded holds nothing to encrypt or decrypt.
 - Tested on SQLite, MySQL 8.4, MariaDB 11.4 and PostgreSQL 16 (DBAL 3 and 4).

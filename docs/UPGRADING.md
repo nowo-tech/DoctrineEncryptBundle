@@ -120,8 +120,14 @@ affected. After upgrading, check the listener-encrypted columns:
    php bin/console doctrine:encrypt:database personal_data --force --lock-timeout=10
    ```
 
-   Exit code `1` with `CONFLICT_002` means earlier chunks were committed: run the command again to resume. Run the
-   query of step 1 again afterwards; it must return no rows.
+   Exit code `1` with `CONFLICT_001` (nothing changed) or `CONFLICT_002` (earlier chunks committed) means a chunk stayed
+   blocked by application locks: run the command again (it resumes). Run the query of step 1 again afterwards; it must
+   return no rows.
+
+   A value that is exactly `<ENC>`, or a plaintext that itself ends with `<ENC>`, is neither listed by the query nor
+   changed by the command: the command counts such values as `skipped_marked` and reports them ("end with `<ENC>` but
+   do not decrypt"). Check those rows by hand (compare with the application's data) and fix them through the
+   application, which encrypts on save.
 3. **Copies outside the table still hold the plaintext.** Re-encrypting the rows does not change what was copied
    before:
    - **backups and dumps** taken while the value was in plaintext: delete them or restore-and-re-encrypt them, within
