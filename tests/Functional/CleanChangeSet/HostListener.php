@@ -29,4 +29,9 @@ final readonly class HostListener
     {
         ($this->callback)($args);
     }
+
+    public function postUpdate(object $args): void
+    {
+        ($this->callback)($args);
+    }
 }

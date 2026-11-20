@@ -181,6 +181,24 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      */
     private WeakMap $flushingManagers; // @igor-ignore - Set and cleared within one flush (preFlush clears it too), reset() clears it.
 
+    /**
+     * Entities prePersist encrypted, per entity manager, so postFlush decrypts them even when the flush did not insert
+     * them (persisted from a postUpdate / postPersist listener, or before the next flush after a failed one). Cleared by
+     * postFlush and reset(); entries disappear with the manager.
+     *
+     * @var WeakMap<object, list<object>>
+     */
+    private WeakMap $encryptedOnPersist; // @igor-ignore - Filled during a flush and drained by its postFlush, reset() clears it.
+
+    /**
+     * Managed entities this listener decrypted (postLoad, postUpdate, postFlush), whatever their class: an inheritance
+     * subclass, an entity whose encrypted fields are all in embeddables, or a proxy. preFlush restores or re-encrypts
+     * exactly these. Entries disappear with the entity.
+     *
+     * @var WeakMap<object, true>
+     */
+    private WeakMap $decryptedEntities; // @igor-ignore - Entity-keyed weak map, never outlives the identity map; reset() clears it.
+
     private readonly LoggerInterface $logger;
 
     private readonly EncryptedFieldMap $encryptedFields;
@@ -207,10 +225,12 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
         }
         $this->encryptedFields = $encryptedFields ?? new EncryptedFieldMap();
 
-        $this->cachedDecryptions = new WeakMap();
-        $this->knownCiphertexts  = new WeakMap();
-        $this->flushingManagers  = new WeakMap();
-        $this->logger            = $logger ?? new NullLogger();
+        $this->cachedDecryptions  = new WeakMap();
+        $this->knownCiphertexts   = new WeakMap();
+        $this->flushingManagers   = new WeakMap();
+        $this->encryptedOnPersist = new WeakMap();
+        $this->decryptedEntities  = new WeakMap();
+        $this->logger             = $logger ?? new NullLogger();
 
         if ($registryOrEncryptor instanceof EncryptorInterface) {
             $this->registry = new EncryptorRegistry(['default' => $registryOrEncryptor], 'default');
@@ -272,6 +292,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
     {
         $this->cachedDecryptions = new WeakMap();
         $this->knownCiphertexts  = new WeakMap();
+        $this->decryptedEntities = new WeakMap();
     }
 
     /**
@@ -290,6 +311,8 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
         $this->encryptCounter       = 0;
         $this->swappedValues        = null;
         $this->flushingManagers     = new WeakMap();
+        $this->encryptedOnPersist   = new WeakMap();
+        $this->decryptedEntities    = new WeakMap();
         // Class-metadata caches (no entity or request data): dropped too, rebuilt once per class on next use.
         $this->accessModes      = [];
         $this->fieldMap         = [];
@@ -333,27 +356,25 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      */
     public function preFlush(PreFlushEventArgs $preFlushEventArgs): void
     {
-        $decryptedClasses = [];
-        foreach ($this->cachedDecryptions as $decryptedEntity => $unused) {
-            $decryptedClasses[$decryptedEntity::class] = true;
-        }
-
-        // Only forget the entities of the entity manager being flushed: the listener instance is shared
-        // by every connection it is registered on, and another manager's decrypted entities still need
-        // their cached ciphertext (otherwise unchanged secrets are re-encrypted and rewritten).
+        // Only the decrypted entities of the entity manager being flushed: the listener instance is shared by every
+        // connection it is registered on, and another manager's decrypted entities still need their cached ciphertext
+        // (otherwise unchanged secrets are re-encrypted and rewritten). Entities are matched by identity, not by class:
+        // the identity map is keyed by root entity name, while a decrypted entity may be a subclass, a proxy, or have
+        // its encrypted fields in an embeddable (cached under the embeddable object).
         $entityManager = $preFlushEventArgs->getObjectManager();
         unset($this->flushingManagers[$entityManager]);
         $unitOfWOrk = $entityManager->getUnitOfWork();
-        foreach ($unitOfWOrk->getIdentityMap() as $entityName => $entityArray) {
-            if (isset($decryptedClasses[$entityName])) {
-                foreach ($entityArray as $instance) {
-                    // An uninitialized proxy was never decrypted: reading it here would only load it.
-                    if ($unitOfWOrk->isUninitializedObject($instance)) {
-                        continue;
-                    }
-                    $this->processManagedEntity($entityManager, $instance, true);
-                    unset($this->cachedDecryptions[$instance]);
+        foreach ($unitOfWOrk->getIdentityMap() as $entityArray) {
+            foreach ($entityArray as $instance) {
+                if (!isset($this->decryptedEntities[$instance]) && !isset($this->cachedDecryptions[$instance])) {
+                    continue;
                 }
+                // An uninitialized proxy was never decrypted: reading it here would only load it.
+                if ($unitOfWOrk->isUninitializedObject($instance)) {
+                    continue;
+                }
+                $this->processManagedEntity($entityManager, $instance, true);
+                unset($this->cachedDecryptions[$instance], $this->decryptedEntities[$instance]);
             }
         }
     }
@@ -384,8 +405,13 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      */
     public function prePersist(PrePersistEventArgs $args): void
     {
-        if (isset($this->flushingManagers[$args->getObjectManager()])) {
-            $this->processFields($args->getObject());
+        $entityManager = $args->getObjectManager();
+        if (isset($this->flushingManagers[$entityManager])) {
+            $entity = $args->getObject();
+            $this->processFields($entity);
+            $tracked                                  = $this->encryptedOnPersist[$entityManager] ?? [];
+            $tracked[]                                = $entity;
+            $this->encryptedOnPersist[$entityManager] = $tracked;
         }
     }
 
@@ -405,6 +431,15 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
                 }
                 $this->processManagedEntity($entityManager, $entity, false);
             }
+        }
+
+        // Entities encrypted on persist that this flush did not insert (persisted from a postUpdate / postPersist
+        // listener, or after a failed flush): they are not in the identity map yet, so decrypt them here. The next
+        // flush encrypts them again on insert.
+        $tracked = $this->encryptedOnPersist[$entityManager] ?? [];
+        unset($this->encryptedOnPersist[$entityManager]);
+        foreach ($tracked as $entity) {
+            $this->processFields($entity, false);
         }
     }
 
@@ -445,6 +480,10 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
 
         if ($swapped === []) {
             return;
+        }
+
+        if (!$isEncryptOperation) {
+            $this->decryptedEntities[$entity] = true;
         }
 
         $unitOfWork = $entityManager->getUnitOfWork();

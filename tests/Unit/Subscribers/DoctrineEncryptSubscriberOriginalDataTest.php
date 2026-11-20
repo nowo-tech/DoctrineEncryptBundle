@@ -22,6 +22,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionProperty;
+use stdClass;
 
 use function spl_object_id;
 
@@ -152,18 +153,49 @@ final class DoctrineEncryptSubscriberOriginalDataTest extends TestCase
         $this->assertSame(['name' => 'encrypted-David<ENC>', 'address' => 'encrypted-Switzerland<ENC>'], $uow->original[spl_object_id($user)]);
     }
 
-    public function testPreFlushNewValueWithoutStoredCiphertextKeepsItsOriginalData(): void
+    public function testPreFlushLeavesEntitiesItDidNotDecryptToOnFlush(): void
     {
-        $user = new User('David', null);
-        $uow  = $this->unitOfWork([spl_object_id($user) => ['name' => null]], [User::class => ['id1' => $user]]);
-        // The class must have a decrypted instance for preFlush to look at it.
+        // Same class as a decrypted entity, but never decrypted itself (a new entity): onFlush encrypts insertions.
+        $user  = new User('David', null);
+        $uow   = $this->unitOfWork([spl_object_id($user) => ['name' => 'David']], [User::class => ['id1' => $user]]);
         $other = new User('encrypted-Other<ENC>', null);
         $this->subscriber->processFields($other, false);
 
         $this->subscriber->preFlush(new PreFlushEventArgs($this->entityManager($uow, $this->metadata(['name']))));
 
+        $this->assertSame('David', $user->name);
+        $this->assertSame(0, $uow->recomputed);
+    }
+
+    public function testPreFlushRestoresADecryptedEntityWhateverItsClass(): void
+    {
+        // Decrypted through postLoad: matched by identity, not by the identity map's (root) class name.
+        $user = new User('encrypted-David<ENC>', null);
+        $uow  = $this->unitOfWork([spl_object_id($user) => ['name' => 'encrypted-David<ENC>']], [stdClass::class => ['id1' => $user]]);
+        $em   = $this->entityManager($uow, $this->metadata(['name']));
+        $this->subscriber->postLoad(new PostLoadEventArgs($user, $em));
+
+        $this->subscriber->preFlush(new PreFlushEventArgs($em));
+
         $this->assertSame('encrypted-David<ENC>', $user->name);
-        $this->assertSame(['name' => null], $uow->original[spl_object_id($user)]);
+        $this->assertSame(['name' => 'encrypted-David<ENC>'], $uow->original[spl_object_id($user)]);
+    }
+
+    public function testPostFlushDecryptsEntitiesEncryptedOnPersistThatWereNotInserted(): void
+    {
+        $uow = $this->unitOfWork([]);
+        $em  = $this->entityManager($uow, $this->metadata(['name']));
+        $this->subscriber->onFlush(new OnFlushEventArgs($em));
+        $late = new User('late', null);
+        $this->subscriber->prePersist(new PrePersistEventArgs($late, $em));
+        $this->assertSame('encrypted-late<ENC>', $late->name);
+
+        $this->subscriber->postFlush(new PostFlushEventArgs($em));
+
+        $this->assertSame('late', $late->name, 'Not in the identity map, decrypted anyway');
+        $this->assertSame([], iterator_to_array((function () {
+            yield from (new ReflectionProperty(DoctrineEncryptSubscriber::class, 'encryptedOnPersist'))->getValue($this->subscriber);
+        })()));
     }
 
     public function testPreFlushRecomputesAnEntityThatAlreadyHasAChangeSet(): void
@@ -182,21 +214,6 @@ final class DoctrineEncryptSubscriberOriginalDataTest extends TestCase
         $this->assertSame($before + 1, $this->subscriber->encryptCounter);
         $this->assertSame('encrypted-David<ENC>', $user->name);
         $this->assertSame(['name' => 'encrypted-David<ENC>', 'address' => 'encrypted-Switzerland<ENC>'], $uow->original[spl_object_id($user)]);
-        $this->assertSame(1, $uow->recomputed);
-    }
-
-    public function testPreFlushRecomputesAnInsertionComputedEarly(): void
-    {
-        $user                 = new User('David', null);
-        $uow                  = $this->unitOfWork([spl_object_id($user) => ['name' => 'David']], [User::class => ['id1' => $user]]);
-        $uow->scheduledInsert = true;
-        $uow->changeSet       = ['name' => [null, 'David']];
-        $other                = new User('encrypted-Other<ENC>', null);
-        $this->subscriber->processFields($other, false);
-
-        $this->subscriber->preFlush(new PreFlushEventArgs($this->entityManager($uow, $this->metadata(['name']))));
-
-        $this->assertSame('encrypted-David<ENC>', $user->name);
         $this->assertSame(1, $uow->recomputed);
     }
 

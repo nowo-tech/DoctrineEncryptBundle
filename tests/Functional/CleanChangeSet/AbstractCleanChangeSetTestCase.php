@@ -22,6 +22,7 @@ use Nowo\DoctrineEncryptBundle\Tests\Functional\CleanChangeSet\fixtures\Account;
 use Nowo\DoctrineEncryptBundle\Tests\Functional\CleanChangeSet\fixtures\Address;
 use Nowo\DoctrineEncryptBundle\Tests\Functional\CleanChangeSet\fixtures\Animal;
 use Nowo\DoctrineEncryptBundle\Tests\Functional\CleanChangeSet\fixtures\Badge;
+use Nowo\DoctrineEncryptBundle\Tests\Functional\CleanChangeSet\fixtures\Contact;
 use Nowo\DoctrineEncryptBundle\Tests\Functional\CleanChangeSet\fixtures\Dog;
 use Nowo\DoctrineEncryptBundle\Tests\Functional\CleanChangeSet\fixtures\Geo;
 use Nowo\DoctrineEncryptBundle\Tests\Functional\CleanChangeSet\fixtures\Note;
@@ -31,6 +32,7 @@ use Nowo\TransactionDoctrine\WriteUnit\WriteUnit;
 use Nowo\TransactionDoctrine\WriteUnit\WriteUnitPolicy;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Throwable;
 
 use function array_filter;
@@ -705,6 +707,169 @@ abstract class AbstractCleanChangeSetTestCase extends TestCase
         self::assertSame('nested', $this->em->getConnection()->fetchOne('SELECT not_secret FROM ccs_account WHERE id = ?', [$id]));
         self::assertSame('outer', $account->getSecret());
         self::assertSame('nested street', $account->getAddress()->getStreet());
+    }
+
+    /**
+     * WE-R1: the change set seen by onFlush / preUpdate holds ciphertext for every kind of decrypted entity, not only
+     * for entities whose class is the identity map's root entity name.
+     *
+     * @return iterable<string, array{string}>
+     */
+    public static function decryptedEntityKinds(): iterable
+    {
+        yield 'inheritance subclass' => ['subclass'];
+        yield 'encrypted fields only in an embeddable' => ['embedded-only'];
+        yield 'initialised proxy' => ['proxy'];
+    }
+
+    #[DataProvider('decryptedEntityKinds')]
+    public function testFlushListenersSeeCiphertextForEveryDecryptedEntityKind(string $kind): void
+    {
+        [$entity, $field, $table, $column, $id, $newValue] = match ($kind) {
+            'subclass'      => $this->loadedDog(),
+            'embedded-only' => $this->loadedContact(),
+            default         => $this->initialisedAccountProxy(),
+        };
+        $before = $this->em->getConnection()->fetchOne('SELECT ' . $column . ' FROM ' . $table . ' WHERE id = ?', [$id]);
+        self::assertTrue(is_string($before));
+
+        $seen    = [];
+        $onFlush = new HostListener(static function (OnFlushEventArgs $args) use ($entity, $field, &$seen): void {
+            $seen['onFlush'] = $args->getObjectManager()->getUnitOfWork()->getEntityChangeSet($entity)[$field] ?? null;
+        });
+        $preUpdate = new HostListener(static function (PreUpdateEventArgs $args) use ($entity, $field, &$seen): void {
+            if ($args->getObject() === $entity && $args->hasChangedField($field)) {
+                $seen['preUpdate'] = [$args->getOldValue($field), $args->getNewValue($field)];
+            }
+        });
+        $events = $this->em->getEventManager();
+        $events->addEventListener([Events::onFlush], $onFlush);
+        $events->addEventListener([Events::preUpdate], $preUpdate);
+        $this->em->flush();
+        $events->removeEventListener([Events::onFlush], $onFlush);
+        $events->removeEventListener([Events::preUpdate], $preUpdate);
+
+        foreach (['onFlush', 'preUpdate'] as $event) {
+            self::assertIsArray($seen[$event] ?? null, $event . ' saw the change');
+            self::assertSame($before, $seen[$event][0], $event . ': old value is the stored ciphertext');
+            self::assertStringEndsWith(self::MARKER, (string) $seen[$event][1], $event . ': new value is ciphertext');
+        }
+        $after = $this->em->getConnection()->fetchOne('SELECT ' . $column . ' FROM ' . $table . ' WHERE id = ?', [$id]);
+        self::assertTrue(is_string($after));
+        self::assertSame($newValue, $this->decryptRaw($after));
+    }
+
+    /**
+     * WE-R2 (P40): an entity persisted from a host postUpdate listener is not inserted by that flush (Doctrine drops
+     * it); it holds the plaintext again after the flush instead of the ciphertext.
+     */
+    public function testEntityPersistedInAPostUpdateListenerHoldsThePlaintextAfterTheFlush(): void
+    {
+        $id      = $this->seedAccount();
+        $account = $this->em->find(Account::class, $id);
+        self::assertInstanceOf(Account::class, $account);
+
+        $late = new Account('late secret', 'x', new Address('Late St', 'X', new Geo('2,2')));
+        // postUpdate runs once: the account is the only updated entity.
+        $listener = new HostListener(function () use ($late): void {
+            $this->em->persist($late);
+        });
+        $this->em->getEventManager()->addEventListener([Events::postUpdate], $listener);
+        $account->setNotSecret('dirty');
+        $this->em->flush();
+        $this->em->getEventManager()->removeEventListener([Events::postUpdate], $listener);
+
+        self::assertSame('late secret', $late->getSecret());
+        self::assertSame('Late St', $late->getAddress()->getStreet());
+
+        // Doctrine drops an insertion scheduled while it commits (no listener involved): nothing is written for it.
+        // (With a SEQUENCE identifier, PostgreSQL on DBAL 3, it even has an id, but no row.)
+        $this->em->flush();
+        self::assertSame('late secret', $late->getSecret());
+        self::assertSame(1, (int) $this->em->getConnection()->fetchOne('SELECT COUNT(*) FROM ccs_account'));
+    }
+
+    /**
+     * WE-R2 (P41): after a host onFlush listener threw, an entity persisted before the next flush is stored encrypted
+     * and holds the plaintext after that flush.
+     */
+    public function testEntityPersistedAfterAFailedFlushHoldsThePlaintextAfterTheNextFlush(): void
+    {
+        $id      = $this->seedAccount();
+        $account = $this->em->find(Account::class, $id);
+        self::assertInstanceOf(Account::class, $account);
+
+        $listener = new HostListener(static function (): void {
+            throw new RuntimeException('host onFlush failure');
+        });
+        $this->em->getEventManager()->addEventListener([Events::onFlush], $listener);
+        $account->setNotSecret('dirty');
+        $failure = null;
+        try {
+            $this->em->flush();
+        } catch (Throwable $throwable) {
+            $failure = $throwable;
+        }
+        self::assertInstanceOf(RuntimeException::class, $failure);
+        self::assertTrue($this->em->isOpen());
+
+        $this->em->getEventManager()->removeEventListener([Events::onFlush], $listener);
+
+        $created = new Account('after failure', 'y', new Address('After St', 'Y', new Geo('3,3')));
+        $this->em->persist($created);
+        $this->em->flush();
+
+        self::assertSame('after failure', $this->decryptRaw($this->rawAccount((int) $created->getId())['secret']));
+        self::assertSame('after failure', $created->getSecret());
+        self::assertSame('dirty', $this->em->getConnection()->fetchOne('SELECT not_secret FROM ccs_account WHERE id = ?', [$id]));
+        self::assertSame('s3cr3t', $account->getSecret());
+    }
+
+    /**
+     * @return array{object, string, string, string, int, string}
+     */
+    private function loadedDog(): array
+    {
+        $dog = new Dog('chip-1', 'Ana');
+        $this->em->persist($dog);
+        $this->em->flush();
+        $id = (int) $dog->getId();
+        $this->em->clear();
+        $loaded = $this->em->find(Animal::class, $id);
+        self::assertInstanceOf(Dog::class, $loaded);
+        $loaded->setChip('chip-2');
+
+        return [$loaded, 'chip', 'ccs_animal', 'chip', $id, 'chip-2'];
+    }
+
+    /**
+     * @return array{object, string, string, string, int, string}
+     */
+    private function loadedContact(): array
+    {
+        $contact = new Contact('n', new Address('Emb St', 'C', new Geo('1,2')));
+        $this->em->persist($contact);
+        $this->em->flush();
+        $id = (int) $contact->getId();
+        $this->em->clear();
+        $loaded = $this->em->find(Contact::class, $id);
+        self::assertInstanceOf(Contact::class, $loaded);
+        $loaded->getAddress()->setStreet('Emb 2');
+
+        return [$loaded, 'address.street', 'ccs_contact', 'address_street', $id, 'Emb 2'];
+    }
+
+    /**
+     * @return array{object, string, string, string, int, string}
+     */
+    private function initialisedAccountProxy(): array
+    {
+        $id    = $this->seedAccount();
+        $proxy = $this->accountReference($id);
+        self::assertSame('s3cr3t', $proxy->getSecret());
+        $proxy->setSecret('px');
+
+        return [$proxy, 'secret', 'ccs_account', 'secret', $id, 'px'];
     }
 
     private function accountReference(int $id): Account
