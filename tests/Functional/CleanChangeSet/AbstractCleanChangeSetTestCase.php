@@ -32,6 +32,7 @@ use Nowo\TransactionDoctrine\WriteUnit\WriteUnit;
 use Nowo\TransactionDoctrine\WriteUnit\WriteUnitPolicy;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use RuntimeException;
 use Throwable;
 
@@ -69,6 +70,9 @@ abstract class AbstractCleanChangeSetTestCase extends TestCase
 
     protected SqlQueryCollector $queries;
 
+    /** @var array<string, mixed> */
+    private array $params = [];
+
     /**
      * Connection parameters of the database the scenarios run on (the test is skipped when it returns null).
      *
@@ -87,28 +91,39 @@ abstract class AbstractCleanChangeSetTestCase extends TestCase
             self::markTestSkipped(static::class . ': database URL not set.');
         }
 
-        $this->queries = new SqlQueryCollector();
-        $dbalConfig    = new DbalConfiguration();
-        $dbalConfig->setMiddlewares([new Middleware($this->queries)]);
-        $connection = DriverManager::getConnection($params, $dbalConfig);
-
-        $config = ORMSetup::createAttributeMetadataConfiguration([__DIR__ . '/fixtures'], true);
-        if (PHP_VERSION_ID >= 80400) {
-            $config->enableNativeLazyObjects(true);
-        }
-        $this->em = new EntityManager($connection, $config);
+        $this->params     = $params;
+        $this->queries    = new SqlQueryCollector();
+        $this->encryptor  = new HaliteEncryptor(__DIR__ . '/../fixtures/halite.key');
+        $this->subscriber = new DoctrineEncryptSubscriber($this->encryptor);
+        $this->em         = $this->createEntityManager($this->queries);
 
         $schemaTool = new SchemaTool($this->em);
         $classes    = $this->em->getMetadataFactory()->getAllMetadata();
         $schemaTool->dropSchema($classes);
         $schemaTool->createSchema($classes);
+    }
 
-        $this->encryptor  = new HaliteEncryptor(__DIR__ . '/../fixtures/halite.key');
-        $this->subscriber = new DoctrineEncryptSubscriber($this->encryptor);
-        $this->em->getEventManager()->addEventListener(
+    /**
+     * An entity manager on its own connection to the test database, with the shared listener (as in a worker that
+     * keeps the listener across requests, or a second manager).
+     */
+    private function createEntityManager(SqlQueryCollector $queries): EntityManager
+    {
+        $dbalConfig = new DbalConfiguration();
+        $dbalConfig->setMiddlewares([new Middleware($queries)]);
+        $connection = DriverManager::getConnection($this->params, $dbalConfig);
+
+        $config = ORMSetup::createAttributeMetadataConfiguration([__DIR__ . '/fixtures'], true);
+        if (PHP_VERSION_ID >= 80400) {
+            $config->enableNativeLazyObjects(true);
+        }
+        $entityManager = new EntityManager($connection, $config);
+        $entityManager->getEventManager()->addEventListener(
             [Events::postUpdate, Events::preUpdate, Events::postLoad, Events::onFlush, Events::preFlush, Events::postFlush, Events::prePersist],
             $this->subscriber,
         );
+
+        return $entityManager;
     }
 
     protected function tearDown(): void
@@ -823,6 +838,93 @@ abstract class AbstractCleanChangeSetTestCase extends TestCase
         self::assertSame('after failure', $created->getSecret());
         self::assertSame('dirty', $this->em->getConnection()->fetchOne('SELECT not_secret FROM ccs_account WHERE id = ?', [$id]));
         self::assertSame('s3cr3t', $account->getSecret());
+    }
+
+    /**
+     * WE-R4 (P46): an entity persisted from a postUpdate listener (dropped by Doctrine, decrypted by postFlush) and
+     * persisted again after clear() is inserted encrypted, not with a cached ciphertext the insert would ignore.
+     */
+    public function testLatePersistedEntityPersistedAgainAfterClearIsStoredEncrypted(): void
+    {
+        $late = $this->latePersistedAccount();
+
+        $this->em->clear();
+        $this->em->persist($late);
+        $this->em->flush();
+
+        $raw = $this->rawAccount((int) $late->getId());
+        self::assertSame('late secret', $this->decryptRaw($raw['secret']));
+        self::assertSame('Late St', $this->decryptRaw($raw['address_street']));
+        self::assertSame('2,2', $this->decryptRaw($raw['address_geo_point']));
+        self::assertSame('late secret', $late->getSecret());
+    }
+
+    /**
+     * WE-R4 (P46b): the same entity persisted in another entity manager sharing the listener (the next worker request
+     * with kernel reset off, or a second manager) is inserted encrypted.
+     */
+    public function testLatePersistedEntityPersistedInAnotherManagerIsStoredEncrypted(): void
+    {
+        $late = $this->latePersistedAccount();
+
+        $other = $this->createEntityManager(new SqlQueryCollector());
+        $other->persist($late);
+        $other->flush();
+
+        $raw = $this->rawAccount((int) $late->getId());
+        self::assertSame('late secret', $this->decryptRaw($raw['secret']));
+        self::assertSame('Late St', $this->decryptRaw($raw['address_street']));
+        self::assertSame('late secret', $late->getSecret());
+        $other->getConnection()->close();
+    }
+
+    /**
+     * A decrypted entity detached and persisted again as new (generated identifier cleared, here in another manager)
+     * reaches onFlush with its cached ciphertext: restoring it must also recompute the insertion.
+     */
+    public function testDecryptedEntityPersistedAgainAsNewIsStoredEncrypted(): void
+    {
+        $id      = $this->seedAccount();
+        $account = $this->em->find(Account::class, $id);
+        self::assertInstanceOf(Account::class, $account);
+        self::assertSame('s3cr3t', $account->getSecret());
+        $this->em->detach($account);
+        (new ReflectionProperty(Account::class, 'id'))->setValue($account, null);
+
+        $other = $this->createEntityManager(new SqlQueryCollector());
+        $other->persist($account);
+        $other->flush();
+
+        $newId = (int) $account->getId();
+        self::assertNotSame($id, $newId);
+        $raw = $this->rawAccount($newId);
+        self::assertSame('s3cr3t', $this->decryptRaw($raw['secret']));
+        self::assertSame('Main St 1', $this->decryptRaw($raw['address_street']));
+        self::assertSame('s3cr3t', $account->getSecret());
+        $other->getConnection()->close();
+    }
+
+    /**
+     * An account persisted from a host postUpdate listener: Doctrine drops that insertion, and the listener's
+     * postFlush decrypts the entity again.
+     */
+    private function latePersistedAccount(): Account
+    {
+        $id      = $this->seedAccount();
+        $account = $this->em->find(Account::class, $id);
+        self::assertInstanceOf(Account::class, $account);
+        $late     = new Account('late secret', 'x', new Address('Late St', 'X', new Geo('2,2')));
+        $listener = new HostListener(function () use ($late): void {
+            $this->em->persist($late);
+        });
+        $this->em->getEventManager()->addEventListener([Events::postUpdate], $listener);
+        $account->setNotSecret('dirty');
+        $this->em->flush();
+        $this->em->getEventManager()->removeEventListener([Events::postUpdate], $listener);
+        $this->em->flush();
+        self::assertSame('late secret', $late->getSecret());
+
+        return $late;
     }
 
     /**

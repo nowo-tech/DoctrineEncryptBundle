@@ -389,9 +389,17 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
         $this->flushingManagers[$entityManager] = true;
         $unitOfWork                             = $entityManager->getUnitOfWork();
         foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
-            $encryptCounterBefore = $this->encryptCounter;
-            $this->processFields($entity);
-            if ($this->encryptCounter > $encryptCounterBefore && $unitOfWork->getOriginalEntityData($entity) !== []) {
+            // Recompute whenever a value was swapped, not only when one was encrypted: an unchanged value with a
+            // cached ciphertext (an entity decrypted, detached and persisted again) is written back without encrypting.
+            $previous            = $this->swappedValues;
+            $this->swappedValues = [];
+            try {
+                $this->processFields($entity);
+                $swapped = $this->collectedSwaps();
+            } finally {
+                $this->swappedValues = $previous;
+            }
+            if ($swapped !== [] && $unitOfWork->getOriginalEntityData($entity) !== []) {
                 $unitOfWork->recomputeSingleEntityChangeSet($entityManager->getClassMetadata($entity::class), $entity);
             }
         }
@@ -440,6 +448,11 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
         unset($this->encryptedOnPersist[$entityManager]);
         foreach ($tracked as $entity) {
             $this->processFields($entity, false);
+            if (!$unitOfWork->isInIdentityMap($entity)) {
+                // Not inserted: it is a new entity again, so the next insert must encrypt it afresh, never restore a
+                // cached ciphertext.
+                $this->forgetEntity($entity);
+            }
         }
     }
 
@@ -550,6 +563,24 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
                     $unitOfWork->setOriginalEntityProperty($oid, $field, $swap['after']);
                     break;
                 }
+            }
+        }
+    }
+
+    /**
+     * Forgets what this listener cached about an entity and its embedded objects (the decrypted values and the
+     * ciphertext written for them).
+     */
+    private function forgetEntity(object $entity): void
+    {
+        unset($this->cachedDecryptions[$entity], $this->knownCiphertexts[$entity], $this->decryptedEntities[$entity]);
+        foreach ($this->fieldMap($this->getRealClass($entity)) as [$refProperty, $encryptedAttr]) {
+            if ($encryptedAttr instanceof Encrypted) {
+                continue;
+            }
+            $embedded = $this->readProperty($entity, $refProperty);
+            if (is_object($embedded)) {
+                $this->forgetEntity($embedded);
             }
         }
     }
