@@ -11,12 +11,12 @@ use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Platforms\SQLServerPlatform;
-use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use InvalidArgumentException;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Doctrine\Types\AbstractEncryptedType;
+use Nowo\DoctrineEncryptBundle\Doctrine\Types\DbalTypeLookup;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Exception\ChunkLockConflictException;
@@ -280,10 +280,7 @@ abstract class AbstractCommand extends Command
         $fields = [];
         foreach ($entityMetaData->getFieldNames() as $fieldName) {
             $typeName = $entityMetaData->getTypeOfField($fieldName);
-            if (!is_string($typeName) || !Type::hasType($typeName)) {
-                continue;
-            }
-            $type = Type::getType($typeName);
+            $type     = is_string($typeName) ? DbalTypeLookup::find($this->entityManager->getConnection(), $typeName) : null;
             if (!$type instanceof AbstractEncryptedType) {
                 continue;
             }

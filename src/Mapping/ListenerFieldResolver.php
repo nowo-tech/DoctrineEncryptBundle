@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Mapping;
 
-use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\Embedded;
 use Nowo\DoctrineEncryptBundle\Configuration\Encrypted;
 use Nowo\DoctrineEncryptBundle\Doctrine\Types\AbstractEncryptedType;
+use Nowo\DoctrineEncryptBundle\Doctrine\Types\DbalTypeLookup;
 use ReflectionClass;
 use ReflectionProperty;
 
@@ -108,10 +109,11 @@ final class ListenerFieldResolver
      * Fields the listener encrypts that are mapped with an encrypted DBAL type too (they would be encrypted twice).
      *
      * @param ClassMetadata<object> $metadata
+     * @param Connection|null $connection Connection whose type provider resolves the type names (doctrine/dbal >= 4.6 deprecates the static registry)
      *
      * @return list<string>
      */
-    public function fieldsAlsoMappedWithEncryptedType(ClassMetadata $metadata): array
+    public function fieldsAlsoMappedWithEncryptedType(ClassMetadata $metadata, ?Connection $connection = null): array
     {
         $fields = array_keys($this->properties($metadata->name));
         foreach ($this->embeddedFields($metadata) as $embedded) {
@@ -124,7 +126,7 @@ final class ListenerFieldResolver
                 continue;
             }
             $type = $metadata->getTypeOfField($field);
-            if (is_string($type) && Type::hasType($type) && Type::getType($type) instanceof AbstractEncryptedType) {
+            if (is_string($type) && DbalTypeLookup::find($connection, $type) instanceof AbstractEncryptedType) {
                 $doubled[] = $field;
             }
         }

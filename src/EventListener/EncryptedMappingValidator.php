@@ -47,7 +47,7 @@ final readonly class EncryptedMappingValidator
             }
         }
 
-        $doubled = $this->resolver->fieldsAlsoMappedWithEncryptedType($metadata);
+        $doubled = $this->resolver->fieldsAlsoMappedWithEncryptedType($metadata, $args->getEntityManager()->getConnection());
         if ($doubled !== []) {
             throw new LogicException(sprintf('nowo_doctrine_encrypt: %s field(s) "%s" are selected for the listener (#[Encrypted] or encrypted_fields) and mapped with an encrypted DBAL type: they would be encrypted twice. Use one of the two.', $metadata->name, implode('", "', $doubled)));
         }

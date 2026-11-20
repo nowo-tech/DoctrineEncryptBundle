@@ -101,7 +101,7 @@ abstract class AbstractEncryptedType extends Type
      */
     public function getRegisteredName(): string
     {
-        return Type::getTypeRegistry()->lookupName($this);
+        return DbalTypeLookup::nameOf($this);
     }
 
     /**

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Tests\Unit\EventListener;
 
-use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -13,6 +12,7 @@ use Nowo\DoctrineEncryptBundle\Doctrine\Types\EncryptedStringType;
 use Nowo\DoctrineEncryptBundle\EventListener\EncryptedMappingValidator;
 use Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap;
 use Nowo\DoctrineEncryptBundle\Mapping\ListenerFieldResolver;
+use Nowo\DoctrineEncryptBundle\Tests\Support\DbalTypeFixtures;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\PlainAddress;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\PlainProfile;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\User;
@@ -20,13 +20,6 @@ use PHPUnit\Framework\TestCase;
 
 final class EncryptedMappingValidatorTest extends TestCase
 {
-    public static function setUpBeforeClass(): void
-    {
-        if (!Type::hasType('encrypted_string')) {
-            Type::addType('encrypted_string', EncryptedStringType::class);
-        }
-    }
-
     public function testValidSelectionPasses(): void
     {
         $metadata = $this->profileMetadata('string');
@@ -35,6 +28,13 @@ final class EncryptedMappingValidatorTest extends TestCase
         // Default configuration: nothing selected, nothing to check.
         $this->validate(new EncryptedFieldMap(), $metadata);
         $this->addToAssertionCount(1);
+
+        // Neither the known nor the unknown type name raises a DBAL deprecation.
+        self::assertSame([], DbalTypeFixtures::deprecationsRaisedBy(function (): void {
+            $map = new EncryptedFieldMap([PlainProfile::class => ['properties' => ['taxId' => null]]]);
+            $this->validate($map, $this->profileMetadata('type_that_is_not_registered'));
+            $this->validate($map, $this->profileMetadata('string'));
+        }));
     }
 
     public function testConfiguredPropertyMustBeAMappedField(): void
@@ -109,6 +109,9 @@ final class EncryptedMappingValidatorTest extends TestCase
      */
     private function validate(EncryptedFieldMap $map, ClassMetadata $metadata): void
     {
-        (new EncryptedMappingValidator($map))->loadClassMetadata(new LoadClassMetadataEventArgs($metadata, $this->createMock(EntityManagerInterface::class)));
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->method('getConnection')->willReturn(DbalTypeFixtures::connection(['encrypted_string' => EncryptedStringType::class]));
+
+        (new EncryptedMappingValidator($map))->loadClassMetadata(new LoadClassMetadataEventArgs($metadata, $entityManager));
     }
 }
