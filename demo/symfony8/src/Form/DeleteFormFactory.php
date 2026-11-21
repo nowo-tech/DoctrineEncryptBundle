@@ -30,7 +30,7 @@ final readonly class DeleteFormFactory
             'action'        => $this->urlGenerator->generate($route, ['id' => $id]),
             'csrf_token_id' => 'delete' . $id,
             'attr'          => [
-                'class'    => $class,
+                'class' => $class,
             ],
         ]);
     }
