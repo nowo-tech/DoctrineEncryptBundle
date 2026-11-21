@@ -2,54 +2,44 @@
 
 {% block title %}Secret messages{% endblock %}
 
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}
+        <a href="{{ path('secret_message_db_values') }}" class="nowo-ui-btn nowo-ui-btn--outline">DB: raw vs decrypted</a>
+        <a href="{{ path('secret_message_new') }}" class="nowo-ui-btn nowo-ui-btn--primary">Create new</a>
+    {% endset %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'Secret messages', intro: 'message is encrypted in the database (Halite); title is plain text. Create or edit a message to see encryption in action, then check the MySQL database to see ciphertext.', toolbar: _toolbar}) }}
+{% endblock %}
+
 {% block body %}
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h2>Secret messages</h2>
-        <div class="nowo-ui-row-actions">
-            <a href="{{ path('secret_message_db_values') }}" class="nowo-ui-btn nowo-ui-btn--outline nowo-ui-btn--sm">DB: raw vs decrypted</a>
-            <a href="{{ path('secret_message_new') }}" class="nowo-ui-btn nowo-ui-btn--primary nowo-ui-btn--sm">Create new</a>
-        </div>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p class="nowo-ui-muted">
-            <strong>message</strong> is encrypted in the database (Halite). <strong>title</strong> is plain text.
-            Create or edit a message to see encryption in action; then check the MySQL database to see ciphertext.
-        </p>
-        {% if messages|length > 0 %}
-            <div class="nowo-ui-table-wrap">
-                <table class="nowo-ui-table">
-                    <thead>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Messages', kind: 'table', empty: messages|length == 0, state_message: 'No secret messages yet.'} %}
+        {% block section_empty_action %}<a href="{{ path('secret_message_new') }}" class="nowo-ui-btn nowo-ui-btn--outline">Create the first one</a>{% endblock %}
+        {% block section_body %}
+            <table class="nowo-ui-data-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Id</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Message (decrypted when loaded)</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for msg in messages %}
                         <tr>
-                            <th>Id</th>
-                            <th>Title</th>
-                            <th>Message (decrypted when loaded)</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for msg in messages %}
-                            <tr>
-                                <td>{{ msg.id }}</td>
-                                <td>{{ msg.title ?? '–' }}</td>
-                                <td>{{ msg.message ? (msg.message|slice(0, 50)) ~ (msg.message|length > 50 ? '…' : '') : '–' }}</td>
-                                <td>
+                            <td>{{ msg.id }}</td>
+                            <td class="nowo-ui-cell--wrap">{{ msg.title ?? '–' }}</td>
+                            <td class="nowo-ui-cell--wrap">{{ msg.message ? (msg.message|slice(0, 50)) ~ (msg.message|length > 50 ? '…' : '') : '–' }}</td>
+                            <td>
+                                <div class="nowo-ui-row-actions">
                                     <a href="{{ path('secret_message_show', { id: msg.id }) }}" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--outline">Show</a>
                                     <a href="{{ path('secret_message_edit', { id: msg.id }) }}" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--outline">Edit</a>
-                                    {% set delete_form = delete_forms[msg.id] %}
-                                    {{ form_start(delete_form) }}
-                                        {% for child in delete_form %}{% if not child.rendered %}{{ form_row(child) }}{% endif %}{% endfor %}
-                                        <button type="submit" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--danger">Delete</button>
-                                    {{ form_end(delete_form) }}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <p class="nowo-ui-muted">No secret messages yet. <a href="{{ path('secret_message_new') }}">Create the first one</a>.</p>
-        {% endif %}
-    </div>
-</div>
+                                    {{ include('_delete.html.twig', {form: delete_forms[msg.id], dialog_id: 'de-delete-secret-message-' ~ msg.id, title: 'Delete secret message #' ~ msg.id ~ '?', message: 'The message is removed from the database.', size: 'sm'}) }}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}

@@ -189,7 +189,7 @@ class MysqlAesNoteController extends AbstractController
         return $this->render('mysql_aes_note/edit.html.twig', [
             'note'        => $note,
             'form'        => $form,
-            'delete_form' => $deleteForms->create('mysql_aes_note_delete', (int) $note->getId(), 'Delete this note?', 'mt-4 pt-3 border-top')->createView(),
+            'delete_form' => $deleteForms->create('mysql_aes_note_delete', (int) $note->getId(), 'Delete this note?')->createView(),
         ]);
     }
 

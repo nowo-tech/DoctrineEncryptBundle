@@ -2,54 +2,43 @@
 
 {% block title %}AES_DECRYPT list{% endblock %}
 
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}
+        <a href="{{ path('mysql_aes_note_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">Doctrine list</a>
+        <a href="{{ path('mysql_aes_note_sql_raw') }}" class="nowo-ui-btn nowo-ui-btn--outline">Raw HEX</a>
+        <a href="{{ path('mysql_aes_note_sql_new') }}" class="nowo-ui-btn nowo-ui-btn--primary">New (AES_ENCRYPT)</a>
+    {% endset %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'SQL: AES_DECRYPT list', intro: 'Filter with MySQL LIKE on plain title, on AES_DECRYPT(...), or on HEX(secret_native).', toolbar: _toolbar}) }}
+{% endblock %}
+
 {% block body %}
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h1>SQL: AES_DECRYPT list</h1>
-        <div class="nowo-ui-row-actions">
-            <a href="{{ path('mysql_aes_note_sql_raw') }}" class="nowo-ui-btn nowo-ui-btn--outline nowo-ui-btn--sm">Raw HEX</a>
-            <a href="{{ path('mysql_aes_note_sql_new') }}" class="nowo-ui-btn nowo-ui-btn--primary nowo-ui-btn--sm">New (AES_ENCRYPT)</a>
-        </div>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p class="nowo-ui-muted">Filter with MySQL <code class="nowo-ui-code">LIKE</code> on plain <code class="nowo-ui-code">title</code>, on <code class="nowo-ui-code">AES_DECRYPT(...)</code>, or on <code class="nowo-ui-code">HEX(secret_native)</code>.</p>
+    {% include 'mysql_aes_note/_list_filter.html.twig' with {
+        filter_form: filter_form,
+        clearPath: path('mysql_aes_note_sql_index'),
+        queryDescription: queryDescription,
+    } only %}
 
-        <h2 class="nowo-ui-muted">Filter (LIKE)</h2>
-
-        {% include 'mysql_aes_note/_list_filter.html.twig' with {
-            filter_form: filter_form,
-            clearPath: path('mysql_aes_note_sql_index'),
-            queryDescription: queryDescription,
-        } only %}
-
-        {% if rows|length > 0 %}
-            <div class="nowo-ui-table-wrap">
-                <table class="nowo-ui-table">
-                    <thead>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Notes', kind: 'table', empty: rows|length == 0, state_message: 'No native AES rows yet.'} %}
+        {% block section_empty_action %}<a href="{{ path('mysql_aes_note_sql_new') }}" class="nowo-ui-btn nowo-ui-btn--outline">Insert via AES_ENCRYPT</a>{% endblock %}
+        {% block section_body %}
+            <table class="nowo-ui-data-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Id</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Secret (decrypted)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
                         <tr>
-                            <th scope="col">Id</th>
-                            <th scope="col">Title</th>
-                            <th scope="col">Secret (decrypted)</th>
+                            <td>{{ row.id }}</td>
+                            <td class="nowo-ui-cell--wrap">{{ row.title }}</td>
+                            <td class="nowo-ui-cell--wrap">{{ row.secret_plain }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in rows %}
-                            <tr>
-                                <td>{{ row.id }}</td>
-                                <td>{{ row.title }}</td>
-                                <td>{{ row.secret_plain }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="nowo-ui-empty">
-                <p class="nowo-ui-muted">No native AES rows yet.</p>
-                <a href="{{ path('mysql_aes_note_sql_new') }}" class="nowo-ui-btn nowo-ui-btn--primary">Insert via AES_ENCRYPT</a>
-            </div>
-        {% endif %}
-    </div>
-</div>
-<div><a href="{{ path('mysql_aes_note_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Doctrine list</a></div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}

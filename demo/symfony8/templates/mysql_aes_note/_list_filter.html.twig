@@ -1,18 +1,22 @@
 {# @var filter_form \Symfony\Component\Form\FormView GET filter (App\Form\ListFilterType; REQ-TWIG-005) #}
-{{ form_start(filter_form) }}
-    {% for child in filter_form %}
-        {% if not child.rendered %}
-            {{ form_row(child) }}
+{% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Filters', intro: 'Filter (LIKE)', kind: 'form', filter_form: filter_form, clearPath: clearPath, queryDescription: queryDescription ?? null} %}
+    {% block section_body %}
+        {{ form_start(filter_form, {attr: {id: 'de-filter-form'}}) }}
+            {% for child in filter_form %}
+                {% if not child.rendered %}
+                    {{ form_row(child) }}
+                {% endif %}
+            {% endfor %}
+            <div class="nowo-ui-row-actions">
+                <button type="submit" class="nowo-ui-btn nowo-ui-btn--primary">Filter</button>
+                <a href="{{ clearPath }}" class="nowo-ui-btn nowo-ui-btn--outline">Clear</a>
+            </div>
+        {{ form_end(filter_form) }}
+        {% if queryDescription is defined and queryDescription %}
+            <details>
+                <summary class="nowo-ui-muted">Query / strategy used</summary>
+                <pre class="nowo-ui-code-block"><code class="nowo-ui-code">{{ queryDescription }}</code></pre>
+            </details>
         {% endif %}
-    {% endfor %}
-    <div>
-        <button type="submit" class="nowo-ui-btn nowo-ui-btn--primary">Filter</button>
-        <a href="{{ clearPath }}" class="nowo-ui-btn nowo-ui-btn--outline">Clear</a>
-    </div>
-{{ form_end(filter_form) }}
-{% if queryDescription is defined and queryDescription %}
-    <details>
-        <summary class="nowo-ui-muted">Query / strategy used</summary>
-        <pre class="nowo-ui-code-block"><code class="nowo-ui-code">{{ queryDescription }}</code></pre>
-    </details>
-{% endif %}
+    {% endblock %}
+{% endembed %}

@@ -2,53 +2,44 @@
 
 {% block title %}Sensitive records (raw SQL){% endblock %}
 
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}
+        <a href="{{ path('sensitive_record_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">View with Doctrine (decrypted)</a>
+        <a href="{{ path('sensitive_record_new') }}" class="nowo-ui-btn nowo-ui-btn--primary">Create new</a>
+    {% endset %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'Sensitive records – Raw SQL', intro: 'Data loaded with raw SQL. personal_note and financial_note show ciphertext as stored (Halite / Defuse).', toolbar: _toolbar}) }}
+{% endblock %}
+
 {% block body %}
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h2>Sensitive records – Raw SQL</h2>
-        <div class="nowo-ui-row-actions">
-            <a href="{{ path('sensitive_record_index') }}" class="nowo-ui-btn nowo-ui-btn--sm">View with Doctrine (decrypted)</a>
-            <a href="{{ path('sensitive_record_new') }}" class="nowo-ui-btn nowo-ui-btn--primary">Create new</a>
-        </div>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p class="nowo-ui-muted">
-            Data loaded with <strong>raw SQL</strong>. <strong>personal_note</strong> and <strong>financial_note</strong> show ciphertext as stored (Halite / Defuse).
-        </p>
-        {% if rows|length > 0 %}
-            <div class="nowo-ui-table-wrap">
-                <table class="nowo-ui-table">
-                    <thead>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Raw rows', kind: 'table', empty: rows|length == 0, state_message: 'No rows. Create one or load fixtures.'} %}
+        {% block section_empty_action %}<a href="{{ path('sensitive_record_new') }}" class="nowo-ui-btn nowo-ui-btn--outline">Create one</a>{% endblock %}
+        {% block section_body %}
+            <table class="nowo-ui-data-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Id</th>
+                        <th scope="col">Personal note (raw)</th>
+                        <th scope="col">Financial note (raw)</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
                         <tr>
-                            <th>Id</th>
-                            <th>Personal note (raw)</th>
-                            <th>Financial note (raw)</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in rows %}
-                            <tr>
-                                <td>{{ row.id }}</td>
-                                <td><code>{{ row.personal_note is not empty ? (row.personal_note|slice(0, 60)) ~ '…' : '–' }}</code></td>
-                                <td><code>{{ row.financial_note is not empty ? (row.financial_note|slice(0, 60)) ~ '…' : '–' }}</code></td>
-                                <td>
+                            <td>{{ row.id }}</td>
+                            <td class="nowo-ui-cell--wrap"><code>{{ row.personal_note is not empty ? (row.personal_note|slice(0, 60)) ~ '…' : '–' }}</code></td>
+                            <td class="nowo-ui-cell--wrap"><code>{{ row.financial_note is not empty ? (row.financial_note|slice(0, 60)) ~ '…' : '–' }}</code></td>
+                            <td>
+                                <div class="nowo-ui-row-actions">
                                     <a href="{{ path('sensitive_record_show', { id: row.id }) }}" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--outline">Show</a>
                                     <a href="{{ path('sensitive_record_edit', { id: row.id }) }}" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--outline">Edit</a>
-                                    {% set delete_form = delete_forms[row.id] %}
-                                    {{ form_start(delete_form) }}
-                                        {% for child in delete_form %}{% if not child.rendered %}{{ form_row(child) }}{% endif %}{% endfor %}
-                                        <button type="submit" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--danger">Delete</button>
-                                    {{ form_end(delete_form) }}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <p class="nowo-ui-muted">No rows. <a href="{{ path('sensitive_record_new') }}">Create one</a> or load fixtures.</p>
-        {% endif %}
-    </div>
-</div>
+                                    {{ include('_delete.html.twig', {form: delete_forms[row.id], dialog_id: 'de-delete-sensitive-raw-' ~ row.id, title: 'Delete sensitive record #' ~ row.id ~ '?', message: 'The record is removed from the database.', size: 'sm'}) }}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}

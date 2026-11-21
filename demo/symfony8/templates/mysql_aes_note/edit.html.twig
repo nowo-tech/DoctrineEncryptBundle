@@ -2,33 +2,28 @@
 
 {% block title %}Edit MySQL AES note{% endblock %}
 
-{% block body %}
-<div>
-    <a href="{{ path('mysql_aes_note_show', { id: note.id }) }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back</a>
-</div>
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h2>Edit note #{{ note.id }}</h2>
-    </div>
-    <div class="nowo-ui-card__body">
-        {{ form_start(form) }}
-        <div>
-            {% for child in form %}
-                {% if not child.rendered %}
-                    {{ form_row(child) }}
-                {% endif %}
-            {% endfor %}
-        </div>
-        {% include 'mysql_aes_note/_form_actions.html.twig' with {
-            submit_label: 'Update',
-            cancel_path: path('mysql_aes_note_show', { id: note.id }),
-        } %}
-        {{ form_end(form) }}
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}<a href="{{ path('mysql_aes_note_show', { id: note.id }) }}" class="nowo-ui-btn nowo-ui-btn--outline">Back</a>{% endset %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'Edit note #' ~ note.id, intro: 'Update the note; the secret is re-encrypted on save.', toolbar: _toolbar}) }}
+{% endblock %}
 
-        {{ form_start(delete_form) }}
-            {% for child in delete_form %}{% if not child.rendered %}{{ form_row(child) }}{% endif %}{% endfor %}
-            <button type="submit" class="nowo-ui-btn nowo-ui-btn--danger">Delete</button>
-        {{ form_end(delete_form) }}
-    </div>
-</div>
+{% block body %}
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Note', kind: 'form', form: form, cancel_path: path('mysql_aes_note_show', { id: note.id }), delete_form: delete_form, note: note} %}
+        {% block section_actions %}
+            {{ include('_delete.html.twig', {form: delete_form, dialog_id: 'de-delete-mysql-aes-note', title: 'Delete note #' ~ note.id ~ '?', message: 'The note is removed from the database.'}) }}
+        {% endblock %}
+        {% block section_body %}
+            {{ form_start(form, { attr: { id: 'de-mysql-form' } }) }}
+                {% for child in form %}
+                    {% if not child.rendered %}
+                        {{ form_row(child) }}
+                    {% endif %}
+                {% endfor %}
+            {{ form_end(form) }}
+        {% endblock %}
+        {% block section_footer %}
+            <a href="{{ cancel_path }}" class="nowo-ui-btn nowo-ui-btn--outline">Cancel</a>
+            <button type="submit" class="nowo-ui-btn nowo-ui-btn--primary" form="de-mysql-form">Update</button>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}

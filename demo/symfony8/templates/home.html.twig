@@ -2,69 +2,54 @@
 
 {% block title %}Home - Doctrine Encrypt Demo{% endblock %}
 
+{% block nowo_ui_page_header %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'Doctrine Encrypt Demo', intro: 'Encrypted entity fields, EncryptUtil and the MySQL AES encryptor.'}) }}
+{% endblock %}
+
 {% block body %}
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h2>Doctrine Encrypt Bundle – Demo</h2>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p>This demo uses <strong>Halite</strong> to encrypt the <code class="nowo-ui-code">message</code> field of <code class="nowo-ui-code">SecretMessage</code> in the database. The <code class="nowo-ui-code">title</code> field is stored in plain text.</p>
-        <p>Use the CRUD below to create, read, update and delete secret messages. Then inspect the MySQL database (service <code class="nowo-ui-code">db</code>) to see that <code class="nowo-ui-code">message</code> is stored as ciphertext.</p>
-    </div>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Doctrine Encrypt Bundle – Demo', kind: 'content'} %}
+        {% block section_body %}
+            <p>This demo uses <strong>Halite</strong> to encrypt the <code class="nowo-ui-code">message</code> field of <code class="nowo-ui-code">SecretMessage</code> in the database. The <code class="nowo-ui-code">title</code> field is stored in plain text.</p>
+            <p>Use the CRUD below to create, read, update and delete secret messages. Then inspect the MySQL database (service <code class="nowo-ui-code">db</code>) to see that <code class="nowo-ui-code">message</code> is stored as ciphertext.</p>
+        {% endblock %}
+    {% endembed %}
 
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h3>CRUD – Secret messages</h3>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p>Create, list, edit and delete secret messages. The <strong>message</strong> column is encrypted at rest (default config).</p>
-        <a href="{{ path('secret_message_index') }}" class="nowo-ui-btn nowo-ui-btn--primary">Open Secret messages</a>
-    </div>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'CRUD – Secret messages', kind: 'content'} %}
+        {% block section_body %}
+            <p>Create, list, edit and delete secret messages. The <strong>message</strong> column is encrypted at rest (default config).</p>
+        {% endblock %}
+        {% block section_footer %}<a href="{{ path('secret_message_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">Open Secret messages</a>{% endblock %}
+    {% endembed %}
 
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h3>EncryptUtil & Twig filters</h3>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p>Single page using <strong>EncryptUtil</strong> (<code class="nowo-ui-code">encrypt</code> / <code class="nowo-ui-code">decrypt</code>) and Twig filter <code class="nowo-ui-code">|decrypt</code>.</p>
-        <a href="{{ path('encrypt_util_demo') }}" class="nowo-ui-btn nowo-ui-btn--primary">Open EncryptUtil & Twig demo</a>
-    </div>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'EncryptUtil & Twig filters', kind: 'content'} %}
+        {% block section_body %}
+            <p>Single page using <strong>EncryptUtil</strong> (<code class="nowo-ui-code">encrypt</code> / <code class="nowo-ui-code">decrypt</code>) and Twig filter <code class="nowo-ui-code">|decrypt</code>.</p>
+        {% endblock %}
+        {% block section_footer %}<a href="{{ path('encrypt_util_demo') }}" class="nowo-ui-btn nowo-ui-btn--outline">Open EncryptUtil &amp; Twig demo</a>{% endblock %}
+    {% endembed %}
 
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h3>CRUD – Sensitive records (multiple encryptors)</h3>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p>Entity with two configs: <strong>personal note</strong> (Halite) and <strong>financial note</strong> (Defuse). Each field uses a different encryptor.</p>
-        <a href="{{ path('sensitive_record_index') }}" class="nowo-ui-btn nowo-ui-btn--primary">Open Sensitive records</a>
-    </div>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'CRUD – Sensitive records (multiple encryptors)', kind: 'content'} %}
+        {% block section_body %}
+            <p>Entity with two configs: <strong>personal note</strong> (Halite) and <strong>financial note</strong> (Defuse). Each field uses a different encryptor.</p>
+        {% endblock %}
+        {% block section_footer %}<a href="{{ path('sensitive_record_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">Open Sensitive records</a>{% endblock %}
+    {% endembed %}
 
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h3>MySQL AES_ENCRYPT / AES_DECRYPT (MysqlAes)</h3>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p>Two paths: <strong>Doctrine forms</strong> with <code class="nowo-ui-code">encryptor_class: MysqlAes</code>, and a <strong>repository</strong> that runs <code class="nowo-ui-code">AES_ENCRYPT</code> / <code class="nowo-ui-code">AES_DECRYPT</code> in SQL. Lists include <strong>LIKE filters</strong> (title, secret decrypted vs ciphertext).</p>
-        <a href="{{ path('mysql_aes_note_index') }}" class="nowo-ui-btn nowo-ui-btn--primary">Open MySQL AES demo</a>
-    </div>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'MySQL AES_ENCRYPT / AES_DECRYPT (MysqlAes)', kind: 'content'} %}
+        {% block section_body %}
+            <p>Two paths: <strong>Doctrine forms</strong> with <code class="nowo-ui-code">encryptor_class: MysqlAes</code>, and a <strong>repository</strong> that runs <code class="nowo-ui-code">AES_ENCRYPT</code> / <code class="nowo-ui-code">AES_DECRYPT</code> in SQL. Lists include <strong>LIKE filters</strong> (title, secret decrypted vs ciphertext).</p>
+        {% endblock %}
+        {% block section_footer %}<a href="{{ path('mysql_aes_note_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">Open MySQL AES demo</a>{% endblock %}
+    {% endembed %}
 
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h3>Console commands</h3>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p>From the project root (inside the container):</p>
-        <ul>
-            <li><code class="nowo-ui-code">php bin/console doctrine:encrypt:status</code> – List entities and encrypted properties</li>
-            <li><code class="nowo-ui-code">php bin/console doctrine:encrypt:generate-secret-key</code> – Generate Halite key</li>
-            <li><code class="nowo-ui-code">php bin/console doctrine:encrypt:database</code> – Encrypt existing data</li>
-            <li><code class="nowo-ui-code">php bin/console doctrine:decrypt:database</code> – Decrypt existing data</li>
-        </ul>
-    </div>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Console commands', intro: 'From the project root (inside the container).', kind: 'list'} %}
+        {% block section_body %}
+            <ul>
+                <li><code class="nowo-ui-code">php bin/console doctrine:encrypt:status</code> – List entities and encrypted properties</li>
+                <li><code class="nowo-ui-code">php bin/console doctrine:encrypt:generate-secret-key</code> – Generate Halite key</li>
+                <li><code class="nowo-ui-code">php bin/console doctrine:encrypt:database</code> – Encrypt existing data</li>
+                <li><code class="nowo-ui-code">php bin/console doctrine:decrypt:database</code> – Decrypt existing data</li>
+            </ul>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}

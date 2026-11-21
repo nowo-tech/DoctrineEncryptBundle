@@ -2,10 +2,11 @@
 
 {% block title %}MySQL required{% endblock %}
 
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}<a href="{{ path('mysql_aes_note_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">Back</a>{% endset %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'Native AES_ENCRYPT / AES_DECRYPT', toolbar: _toolbar}) }}
+{% endblock %}
+
 {% block body %}
-<div class="nowo-ui-flash nowo-ui-flash--warning">
-    <h2>Native AES_ENCRYPT / AES_DECRYPT</h2>
-    <p>This demo needs <strong>MySQL or MariaDB</strong>. Copy the MySQL <code class="nowo-ui-code">DATABASE_URL</code> from <code class="nowo-ui-code">.env.example</code>, set <code class="nowo-ui-code">MYSQL_AES_KEY</code>, then run <code class="nowo-ui-code">make setup</code> in the demo.</p>
-</div>
-<a href="{{ path('mysql_aes_note_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back</a>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'MySQL required', kind: 'content', state: 'error', state_message: 'This demo needs MySQL or MariaDB. Copy the MySQL DATABASE_URL from .env.example, set MYSQL_AES_KEY, then run make setup in the demo.'} %}{% endembed %}
 {% endblock %}

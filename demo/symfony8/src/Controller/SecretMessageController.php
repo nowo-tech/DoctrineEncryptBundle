@@ -97,7 +97,7 @@ class SecretMessageController extends AbstractController
     {
         return $this->render('secret_message/show.html.twig', [
             'secret_message' => $secretMessage,
-            'delete_form'    => $deleteForms->create('secret_message_delete', (int) $secretMessage->getId(), 'Delete this message?', 'mt-4 pt-3 border-top')->createView(),
+            'delete_form'    => $deleteForms->create('secret_message_delete', (int) $secretMessage->getId(), 'Delete this message?')->createView(),
         ]);
     }
 

@@ -2,80 +2,72 @@
 
 {% block title %}MySQL AES notes{% endblock %}
 
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}
+        <a href="{{ path('mysql_aes_note_db_values') }}" class="nowo-ui-btn nowo-ui-btn--outline">DB: raw vs decrypted</a>
+        {% if nativeSupported %}
+            <a href="{{ path('mysql_aes_note_sql_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">SQL list</a>
+            <a href="{{ path('mysql_aes_note_sql_raw') }}" class="nowo-ui-btn nowo-ui-btn--outline">Raw HEX</a>
+            <a href="{{ path('mysql_aes_note_sql_new') }}" class="nowo-ui-btn nowo-ui-btn--outline">SQL insert</a>
+        {% endif %}
+        <a href="{{ path('mysql_aes_note_new') }}" class="nowo-ui-btn nowo-ui-btn--primary">New (Doctrine)</a>
+    {% endset %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'MySQL AES notes', intro: 'Two encryption paths: Doctrine (MysqlAes encryptor) and native AES in SQL.', toolbar: _toolbar}) }}
+{% endblock %}
+
 {% block body %}
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h1>MySQL AES notes</h1>
-        <div class="nowo-ui-row-actions">
-            <a href="{{ path('mysql_aes_note_db_values') }}" class="nowo-ui-btn nowo-ui-btn--outline nowo-ui-btn--sm">DB: raw vs decrypted</a>
-            {% if nativeSupported %}
-                <a href="{{ path('mysql_aes_note_sql_index') }}" class="nowo-ui-btn nowo-ui-btn--outline nowo-ui-btn--sm">SQL list</a>
-                <a href="{{ path('mysql_aes_note_sql_raw') }}" class="nowo-ui-btn nowo-ui-btn--outline nowo-ui-btn--sm">Raw HEX</a>
-                <a href="{{ path('mysql_aes_note_sql_new') }}" class="nowo-ui-btn nowo-ui-btn--outline nowo-ui-btn--sm">SQL insert</a>
-            {% endif %}
-            <a href="{{ path('mysql_aes_note_new') }}" class="nowo-ui-btn nowo-ui-btn--primary nowo-ui-btn--sm">New (Doctrine)</a>
-        </div>
-    </div>
-    <div class="nowo-ui-card__body">
-        <div class="nowo-ui-flash nowo-ui-flash--info">
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Encryption paths', kind: 'content'} %}
+        {% block section_body %}
             <p><strong>Doctrine path</strong> — <code class="nowo-ui-code">secret_orm</code> with <code class="nowo-ui-code">#[Encrypted('mysql_aes')]</code> (subscriber + <code class="nowo-ui-code">&lt;ENC&gt;</code> marker).</p>
             <p><strong>Repository path</strong> — <code class="nowo-ui-code">secret_native</code> via <code class="nowo-ui-code">AES_ENCRYPT(:plain, :key)</code> in SQL (MySQL/MariaDB only).</p>
-        </div>
+        {% endblock %}
+    {% endembed %}
 
-        {% if not nativeSupported %}
-            <div class="nowo-ui-flash nowo-ui-flash--warning">
-                Native <code class="nowo-ui-code">AES_ENCRYPT</code> / <code class="nowo-ui-code">AES_DECRYPT</code> need MySQL.
-                Uncomment the MySQL <code class="nowo-ui-code">DATABASE_URL</code> in <code class="nowo-ui-code">.env.example</code>, copy to <code class="nowo-ui-code">.env</code>, then restart the stack.
-            </div>
-        {% endif %}
+    {% if not nativeSupported %}
+        {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Native AES unavailable', kind: 'content'} %}
+            {% block section_body %}
+                <p>Native <code class="nowo-ui-code">AES_ENCRYPT</code> / <code class="nowo-ui-code">AES_DECRYPT</code> need MySQL. Uncomment the MySQL <code class="nowo-ui-code">DATABASE_URL</code> in <code class="nowo-ui-code">.env.example</code>, copy to <code class="nowo-ui-code">.env</code>, then restart the stack.</p>
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
 
-        <h2 class="nowo-ui-muted">Filter (LIKE)</h2>
+    {% include 'mysql_aes_note/_list_filter.html.twig' with {
+        filter_form: filter_form,
+        clearPath: path('mysql_aes_note_index'),
+        queryDescription: queryDescription,
+    } only %}
 
-        {% include 'mysql_aes_note/_list_filter.html.twig' with {
-            filter_form: filter_form,
-            clearPath: path('mysql_aes_note_index'),
-            queryDescription: queryDescription,
-        } only %}
-
-        {% if notes|length > 0 %}
-            <div class="nowo-ui-table-wrap">
-                <table class="nowo-ui-table">
-                    <thead>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Notes', kind: 'table', empty: notes|length == 0, state_message: 'No notes yet.'} %}
+        {% block section_empty_action %}
+            <a href="{{ path('mysql_aes_note_new') }}" class="nowo-ui-btn nowo-ui-btn--outline">Create first note (Doctrine)</a>
+            {% if nativeSupported %}<a href="{{ path('mysql_aes_note_sql_new') }}" class="nowo-ui-btn nowo-ui-btn--outline">Insert via SQL</a>{% endif %}
+        {% endblock %}
+        {% block section_body %}
+            <table class="nowo-ui-data-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Id</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Secret (ORM, decrypted)</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for note in notes %}
                         <tr>
-                            <th scope="col">Id</th>
-                            <th scope="col">Title</th>
-                            <th scope="col">Secret (ORM, decrypted)</th>
-                            <th scope="col" class="nowo-ui-cell--end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for note in notes %}
-                            <tr>
-                                <td>{{ note.id }}</td>
-                                <td>{{ note.title }}</td>
-                                <td>{{ note.secretOrm ? note.secretOrm|slice(0, 40) ~ (note.secretOrm|length > 40 ? '…' : '') : '–' }}</td>
-                                <td class="nowo-ui-cell--end">
+                            <td>{{ note.id }}</td>
+                            <td class="nowo-ui-cell--wrap">{{ note.title }}</td>
+                            <td class="nowo-ui-cell--wrap">{{ note.secretOrm ? note.secretOrm|slice(0, 40) ~ (note.secretOrm|length > 40 ? '…' : '') : '–' }}</td>
+                            <td>
+                                <div class="nowo-ui-row-actions">
                                     <a href="{{ path('mysql_aes_note_show', { id: note.id }) }}" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--outline">Show</a>
                                     <a href="{{ path('mysql_aes_note_edit', { id: note.id }) }}" class="nowo-ui-btn nowo-ui-btn--sm nowo-ui-btn--outline">Edit</a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="nowo-ui-empty">
-                <p class="nowo-ui-muted">No notes yet.</p>
-                <a href="{{ path('mysql_aes_note_new') }}" class="nowo-ui-btn nowo-ui-btn--primary">Create first note (Doctrine)</a>
-                {% if nativeSupported %}
-                    <span class="nowo-ui-muted">or</span>
-                    <a href="{{ path('mysql_aes_note_sql_new') }}" class="nowo-ui-btn nowo-ui-btn--outline">Insert via SQL</a>
-                {% endif %}
-            </div>
-        {% endif %}
-    </div>
-</div>
-<div>
-    <a href="{{ path('demo_home') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Home</a>
-</div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}
