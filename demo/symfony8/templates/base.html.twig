@@ -1,31 +1,18 @@
-{#- REQ-DEMO-014: the demo shell is UiKit's admin layout with UiKit's default theme (nowo-ui.css from the bundle's own
-    asset package, no CSS framework, no CDN). -#}
-{% extends '@NowoUiKit/layout/admin.html.twig' %}
-
+{#- REQ-DEMO-014: the demo runs inside UiKit's shared demo platform shell (@NowoUiKit/demo_platform/layout.html.twig).
+    This file only declares the demo (nowo_ui_demo_platform). -#}
+{% extends '@NowoUiKit/demo_platform/layout.html.twig' %}
+{% set nowo_ui_demo_platform = {
+    bundle: 'Doctrine Encrypt',
+    home_route: 'demo_home',
+    repository: 'https://github.com/nowo-tech/DoctrineEncryptBundle',
+    translation_domain: false,
+    locales: [],
+    nav: [
+        {label: 'Home', route: 'demo_home', section: 'Demo'},
+        {label: 'EncryptUtil & Twig', route: 'encrypt_util_demo', section: 'Demo'},
+        {label: 'Secret messages', route: 'secret_message_index', active: ['secret_message_*'], section: 'Encrypted entities'},
+        {label: 'Sensitive records', route: 'sensitive_record_index', active: ['sensitive_record_*'], section: 'Encrypted entities'},
+        {label: 'MySQL AES', route: 'mysql_aes_note_index', active: ['mysql_aes_note_*'], section: 'Encrypted entities'},
+    ],
+} %}
 {% block nowo_ui_document_title %}{% block title %}Doctrine Encrypt Demo{% endblock %}{% endblock %}
-
-{% block nowo_ui_navigation %}
-    {% set _route = app.request.attributes.get('_route') %}
-    <header class="nowo-ui-header" data-testid="demo-masthead">
-        <a class="nowo-ui-brand" href="{{ path('demo_home') }}">Doctrine Encrypt Bundle Demo</a>
-        <nav class="nowo-ui-menu" aria-label="Doctrine Encrypt Bundle">
-            <a class="nowo-ui-link" href="{{ path('encrypt_util_demo') }}"{% if _route starts with 'encrypt_util' %} aria-current="page"{% endif %}>EncryptUtil &amp; Twig</a>
-            <a class="nowo-ui-link" href="{{ path('secret_message_index') }}"{% if _route starts with 'secret_message' %} aria-current="page"{% endif %}>Secret messages</a>
-            <a class="nowo-ui-link" href="{{ path('sensitive_record_index') }}"{% if _route starts with 'sensitive_record' %} aria-current="page"{% endif %}>Sensitive records</a>
-            <a class="nowo-ui-link" href="{{ path('mysql_aes_note_index') }}"{% if _route starts with 'mysql_aes_note' %} aria-current="page"{% endif %}>MySQL AES</a>
-        </nav>
-        <div class="nowo-ui-header__end">
-            {{ include('@NowoUiKitBundle/partials/_theme_toggle.html.twig', { compact: true }, false) }}
-        </div>
-    </header>
-{% endblock %}
-
-{% block nowo_ui_flashes %}
-    {% for type, css in {success: 'success', error: 'error'} %}
-        {% for message in app.flashes(type) %}
-            <div class="nowo-ui-flash nowo-ui-flash--{{ css }}" role="alert">{{ message }}</div>
-        {% endfor %}
-    {% endfor %}
-{% endblock %}
-
-{% block nowo_ui_content %}{% block body %}{% endblock %}{% endblock %}

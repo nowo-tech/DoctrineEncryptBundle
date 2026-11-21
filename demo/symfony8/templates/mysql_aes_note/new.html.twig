@@ -2,28 +2,25 @@
 
 {% block title %}New MySQL AES note (Doctrine){% endblock %}
 
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}<a href="{{ path('mysql_aes_note_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">Back to list</a>{% endset %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'Create via Doctrine', intro: 'The secret is encrypted by the MysqlAes encryptor through the Doctrine subscriber.', toolbar: _toolbar}) }}
+{% endblock %}
+
 {% block body %}
-<div>
-    <a href="{{ path('mysql_aes_note_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back to list</a>
-</div>
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h2>Create via Doctrine (MysqlAes encryptor)</h2>
-    </div>
-    <div class="nowo-ui-card__body">
-        {{ form_start(form) }}
-        <div>
-            {% for child in form %}
-                {% if not child.rendered %}
-                    {{ form_row(child) }}
-                {% endif %}
-            {% endfor %}
-        </div>
-        {% include 'mysql_aes_note/_form_actions.html.twig' with {
-            submit_label: 'Save',
-            cancel_path: path('mysql_aes_note_index'),
-        } %}
-        {{ form_end(form) }}
-    </div>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Note', kind: 'form', form: form, cancel_path: path('mysql_aes_note_index')} %}
+        {% block section_body %}
+            {{ form_start(form, { attr: { id: 'de-mysql-form' } }) }}
+                {% for child in form %}
+                    {% if not child.rendered %}
+                        {{ form_row(child) }}
+                    {% endif %}
+                {% endfor %}
+            {{ form_end(form) }}
+        {% endblock %}
+        {% block section_footer %}
+            <a href="{{ cancel_path }}" class="nowo-ui-btn nowo-ui-btn--outline">Cancel</a>
+            <button type="submit" class="nowo-ui-btn nowo-ui-btn--primary" form="de-mysql-form">Save</button>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}

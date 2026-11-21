@@ -2,88 +2,62 @@
 
 {% block title %}EncryptUtil & Twig filters – Demo{% endblock %}
 
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}<a href="{{ path('demo_home') }}" class="nowo-ui-btn nowo-ui-btn--outline">Back to home</a>{% endset %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'EncryptUtil + Twig filters', intro: 'EncryptUtil and the |decrypt filter with the default config and with specified configs (personal_data, financial_data).', toolbar: _toolbar}) }}
+{% endblock %}
+
 {% block body %}
-<div>
-    <a href="{{ path('demo_home') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back to home</a>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: '1. EncryptUtil – default config', intro: 'encrypt($plain) / decrypt($encrypted) (no second argument)', kind: 'detail', plain: plainDefault, enc: encryptedDefault, dec: decryptedDefault} %}
+        {% block section_body %}
+            <dl class="nowo-ui-detail-list">
+                <dt>Plain</dt>
+                <dd><code class="nowo-ui-code">{{ plain }}</code></dd>
+                <dt>Encrypted</dt>
+                <dd class="nowo-ui-cell--wrap"><code>{{ enc }}</code></dd>
+                <dt>Decrypted (round-trip)</dt>
+                <dd><code class="nowo-ui-code">{{ dec }}</code></dd>
+            </dl>
+        {% endblock %}
+    {% endembed %}
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: '2. EncryptUtil – config personal_data', intro: 'encrypt($plain, \'personal_data\') / decrypt($encrypted, \'personal_data\')', kind: 'detail', plain: plainPersonal, enc: encryptedPersonal, dec: decryptedPersonal} %}
+        {% block section_body %}
+            <dl class="nowo-ui-detail-list">
+                <dt>Plain</dt>
+                <dd><code class="nowo-ui-code">{{ plain }}</code></dd>
+                <dt>Encrypted</dt>
+                <dd class="nowo-ui-cell--wrap"><code>{{ enc }}</code></dd>
+                <dt>Decrypted (round-trip)</dt>
+                <dd><code class="nowo-ui-code">{{ dec }}</code></dd>
+            </dl>
+        {% endblock %}
+    {% endembed %}
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: '3. EncryptUtil – config financial_data', intro: 'encrypt($plain, \'financial_data\') / decrypt($encrypted, \'financial_data\')', kind: 'detail', plain: plainFinancial, enc: encryptedFinancial, dec: decryptedFinancial} %}
+        {% block section_body %}
+            <dl class="nowo-ui-detail-list">
+                <dt>Plain</dt>
+                <dd><code class="nowo-ui-code">{{ plain }}</code></dd>
+                <dt>Encrypted</dt>
+                <dd class="nowo-ui-cell--wrap"><code>{{ enc }}</code></dd>
+                <dt>Decrypted (round-trip)</dt>
+                <dd><code class="nowo-ui-code">{{ dec }}</code></dd>
+            </dl>
+        {% endblock %}
+    {% endembed %}
 
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h2>EncryptUtil + Twig filters</h2>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p>This page uses <strong>EncryptUtil</strong> and Twig filter <code class="nowo-ui-code">|decrypt</code> with <strong>default</strong> config and with <strong>specified config</strong> (<code class="nowo-ui-code">personal_data</code>, <code class="nowo-ui-code">financial_data</code>).</p>
-    </div>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: '4. Twig filter |decrypt – default and specified config', kind: 'content', encryptedForTwigDefault: encryptedForTwigDefault, encryptedForTwigPersonal: encryptedForTwigPersonal, encryptedForTwigFinancial: encryptedForTwigFinancial} %}
+        {% block section_body %}
+            <p>Default: <code class="nowo-ui-code">{{ '{{ value|decrypt }}' }}</code> → <strong>{{ encryptedForTwigDefault|decrypt }}</strong></p>
+            <p>Specified config (same as default): <code class="nowo-ui-code">{{ '{{ value|decrypt(\'personal_data\') }}' }}</code> → <strong>{{ encryptedForTwigPersonal|decrypt('personal_data') }}</strong></p>
+            <p>Specified config (different from default): <code class="nowo-ui-code">{{ '{{ value|decrypt(\'financial_data\') }}' }}</code> → <strong>{{ encryptedForTwigFinancial|decrypt('financial_data') }}</strong></p>
+        {% endblock %}
+    {% endembed %}
 
-{# --- 1) EncryptUtil: default config --- #}
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h3>1. EncryptUtil – default config</h3>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p><code class="nowo-ui-code">encrypt($plain)</code> / <code class="nowo-ui-code">decrypt($encrypted)</code> (no second argument)</p>
-        <dl class="nowo-ui-detail-list">
-            <dt>Plain</dt>
-            <dd><code class="nowo-ui-code">{{ plainDefault }}</code></dd>
-            <dt>Encrypted</dt>
-            <dd><code>{{ encryptedDefault }}</code></dd>
-            <dt>Decrypted (round-trip)</dt>
-            <dd><code class="nowo-ui-code">{{ decryptedDefault }}</code></dd>
-        </dl>
-    </div>
-</div>
-
-{# --- 2) EncryptUtil: config personal_data --- #}
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h3>2. EncryptUtil – config <code class="nowo-ui-code">personal_data</code></h3>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p><code class="nowo-ui-code">encrypt($plain, 'personal_data')</code> / <code class="nowo-ui-code">decrypt($encrypted, 'personal_data')</code></p>
-        <dl class="nowo-ui-detail-list">
-            <dt>Plain</dt>
-            <dd><code class="nowo-ui-code">{{ plainPersonal }}</code></dd>
-            <dt>Encrypted</dt>
-            <dd><code>{{ encryptedPersonal }}</code></dd>
-            <dt>Decrypted (round-trip)</dt>
-            <dd><code class="nowo-ui-code">{{ decryptedPersonal }}</code></dd>
-        </dl>
-    </div>
-</div>
-
-{# --- 3) EncryptUtil: config financial_data --- #}
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h3>3. EncryptUtil – config <code class="nowo-ui-code">financial_data</code></h3>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p><code class="nowo-ui-code">encrypt($plain, 'financial_data')</code> / <code class="nowo-ui-code">decrypt($encrypted, 'financial_data')</code></p>
-        <dl class="nowo-ui-detail-list">
-            <dt>Plain</dt>
-            <dd><code class="nowo-ui-code">{{ plainFinancial }}</code></dd>
-            <dt>Encrypted</dt>
-            <dd><code>{{ encryptedFinancial }}</code></dd>
-            <dt>Decrypted (round-trip)</dt>
-            <dd><code class="nowo-ui-code">{{ decryptedFinancial }}</code></dd>
-        </dl>
-    </div>
-</div>
-
-{# --- 4) Twig filter: default and specified config --- #}
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h3>4. Twig filter <code class="nowo-ui-code">|decrypt</code> – default and specified config</h3>
-    </div>
-    <div class="nowo-ui-card__body">
-        <p>Default: <code class="nowo-ui-code">{{ '{{ value|decrypt }}' }}</code> → <strong>{{ encryptedForTwigDefault|decrypt }}</strong></p>
-        <p>Specified config (same as default): <code class="nowo-ui-code">{{ '{{ value|decrypt(\'personal_data\') }}' }}</code> → <strong>{{ encryptedForTwigPersonal|decrypt('personal_data') }}</strong></p>
-        <p>Specified config (different from default): <code class="nowo-ui-code">{{ '{{ value|decrypt(\'financial_data\') }}' }}</code> → <strong>{{ encryptedForTwigFinancial|decrypt('financial_data') }}</strong></p>
-        <hr>
-        <h4>5. Twig filters |mask and |decrypt then |mask</h4>
-        <p><code class="nowo-ui-code">|mask(4)</code> on plain value: {{ "12345678"|mask(4) }}</p>
-        <p><code class="nowo-ui-code">|decrypt('personal_data')|mask(4)</code> on encrypted: {{ encryptedForTwigPersonal|decrypt('personal_data')|mask(4) }}</p>
-        <p><code class="nowo-ui-code">|decrypt|mask(4)</code> default config: {{ encryptedForTwigDefault|decrypt|mask(4) }}</p>
-    </div>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: '5. Twig filters |mask and |decrypt then |mask', kind: 'content', encryptedForTwigDefault: encryptedForTwigDefault, encryptedForTwigPersonal: encryptedForTwigPersonal} %}
+        {% block section_body %}
+            <p><code class="nowo-ui-code">|mask(4)</code> on plain value: {{ "12345678"|mask(4) }}</p>
+            <p><code class="nowo-ui-code">|decrypt('personal_data')|mask(4)</code> on encrypted: {{ encryptedForTwigPersonal|decrypt('personal_data')|mask(4) }}</p>
+            <p><code class="nowo-ui-code">|decrypt|mask(4)</code> default config: {{ encryptedForTwigDefault|decrypt|mask(4) }}</p>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}

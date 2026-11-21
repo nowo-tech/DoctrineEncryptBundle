@@ -4,7 +4,8 @@ nowo_hot_reload:
     auto_inject: true
     require_frankenphp_env: true
     allow_production: false
-    idiomorph: true
+    client_mode: visibility
+    idiomorph: false
     preserve_selectors:
         - '[id^="sfwdt"]'
         - '.sf-toolbar'

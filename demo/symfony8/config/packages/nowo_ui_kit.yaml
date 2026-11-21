@@ -2,3 +2,7 @@
 nowo_ui_kit:
     css_framework: custom
     icon_set: none
+    base_stylesheet: true
+    layouts:
+        admin: 'base.html.twig'
+        guest: 'base.html.twig'

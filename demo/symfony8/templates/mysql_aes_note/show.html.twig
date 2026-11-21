@@ -2,18 +2,24 @@
 
 {% block title %}MySQL AES note #{{ note.id }}{% endblock %}
 
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}
+        <a href="{{ path('mysql_aes_note_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">Back</a>
+        <a href="{{ path('mysql_aes_note_db_values') }}" class="nowo-ui-btn nowo-ui-btn--outline">View DB values</a>
+        <a href="{{ path('mysql_aes_note_edit', { id: note.id }) }}" class="nowo-ui-btn nowo-ui-btn--primary">Edit</a>
+    {% endset %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'MySQL AES note #' ~ note.id, intro: 'The secret is decrypted when loaded through Doctrine.', toolbar: _toolbar}) }}
+{% endblock %}
+
 {% block body %}
-<div><a href="{{ path('mysql_aes_note_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back</a></div>
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__body">
-        <dl class="nowo-ui-detail-list">
-            <dt>Title</dt><dd>{{ note.title }}</dd>
-            <dt>Secret (ORM)</dt><dd><pre class="nowo-ui-code-block">{{ note.secretOrm }}</pre></dd>
-        </dl>
-        <div class="nowo-ui-row-actions">
-            <a href="{{ path('mysql_aes_note_edit', { id: note.id }) }}" class="nowo-ui-btn nowo-ui-btn--primary">Edit</a>
-            <a href="{{ path('mysql_aes_note_db_values') }}" class="nowo-ui-btn nowo-ui-btn--outline">View DB values</a>
-        </div>
-    </div>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Details', kind: 'detail'} %}
+        {% block section_body %}
+            <dl class="nowo-ui-detail-list">
+                <dt>Title</dt>
+                <dd>{{ note.title }}</dd>
+                <dt>Secret (ORM)</dt>
+                <dd><pre class="nowo-ui-code-block">{{ note.secretOrm }}</pre></dd>
+            </dl>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}

@@ -57,7 +57,6 @@ final class ListFilterType extends AbstractType
             'method'              => 'GET',
             'csrf_protection'     => false,
             'secret_mode_choices' => [],
-            'attr'                => ['class' => 'nowo-ui-filter-bar'],
         ]);
         $resolver->setAllowedTypes('secret_mode_choices', 'array');
     }

@@ -2,25 +2,26 @@
 
 {% block title %}Raw AES ciphertext{% endblock %}
 
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}<a href="{{ path('mysql_aes_note_sql_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">Decrypted list</a>{% endset %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'Raw AES ciphertext', intro: 'HEX(secret_native) as stored by MySQL.', toolbar: _toolbar}) }}
+{% endblock %}
+
 {% block body %}
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header"><h2>HEX(secret_native) — as stored by MySQL</h2></div>
-    <div class="nowo-ui-card__body">
-        <table class="nowo-ui-table">
-            <thead><tr><th>Id</th><th>Title</th><th>secret_native (hex)</th></tr></thead>
-            <tbody>
-                {% for row in rows %}
-                    <tr>
-                        <td>{{ row.id }}</td>
-                        <td>{{ row.title }}</td>
-                        <td><code>{{ row.secret_native_hex }}</code></td>
-                    </tr>
-                {% else %}
-                    <tr><td colspan="3" class="nowo-ui-muted">No rows.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-<div><a href="{{ path('mysql_aes_note_sql_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Decrypted list</a></div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'HEX(secret_native) — as stored by MySQL', kind: 'table', empty: rows|length == 0, state_message: 'No rows.'} %}
+        {% block section_body %}
+            <table class="nowo-ui-data-table">
+                <thead><tr><th scope="col">Id</th><th scope="col">Title</th><th scope="col">secret_native (hex)</th></tr></thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            <td>{{ row.id }}</td>
+                            <td class="nowo-ui-cell--wrap">{{ row.title }}</td>
+                            <td class="nowo-ui-cell--wrap"><code>{{ row.secret_native_hex }}</code></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}

@@ -3,8 +3,8 @@ import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 /**
- * REQ-DEMO-013 — README screenshots in full demo context: demo navbar + bundle feature + Symfony web debug
- * toolbar, on the seeded fixtures (`make demo-screenshots` reloads them first).
+ * REQ-DEMO-013 — README screenshots in full demo context: demo platform shell + bundle feature (no Symfony web
+ * debug toolbar), on the seeded fixtures (`make demo-screenshots` reloads them first).
  * Captured as PNG; `make demo-screenshots` converts them to WebP (docs/images/demo/) and deletes the PNGs.
  */
 test.describe.configure({ mode: 'serial' });
@@ -17,17 +17,14 @@ const WIDTH = 1440;
 const HEIGHT = 900;
 
 /**
- * Captures the viewport (navbar → bundle feature → fixed web debug toolbar) once the toolbar is rendered.
- * When `until` is given, the viewport grows so that element is fully visible above the toolbar.
+ * Captures the viewport (demo platform shell → bundle feature; the web debug toolbar is hidden).
+ * When `until` is given, the viewport grows so that element is fully visible.
  */
 async function captureDemoFrame(page: Page, file: string, until?: Locator): Promise<void> {
-  const toolbar = page.locator('.sf-toolbar .sf-toolbarreset');
-  await expect(toolbar).toBeVisible();
+  await page.addStyleTag({ content: '.sf-toolbar,.sf-minitoolbar,[id^="sfwdt"]{display:none!important}' });
   if (until) {
     const bottom = await until.evaluate((el) => el.getBoundingClientRect().bottom + window.scrollY);
-    const toolbarHeight = (await toolbar.boundingBox())?.height ?? 40;
-    await page.setViewportSize({ width: WIDTH, height: Math.max(HEIGHT, Math.ceil(bottom + 32 + toolbarHeight)) });
-    await expect(toolbar).toBeVisible();
+    await page.setViewportSize({ width: WIDTH, height: Math.max(HEIGHT, Math.ceil(bottom + 32)) });
   }
   await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => setTimeout(done, 500))));
   await page.screenshot({ path: resolve(outDir, file) });

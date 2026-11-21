@@ -2,27 +2,25 @@
 
 {% block title %}New sensitive record{% endblock %}
 
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}<a href="{{ path('sensitive_record_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">Back to list</a>{% endset %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'Create sensitive record', intro: 'A new sensitive record is stored encrypted in the database.', toolbar: _toolbar}) }}
+{% endblock %}
+
 {% block body %}
-<div>
-    <a href="{{ path('sensitive_record_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back to list</a>
-</div>
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h2>Create sensitive record</h2>
-    </div>
-    <div class="nowo-ui-card__body">
-        {{ form_start(form, { attr: { novalidate: true } }) }}
-        {% for child in form %}
-            {% if not child.rendered %}
-                {{ form_row(child) }}
-            {% endif %}
-        {% endfor %}
-        <hr>
-        <div class="nowo-ui-row-actions">
-            <button type="submit" class="nowo-ui-btn nowo-ui-btn--primary">Create</button>
-            <a href="{{ path('sensitive_record_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">Cancel</a>
-        </div>
-        {{ form_end(form) }}
-    </div>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Fields', kind: 'form', form: form, cancel_path: path('sensitive_record_index')} %}
+        {% block section_body %}
+            {{ form_start(form, { attr: { id: 'de-sr-form', novalidate: true } }) }}
+            {% for child in form %}
+                {% if not child.rendered %}
+                    {{ form_row(child) }}
+                {% endif %}
+            {% endfor %}
+            {{ form_end(form) }}
+        {% endblock %}
+        {% block section_footer %}
+            <a href="{{ cancel_path }}" class="nowo-ui-btn nowo-ui-btn--outline">Cancel</a>
+            <button type="submit" class="nowo-ui-btn nowo-ui-btn--primary" form="de-sr-form">Create</button>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}

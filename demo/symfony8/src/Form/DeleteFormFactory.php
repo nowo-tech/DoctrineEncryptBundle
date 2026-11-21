@@ -9,8 +9,6 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-use function sprintf;
-
 /**
  * Builds the demo delete forms (REQ-TWIG-005 / REQ-DEMO-015): form name "delete_{id}", CSRF token id "delete{id}" (the id the
  * controllers always checked), POST to the entity delete route, confirm prompt on submit.
@@ -32,8 +30,7 @@ final readonly class DeleteFormFactory
             'action'        => $this->urlGenerator->generate($route, ['id' => $id]),
             'csrf_token_id' => 'delete' . $id,
             'attr'          => [
-                'class'    => $class,
-                'onsubmit' => sprintf("return confirm('%s');", $confirm),
+                'class' => $class,
             ],
         ]);
     }

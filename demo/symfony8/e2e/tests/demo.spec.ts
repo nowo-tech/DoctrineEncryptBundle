@@ -26,7 +26,7 @@ test.describe('Doctrine Encrypt demo happy path', () => {
     await page.getByLabel('Message (encrypted in database)').fill(secret);
     await page.getByRole('button', { name: 'Create' }).click();
 
-    await expect(page.getByRole('alert')).toContainText('Secret message created');
+    await expect(page.getByRole('status')).toContainText('Secret message created');
     const listRow = page.locator('main table tbody tr', { hasText: title });
     await expect(listRow).toContainText(secret.slice(0, 50));
     await expect(listRow).not.toContainText(/MUIF[\w-]{40,}/);
@@ -39,9 +39,9 @@ test.describe('Doctrine Encrypt demo happy path', () => {
 
     // Clean up so the suite can be re-run against the same demo data.
     await page.goto('/secret-message/');
-    page.once('dialog', (dialog) => dialog.accept());
     await page.locator('main table tbody tr', { hasText: title }).getByRole('button', { name: 'Delete' }).click();
-    await expect(page.getByRole('alert')).toContainText('Secret message deleted');
+    await page.locator('dialog[open]').getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByRole('status')).toContainText('Secret message deleted');
     await expect(page.locator('main table tbody tr', { hasText: title })).toHaveCount(0);
   });
 

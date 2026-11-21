@@ -2,31 +2,29 @@
 
 {% block title %}Secret message #{{ secret_message.id }}{% endblock %}
 
+{% block nowo_ui_page_header %}
+    {% set _toolbar %}
+        <a href="{{ path('secret_message_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">Back to list</a>
+        <a href="{{ path('secret_message_db_values') }}" class="nowo-ui-btn nowo-ui-btn--outline">View DB values</a>
+        <a href="{{ path('secret_message_edit', { id: secret_message.id }) }}" class="nowo-ui-btn nowo-ui-btn--primary">Edit</a>
+    {% endset %}
+    {{ include(nowo_ui_partial('page_header'), {title: 'Secret message #' ~ secret_message.id, intro: 'The message is decrypted when loaded through Doctrine.', toolbar: _toolbar}) }}
+{% endblock %}
+
 {% block body %}
-<div>
-    <a href="{{ path('secret_message_index') }}" class="nowo-ui-btn nowo-ui-btn--outline">← Back to list</a>
-</div>
-<div class="nowo-ui-card">
-    <div class="nowo-ui-card__header">
-        <h2>Secret message #{{ secret_message.id }}</h2>
-        <div class="nowo-ui-row-actions">
-            <a href="{{ path('secret_message_edit', { id: secret_message.id }) }}" class="nowo-ui-btn nowo-ui-btn--primary nowo-ui-btn--sm">Edit</a>
-            <a href="{{ path('secret_message_db_values') }}" class="nowo-ui-btn nowo-ui-btn--outline nowo-ui-btn--sm">View DB values</a>
-        </div>
-    </div>
-    <div class="nowo-ui-card__body">
-        <dl class="nowo-ui-detail-list">
-            <dt>Id</dt>
-            <dd>{{ secret_message.id }}</dd>
-            <dt>Title (plain)</dt>
-            <dd>{{ secret_message.title ?? '–' }}</dd>
-            <dt>Message (decrypted)</dt>
-            <dd>{{ secret_message.message ?? '–' }}</dd>
-        </dl>
-        {{ form_start(delete_form) }}
-            {% for child in delete_form %}{% if not child.rendered %}{{ form_row(child) }}{% endif %}{% endfor %}
-            <button type="submit" class="nowo-ui-btn nowo-ui-btn--danger">Delete</button>
-        {{ form_end(delete_form) }}
-    </div>
-</div>
+    {% embed '@NowoUiKit/demo_platform/_section.html.twig' with {title: 'Details', kind: 'detail'} %}
+        {% block section_actions %}
+            {{ include('_delete.html.twig', {form: delete_form, dialog_id: 'de-delete-secret-message', title: 'Delete secret message #' ~ secret_message.id ~ '?', message: 'The message is removed from the database.'}) }}
+        {% endblock %}
+        {% block section_body %}
+            <dl class="nowo-ui-detail-list">
+                <dt>Id</dt>
+                <dd>{{ secret_message.id }}</dd>
+                <dt>Title (plain)</dt>
+                <dd>{{ secret_message.title ?? '–' }}</dd>
+                <dt>Message (decrypted)</dt>
+                <dd>{{ secret_message.message ?? '–' }}</dd>
+            </dl>
+        {% endblock %}
+    {% endembed %}
 {% endblock %}
