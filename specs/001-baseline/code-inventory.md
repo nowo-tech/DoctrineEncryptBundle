@@ -2,7 +2,7 @@
 
 **Baseline spec**: [`spec.md`](spec.md)  
 **Package**: `nowo-tech/doctrine-encrypt-bundle`  
-**Last audited**: 2026-11-18 (sweep: 2026-10-13 baseline + later sources)
+**Last audited**: 2026-11-22 (sweep: 2026-10-13 baseline + later sources; `DbalTypeLookup` added for 2.15.1)
 
 Every production artifact under `src/` is listed below (including `src/.gitignore`, which excludes generated paths from VCS).
 
@@ -60,6 +60,7 @@ These 21 `src/` files were added by releases after the last review. Each row map
 | Source file | Spec section | Requirement IDs |
 | --- | --- | --- |
 | `Doctrine/Types/AbstractEncryptedType.php` | Base class of the encrypted DBAL types: the value is encrypted when Doctrine converts it for the database and decrypt... | FR-ORM-001 |
+| `Doctrine/Types/DbalTypeLookup.php` | Finds a registered DBAL type by name through the connection's type provider (doctrine/dbal >= 4.6) or the static registry on older versions, without the deprecated static calls; stateless, safe in a kept-alive worker. | FR-ORM-001 |
 | `Doctrine/Types/EncryptedJsonType.php` | `encrypted_json` (CLOB/TEXT, not a native JSON column: the stored value is ciphertext): a value JSON-encoded, then en... | FR-ORM-001 |
 | `Doctrine/Types/EncryptedStringType.php` | `encrypted_string` (VARCHAR): a string encrypted with the profile's encryptor. | FR-ORM-001 |
 | `Doctrine/Types/EncryptedTextType.php` | `encrypted_text` (CLOB/TEXT): like `encrypted_string` for long values. | FR-ORM-001 |
@@ -86,7 +87,7 @@ These 21 `src/` files were added by releases after the last review. Each row map
 
 | Category | Files | Mapped |
 | --- | ---: | ---: |
-| PHP classes | 25 | 25 |
-| YAML config / translations | 3 | 3 |
+| PHP classes | 46 | 46 |
+| YAML config / translations | 8 | 8 |
 | Repository metadata | 1 | 1 |
-| **Total production sources** | **50** | **50** |
+| **Total production sources** | **55** | **55** |
