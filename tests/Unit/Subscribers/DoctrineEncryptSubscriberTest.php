@@ -108,7 +108,7 @@ class DoctrineEncryptSubscriberTest extends TestCase
         $this->subscriber->reset();
         $this->assertSame([], (new ReflectionProperty(DoctrineEncryptSubscriber::class, 'fieldMap'))->getValue($this->subscriber));
         $this->subscriber->processFields(new User('Zoe', 'Peru'), true);
-        $this->assertSame([User::class], array_keys((array) (new ReflectionProperty(DoctrineEncryptSubscriber::class, 'fieldMap'))->getValue($this->subscriber)));
+        $this->assertSame([User::class], array_keys((new ReflectionProperty(DoctrineEncryptSubscriber::class, 'fieldMap'))->getValue($this->subscriber)));
     }
 
     public function testProcessFieldsEncrypt(): void
