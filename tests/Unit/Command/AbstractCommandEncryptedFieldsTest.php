@@ -51,7 +51,7 @@ final class AbstractCommandEncryptedFieldsTest extends TestCase
         $metadata->mapField(['fieldName' => 'setterCalls', 'type' => 'type_that_is_not_registered']);
 
         $command = $this->command();
-        self::assertSame([], DbalTypeFixtures::deprecationsRaisedBy(static fn () => $command->typeFields($metadata)));
+        self::assertSame([], DbalTypeFixtures::deprecationsRaisedBy(static fn (): array => $command->typeFields($metadata)));
         self::assertSame([['field' => 'taxId', 'config' => 'default_profile', 'type' => 'encrypted_string']], $command->typeFields($metadata));
         self::assertSame([], $command->typeFields($this->metadata(PlainProfile::class)));
         self::assertFalse($command->embeddable($metadata));

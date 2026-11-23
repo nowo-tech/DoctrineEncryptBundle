@@ -68,6 +68,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- CI: new `release-gates` job in `.github/workflows/ci.yml` runs the `make release-check` gates (`rector-dry`, `validate-phpdoc`, `validate-translations`, `check-twig-extra`) on every full-mode push and PR, so they no longer fail only at release time. CI only, no bundle change.
+- `make rector-dry` passes again: `DbalTypeLookup::find()` tests the connection with `instanceof`, and two tests get a return type / drop a redundant cast. No behaviour change.
+- `rector.php` skips `ArrayToFirstClassCallableRector` for `DbalTypeLookup` and `tests/Support/DbalTypeFixtures.php`, with the reason written in the file: `is_callable([$configuration, 'getTypeProvider'])` is a method-exists check for DBAL 3, and the first-class callable form would throw there.
 - Demo: runs in UiKit's demo platform shell (`nowo-tech/ui-kit-bundle` ^2.60); the demo's own header is gone and the pages use the shell page headers and section cards. Demo only, no bundle change.
 - CI runs the unit and functional suites on the DBAL 3 and DBAL 4 database cells too (they ran on the lockfile's DBAL only), and `testNoUpdateOnReadEncrypted` no longer depends on whether a nested transaction logs a statement, which differs between DBAL 3 and 4 (it failed on DBAL 3 for that reason only; reading an encrypted entity issues no UPDATE on either version).
 

@@ -27,7 +27,7 @@ final class DbalTypeLookup
      */
     public static function find(?Connection $connection, string $name): ?Type
     {
-        if ($connection !== null) {
+        if ($connection instanceof Connection) {
             $configuration = $connection->getConfiguration();
             if (is_callable([$configuration, 'getTypeProvider'])) {
                 $provider = $configuration->getTypeProvider();

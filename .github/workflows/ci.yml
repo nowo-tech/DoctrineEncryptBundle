@@ -294,6 +294,133 @@ jobs:
       - name: Run PHPStan (REQ-CS-006)
         run: composer phpstan
 
+  # Release gates (docs/GITHUB_CI.md#release-gates-in-full-mode): the `make release-check` gates that no other job of
+  # this workflow runs on every push. One matrix cell per gate, so the PR checks list names the gate that failed. Each
+  # cell runs the repo's own Makefile target with $(COMPOSE) pointed at the runner (CI and release-check run the same
+  # recipe); a repo whose Makefile does not define the target passes that cell with a notice, so this block is the same
+  # in every bundle. Not a required check. Light mode: the cells pass after one echo step (never skipped at job level,
+  # same as the test matrix, so the contexts keep their names if they are ever made required).
+  release-gates:
+    name: Release gate (make ${{ matrix.gate }})
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ !cancelled() }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        gate: ['rector-dry', 'validate-phpdoc', 'validate-translations', 'check-twig-extra']
+
+    env:
+      HEAVY: ${{ needs.changes.outputs.mode != 'light' }}
+      GATE: ${{ matrix.gate }}
+    steps:
+      - name: Light mode (deps/docs-only PR) - release gates run in full mode only
+        if: env.HEAVY != 'true'
+        run: echo "Light mode, this gate runs on full-mode PRs and on every push."
+
+      - name: Checkout code
+        if: env.HEAVY == 'true'
+        uses: actions/checkout@v7
+
+      - name: Is make ${{ matrix.gate }} defined in this repo?
+        if: env.HEAVY == 'true'
+        id: gate
+        run: |
+          # Defined = the Makefile has a rule with a recipe for the target. Skip only on these two exact make answers;
+          # any other make error (broken Makefile, missing include) fails the cell instead of hiding the gate.
+          run=false
+          if [ ! -f Makefile ]; then
+            reason="no Makefile in this repo"
+          else
+            set +e
+            plan=$(LC_ALL=C make -n -o ensure-up -o install "$GATE" 2>&1)
+            rc=$?
+            set -e
+            if [ "$rc" -ne 0 ] && printf '%s\n' "$plan" | grep -qF "No rule to make target '$GATE'.  Stop."; then
+              reason="the Makefile has no '$GATE' target"
+            elif [ "$rc" -eq 0 ] && printf '%s\n' "$plan" | grep -qF "Nothing to be done for '$GATE'."; then
+              reason="the Makefile declares '$GATE' without a recipe"
+            elif [ "$rc" -ne 0 ]; then
+              printf '%s\n' "$plan"
+              echo "::error title=Release gate $GATE::make -n $GATE failed (exit $rc), see the output above"
+              exit 1
+            else
+              run=true
+              echo "make $GATE runs (docker compose exec/run prefixes are dropped, the command runs on the runner):"
+              printf '%s\n' "$plan"
+            fi
+          fi
+          if [ "$run" = false ]; then
+            echo "::notice title=Release gate $GATE skipped::$reason, nothing to check."
+            echo "Release gate \`$GATE\` skipped: $reason." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
+      - name: Setup PHP
+        if: steps.gate.outputs.run == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          # same PHP as this workflow's phpstan job
+          php-version: '8.2'
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        if: steps.gate.outputs.run == 'true'
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-8.2-release-gates-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.2-release-gates-composer-
+            ${{ runner.os }}-php-8.2-composer-
+
+      - name: Install dependencies
+        if: steps.gate.outputs.run == 'true'
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: make ${{ matrix.gate }}
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          # Stand-in for `docker compose`: `[global options] exec|run [options] <service> <command...>` runs <command>
+          # here (-e VAR=value is exported, an absolute binary path missing on the runner is looked up on PATH). Any
+          # other compose call (up, ps, ...) fails loudly: the gate needs a stack CI does not start.
+          shim="$RUNNER_TEMP/compose-on-runner"
+          cat > "$shim" <<'SHIM'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          sub=""
+          while [ $# -gt 0 ]; do
+            case "$1" in
+              exec|run) sub=$1; shift; break ;;
+              -f|--file|-p|--project-name|--project-directory|--env-file|--profile|--ansi|--progress) shift 2 ;;
+              -*) shift ;;
+              *) break ;;
+            esac
+          done
+          if [ -z "$sub" ]; then echo "compose-on-runner: 'compose $*' needs the Docker stack, CI has none" >&2; exit 1; fi
+          while [ $# -gt 0 ]; do
+            case "$1" in
+              -e|--env) export "$2"; shift 2 ;;
+              --env=*) export "${1#--env=}"; shift ;;
+              -w|--workdir|-u|--user|--name|--entrypoint|--index) shift 2 ;;
+              -*) shift ;;
+              *) shift; break ;;
+            esac
+          done
+          if [ $# -eq 0 ]; then echo "compose-on-runner: no command after the service" >&2; exit 1; fi
+          if [ "${1#/}" != "$1" ] && [ ! -x "$1" ]; then set -- "${1##*/}" "${@:2}"; fi
+          exec "$@"
+          SHIM
+          chmod +x "$shim"
+          make -o ensure-up -o install COMPOSE="$shim" COMPOSE_BIN="$shim" "$GATE"
+
+
   code-style:
     name: Code Style
     runs-on: ubuntu-latest
