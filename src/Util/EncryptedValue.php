@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Util;
 
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
+use SensitiveParameter;
 use Throwable;
 
 use function strlen;
@@ -24,7 +25,7 @@ final class EncryptedValue
     /**
      * Whether the value ends with the marker and has a non-empty payload before it (format only, no decryption).
      */
-    public static function hasMarker(string $value): bool
+    public static function hasMarker(#[SensitiveParameter] string $value): bool
     {
         return strlen($value) > strlen(self::MARKER) && str_ends_with($value, self::MARKER);
     }
@@ -32,7 +33,7 @@ final class EncryptedValue
     /**
      * The ciphertext before the marker (the value is expected to pass {@see self::hasMarker()}).
      */
-    public static function payload(string $value): string
+    public static function payload(#[SensitiveParameter] string $value): string
     {
         return substr($value, 0, -strlen(self::MARKER));
     }
@@ -41,7 +42,7 @@ final class EncryptedValue
      * Whether the value is marked ciphertext that the encryptor can decrypt (wrong key, corrupted data and
      * plaintext ending with the marker all return false).
      */
-    public static function isDecryptable(string $value, EncryptorInterface $encryptor): bool
+    public static function isDecryptable(#[SensitiveParameter] string $value, EncryptorInterface $encryptor): bool
     {
         if (!self::hasMarker($value)) {
             return false;

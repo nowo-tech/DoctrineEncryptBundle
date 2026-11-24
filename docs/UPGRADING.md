@@ -81,6 +81,14 @@ that carries a key): PHP does not inherit parameter attributes from the interfac
 public function encrypt(#[\SensitiveParameter] string $data): string
 ```
 
+Behaviour change for error handling only: when an entity's setter or typed property refuses a value the Doctrine
+listener writes (the decrypted value on load, the ciphertext on flush), the listener now throws
+`Nowo\DoctrineEncryptBundle\Exception\PropertyWriteFailedException` instead of rethrowing the setter's exception (for
+example a `TypeError`), because that exception's trace carries the value. It has no previous exception and names the
+cause by class only. If you caught the original exception type around a load or a flush, catch
+`PropertyWriteFailedException` (or `ExceptionInterface`) instead. `encrypted_json` still throws `JsonException` on
+invalid JSON, now without a previous exception.
+
 ## To 2.15.0
 
 Not released yet. No configuration change needed.

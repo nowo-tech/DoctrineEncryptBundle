@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Form;
 
+use SensitiveParameter;
+
 use function is_array;
 use function is_string;
 
@@ -30,7 +32,7 @@ final class SecretFieldApplier
      * @param string|null $plain The submitted plain secret (null or '' keeps the stored value)
      * @param callable(string|null): mixed $setter Receives the new secret, or null to clear it
      */
-    public static function apply(bool $clear, ?string $plain, callable $setter): void
+    public static function apply(bool $clear, #[SensitiveParameter] ?string $plain, callable $setter): void
     {
         if ($clear) {
             $setter(null);
@@ -51,7 +53,7 @@ final class SecretFieldApplier
      * @param mixed $data Usually `$form->get('apiKey')->getData()`: `['value' => ?string, 'clear' => bool]`
      * @param callable(string|null): mixed $setter Receives the new secret, or null to clear it
      */
-    public static function applyData(mixed $data, callable $setter): void
+    public static function applyData(#[SensitiveParameter] mixed $data, callable $setter): void
     {
         if (!is_array($data)) {
             return;

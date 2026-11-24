@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Util;
 
+use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 
 use function array_slice;
@@ -31,7 +32,7 @@ final class MaskUtil
      *
      * @return string|null The masked value, or null if $value is null
      */
-    public static function mask(?string $value, ?int $visibleLast = 4, ?string $replacement = '****'): ?string
+    public static function mask(#[SensitiveParameter] ?string $value, ?int $visibleLast = 4, ?string $replacement = '****'): ?string
     {
         if ($value === null) {
             return null;
@@ -62,7 +63,7 @@ final class MaskUtil
      * @param int $visibleLast Number of trailing characters to reveal (default 4; <= 0 reveals nothing)
      * @param string $mask Mask prefix (default four bullets)
      */
-    public static function secretHint(?string $secret, int $visibleLast = 4, string $mask = '••••'): ?string
+    public static function secretHint(#[SensitiveParameter] ?string $secret, int $visibleLast = 4, string $mask = '••••'): ?string
     {
         if ($secret === null || $secret === '') {
             return null;
@@ -82,7 +83,7 @@ final class MaskUtil
      *
      * @return list<string>
      */
-    private static function splitCharacters(string $value): array
+    private static function splitCharacters(#[SensitiveParameter] string $value): array
     {
         $chars = preg_split('//u', $value, -1, PREG_SPLIT_NO_EMPTY);
         if ($chars === false) {

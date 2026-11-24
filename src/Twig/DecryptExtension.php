@@ -7,6 +7,7 @@ namespace Nowo\DoctrineEncryptBundle\Twig;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Util\EncryptUtil;
+use SensitiveParameter;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 
@@ -54,7 +55,7 @@ final class DecryptExtension extends AbstractExtension
      * @param mixed $value The value to decrypt
      * @param string|null $config Encryptor config name (e.g. 'financial_data'). Null = default config
      */
-    public function decrypt(mixed $value, ?string $config = null): mixed
+    public function decrypt(#[SensitiveParameter] mixed $value, ?string $config = null): mixed
     {
         if ($value === null) {
             return null;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Twig;
 
 use Nowo\DoctrineEncryptBundle\Util\MaskUtil;
+use SensitiveParameter;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 
@@ -43,7 +44,7 @@ final class MaskExtension extends AbstractExtension
      *
      * @return string|null Masked value, or null if input is null
      */
-    public function mask(mixed $value, ?int $visibleLast = 4, ?string $replacement = '****'): ?string
+    public function mask(#[SensitiveParameter] mixed $value, ?int $visibleLast = 4, ?string $replacement = '****'): ?string
     {
         $str = $value === null ? null : (string) $value;
 
@@ -55,7 +56,7 @@ final class MaskExtension extends AbstractExtension
      *
      * Usage: {{ settings.apiKey|secret_hint ?? 'Not set' }} or {{ value|secret_hint(4, '****') }}
      */
-    public function secretHint(mixed $value, int $visibleLast = 4, string $mask = '••••'): ?string
+    public function secretHint(#[SensitiveParameter] mixed $value, int $visibleLast = 4, string $mask = '••••'): ?string
     {
         if ($value === null) {
             return null;

@@ -22,7 +22,7 @@ interface EncryptUtilInterface
      * @param string|null $value Value to decrypt (ciphertext + marker, or plain)
      * @param string|null $config Encryptor config name. Null = default config
      */
-    public function decrypt(?string $value, ?string $config = null): ?string;
+    public function decrypt(#[SensitiveParameter] ?string $value, ?string $config = null): ?string;
 
     /**
      * Decrypts a value that must be ciphertext: never passes plaintext through.
@@ -33,7 +33,7 @@ interface EncryptUtilInterface
      * @throws ValueNotEncryptedException
      * @throws DecryptionFailedException
      */
-    public function decryptStrict(?string $value, ?string $config = null): ?string;
+    public function decryptStrict(#[SensitiveParameter] ?string $value, ?string $config = null): ?string;
 
     /**
      * Encrypts a value and returns it with the encryption marker appended (null and '' are returned unchanged).
