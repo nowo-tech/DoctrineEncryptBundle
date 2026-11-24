@@ -49,7 +49,7 @@ final class SensitiveParameterRedactionTest extends TestCase
 
     public function testHaliteEncryptRedactsPlaintextInTrace(): void
     {
-        $plaintext = self::marker();
+        $plaintext = $this->marker();
         $encryptor = new HaliteEncryptor('', null, false);
 
         $e = $this->catchThrowable(static fn (): string => $encryptor->encrypt($plaintext));
@@ -60,7 +60,7 @@ final class SensitiveParameterRedactionTest extends TestCase
     public function testHaliteKeyContentIsRedactedInTrace(): void
     {
         // Not a valid hex Halite key: importing it throws inside loadKeyFromString().
-        $keyContent = self::marker();
+        $keyContent = $this->marker();
         $encryptor  = new HaliteEncryptor('', $keyContent, false);
 
         $e = $this->catchThrowable(static fn (): string => $encryptor->encrypt('x'));
@@ -70,7 +70,7 @@ final class SensitiveParameterRedactionTest extends TestCase
 
     public function testDefuseEncryptRedactsPlaintextInTrace(): void
     {
-        $plaintext = self::marker();
+        $plaintext = $this->marker();
         $encryptor = new DefuseEncryptor('', null, false);
 
         $e = $this->catchThrowable(static fn (): string => $encryptor->encrypt($plaintext));
@@ -80,7 +80,7 @@ final class SensitiveParameterRedactionTest extends TestCase
 
     public function testMysqlAesEncryptRedactsPlaintextInTrace(): void
     {
-        $plaintext = self::marker();
+        $plaintext = $this->marker();
         $encryptor = new MysqlAesEncryptor(sys_get_temp_dir() . '/missing-' . uniqid('', true) . '.key');
 
         $e = $this->catchThrowable(static fn (): string => $encryptor->encrypt($plaintext));
@@ -90,7 +90,7 @@ final class SensitiveParameterRedactionTest extends TestCase
 
     public function testEncryptUtilRedactsPlaintextInTrace(): void
     {
-        $plaintext = self::marker();
+        $plaintext = $this->marker();
         $failing   = $this->createMock(EncryptorInterface::class);
         // Thrown from inside the call (an exception built up front would carry the test's trace, not EncryptUtil's).
         $failing->method('encrypt')->willReturnCallback(static fn (): never => throw new RuntimeException('encryptor failure'));
@@ -141,7 +141,7 @@ final class SensitiveParameterRedactionTest extends TestCase
         self::fail(sprintf('Parameter $%s not found on %s::%s()', $parameter, $class, $method));
     }
 
-    private static function marker(): string
+    private function marker(): string
     {
         return 'ZAW-I4-' . bin2hex(random_bytes(8));
     }
