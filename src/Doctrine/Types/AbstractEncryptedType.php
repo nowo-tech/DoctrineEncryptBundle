@@ -46,7 +46,7 @@ abstract class AbstractEncryptedType extends Type
     /**
      * Turns the decrypted plaintext (or a stored value without the marker) back into the PHP value.
      */
-    abstract protected function fromPlaintext(string $plaintext): mixed;
+    abstract protected function fromPlaintext(#[SensitiveParameter] string $plaintext): mixed;
 
     public function convertToDatabaseValue(#[SensitiveParameter] mixed $value, AbstractPlatform $platform): ?string
     {
@@ -58,7 +58,7 @@ abstract class AbstractEncryptedType extends Type
         return EncryptedTypeRuntime::encryptor($this->getProfile())->encrypt($plaintext) . EncryptedValue::MARKER;
     }
 
-    public function convertToPHPValue(mixed $value, AbstractPlatform $platform): mixed
+    public function convertToPHPValue(#[SensitiveParameter] mixed $value, AbstractPlatform $platform): mixed
     {
         if ($value === null) {
             return null;

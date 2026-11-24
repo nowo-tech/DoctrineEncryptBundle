@@ -54,7 +54,7 @@ final readonly class EncryptUtil implements EncryptUtilInterface
      *
      * @return string|null Decrypted value or original if not encrypted
      */
-    public function decrypt(?string $value, ?string $config = null): ?string
+    public function decrypt(#[SensitiveParameter] ?string $value, ?string $config = null): ?string
     {
         if ($value === null) {
             return null;
@@ -84,7 +84,7 @@ final readonly class EncryptUtil implements EncryptUtilInterface
      * @throws ValueNotEncryptedException
      * @throws DecryptionFailedException
      */
-    public function decryptStrict(?string $value, ?string $config = null): ?string
+    public function decryptStrict(#[SensitiveParameter] ?string $value, ?string $config = null): ?string
     {
         if ($value === null || $value === '') {
             return $value;

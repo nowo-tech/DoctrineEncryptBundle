@@ -56,11 +56,11 @@ Encrypt and decrypt Doctrine entity field values at rest using pluggable encrypt
 
 Areas introduced by releases after the baseline review; each requirement names the area and what its main source does (class docblock).
 
-- **FR-EXCEPTION-001** `src/Exception/`: A value carries the encryption marker but cannot be decrypted (wrong or rotated key, corrupted or foreign ciphertext).
+- **FR-EXCEPTION-001** `src/Exception/`: A value carries the encryption marker but cannot be decrypted (wrong or rotated key, corrupted or foreign ciphertext); the listener cannot write a property (`PropertyWriteFailedException`, never carrying the value).
 
 ## Success Criteria
 
-- **SC-001**: **55/55** production files mapped in inventory.
+- **SC-001**: **56/56** production files mapped in inventory.
 - **SC-002**: Config keys in [`docs/CONFIGURATION.md`](../../docs/CONFIGURATION.md) match `Configuration.php`.
 - **SC-003**: `composer qa` passes; PHPUnit covers subscriber and encryptors.
 

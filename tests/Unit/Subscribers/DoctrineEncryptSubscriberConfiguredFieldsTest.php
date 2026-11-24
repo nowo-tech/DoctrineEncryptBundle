@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use LogicException;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
+use Nowo\DoctrineEncryptBundle\Exception\PropertyWriteFailedException;
 use Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Tests\Unit\Subscribers\fixtures\PlainAddress;
@@ -54,8 +55,10 @@ final class DoctrineEncryptSubscriberConfiguredFieldsTest extends TestCase
         $subscriber = $this->subscriber(new EncryptedFieldMap([PlainProfile::class => ['properties' => ['taxId' => null]]]));
         $profile    = new PlainProfile('X123');
 
-        // Default behaviour (unchanged): the one-argument setter receives the ciphertext and may reject it.
-        $this->expectException(InvalidArgumentException::class);
+        // Default behaviour: the one-argument setter receives the ciphertext and may reject it. Since 2.15.2 the listener
+        // reports that as PropertyWriteFailedException (cause by class, no previous: the setter frames carry the value).
+        $this->expectException(PropertyWriteFailedException::class);
+        $this->expectExceptionMessage(InvalidArgumentException::class);
         $subscriber->processFields($profile);
     }
 

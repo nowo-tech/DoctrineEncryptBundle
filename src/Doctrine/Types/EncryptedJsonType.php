@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Doctrine\Types;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
+use JsonException;
 use SensitiveParameter;
 
 use function json_decode;
@@ -28,11 +29,37 @@ class EncryptedJsonType extends AbstractEncryptedType
 
     protected function toPlaintext(#[SensitiveParameter] mixed $value): ?string
     {
-        return $value === null ? null : json_encode($value, JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR);
+        if ($value === null) {
+            return null;
+        }
+
+        try {
+            return json_encode($value, JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            throw $this->withoutValue($e);
+        }
     }
 
-    protected function fromPlaintext(string $plaintext): mixed
+    protected function fromPlaintext(#[SensitiveParameter] string $plaintext): mixed
     {
-        return $plaintext === '' ? null : json_decode($plaintext, true, 512, JSON_THROW_ON_ERROR);
+        if ($plaintext === '') {
+            return null;
+        }
+
+        try {
+            return json_decode($plaintext, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            throw $this->withoutValue($e);
+        }
+    }
+
+    /**
+     * The trace of a JsonException holds the json_encode() / json_decode() frame, whose argument is the plaintext
+     * (built-in functions cannot be marked #[\SensitiveParameter]). A fresh exception, without $previous, keeps the
+     * message and code but starts its trace in this class, where the argument is redacted.
+     */
+    private function withoutValue(JsonException $e): JsonException
+    {
+        return new JsonException($e->getMessage(), $e->getCode());
     }
 }

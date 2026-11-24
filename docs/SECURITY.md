@@ -99,15 +99,27 @@ are not known before `INSERT` for generated identifiers, so it needs a design th
 
 Avoid logging decrypted personal data, key paths with sensitive contents, or encryption exceptions that embed user data. Prefer generic error messages in production logs. The bundle's decrypt-failure warning and `DecryptionFailedException` contain the entity class, property, profile and the underlying exception class / message, never the stored value.
 
-Stack traces (since 2.15.2): every bundle parameter that carries plaintext or key material is `#[\SensitiveParameter]`
-(PHP 8.2+): the encryptors' `encrypt()` (Halite, Defuse, MysqlAes and `EncryptorInterface`), their `$keyContent`
-constructor argument, Halite's key import, `MysqlAesEncryptor::deriveKey()`, `EncryptUtil::encrypt()` and the encrypted
-DBAL types' `convertToDatabaseValue()` / `toPlaintext()`. PHP replaces those arguments with a `SensitiveParameterValue`
-in every trace frame, so an exception logged or rendered with `zend.exception_ignore_args = Off` (the development
-`php.ini`) does not show them. `decrypt()` arguments are ciphertext and are not redacted. Frames inside the crypto
-libraries are outside the bundle's control: Halite wraps plaintext and keys in `HiddenString`, while
-`defuse/php-encryption` passes plaintext and the password as plain strings, so keep `zend.exception_ignore_args = On`
-in production (the production `php.ini` default).
+Stack traces (since 2.15.2): the bundle's parameters that carry plaintext or key material are `#[\SensitiveParameter]`
+(PHP 8.2+), so PHP replaces them with a `SensitiveParameterValue` in every trace frame and an exception logged or
+rendered with `zend.exception_ignore_args = Off` (the development `php.ini`) does not show them:
+
+- encryptors: `encrypt()` of `HaliteEncryptor`, `DefuseEncryptor`, `MysqlAesEncryptor` and `EncryptorInterface`, the
+  `$keyContent` constructor argument, Halite's key import, `MysqlAesEncryptor::deriveKey()`;
+- `EncryptUtil(Interface)::encrypt()`, `decrypt()` and `decryptStrict()` (a value without the marker passes through as
+  plaintext), `EncryptedValue::hasMarker()` / `payload()` / `isDecryptable()`;
+- encrypted DBAL types: `convertToDatabaseValue()`, `convertToPHPValue()` (legacy rows without the marker are
+  plaintext), `toPlaintext()` and `fromPlaintext()`. `encrypted_json` rethrows a `JsonException` from
+  `json_encode()` / `json_decode()` as a new exception without `$previous`, because the built-in function's frame
+  carries the plaintext;
+- the Doctrine listener's internal write and plaintext checks. When the entity's setter or typed property refuses a
+  value, the listener throws `PropertyWriteFailedException` (no previous exception, cause named by class only) instead
+  of rethrowing the original exception, whose trace carries the value;
+- `SecretFieldApplier::apply()` / `applyData()`, the Twig filters `decrypt`, `mask`, `secret_hint` and `MaskUtil`.
+
+The encryptors' `decrypt()` arguments are ciphertext and are not redacted. Frames outside the bundle are outside its
+control: `defuse/php-encryption` passes plaintext and the password as plain strings (Halite wraps them in
+`HiddenString`), and your own setters, Doctrine DBAL statement parameters or Twig internals receive values as usual.
+Keep `zend.exception_ignore_args = On` in production (the production `php.ini` default).
 
 ## Dependencies and updates
 

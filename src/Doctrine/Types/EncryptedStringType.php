@@ -38,7 +38,7 @@ class EncryptedStringType extends AbstractEncryptedType
         throw new InvalidArgumentException(sprintf('DBAL type "%s" expects a string, a Stringable or null, got %s.', $this->getRegisteredName(), get_debug_type($value)));
     }
 
-    protected function fromPlaintext(string $plaintext): mixed
+    protected function fromPlaintext(#[SensitiveParameter] string $plaintext): mixed
     {
         return $plaintext;
     }

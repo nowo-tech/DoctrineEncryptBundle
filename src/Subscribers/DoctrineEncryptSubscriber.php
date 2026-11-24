@@ -28,6 +28,7 @@ use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistry;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Exception\DecryptionFailedException;
+use Nowo\DoctrineEncryptBundle\Exception\PropertyWriteFailedException;
 use Nowo\DoctrineEncryptBundle\Mapping\EncryptedFieldMap;
 use Nowo\DoctrineEncryptBundle\Util\EncryptedValue;
 use Psr\Log\LoggerInterface;
@@ -36,6 +37,7 @@ use Psr\Log\NullLogger;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
+use SensitiveParameter;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Contracts\Service\ResetInterface;
@@ -600,7 +602,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      * @param 'changed'|'decrypted'|'restored' $kind
      * @param (Closure(): string)|null $reencrypt
      */
-    private function recordSwap(string $kind, string $property, mixed $before, mixed $after, ?string $stored = null, ?Closure $reencrypt = null): void
+    private function recordSwap(string $kind, string $property, #[SensitiveParameter] mixed $before, #[SensitiveParameter] mixed $after, ?string $stored = null, ?Closure $reencrypt = null): void
     {
         if ($this->swappedValues !== null) {
             $this->swappedValues[] = ['kind' => $kind, 'property' => $property, 'before' => $before, 'after' => $after, 'stored' => $stored, 'reencrypt' => $reencrypt];
@@ -728,7 +730,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      * The marker alone is not enough (a plaintext may end with "<ENC>"): the value must be ciphertext this listener
      * wrote or restored, or its payload must decrypt with the property encryptor.
      */
-    private function isCiphertext(object $entity, string $property, string $value, EncryptorInterface $encryptor): bool
+    private function isCiphertext(object $entity, string $property, #[SensitiveParameter] string $value, EncryptorInterface $encryptor): bool
     {
         if (!EncryptedValue::hasMarker($value)) {
             return false;
@@ -772,7 +774,7 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
      * Writes a property through PropertyAccess (one-argument setter, public property) or, when it is not writable that
      * way (private property without setter, setter with more than one required argument), through reflection.
      */
-    private function writeProperty(object $entity, ReflectionProperty $refProperty, ?string $value, string $config): void
+    private function writeProperty(object $entity, ReflectionProperty $refProperty, #[SensitiveParameter] ?string $value, string $config): void
     {
         $pac = $this->propertyAccessor ??= PropertyAccess::createPropertyAccessor();
 
@@ -786,7 +788,9 @@ class DoctrineEncryptSubscriber implements ResetInterface /* implements EventSub
             $refProperty->setValue($entity, $value);
         } catch (Throwable $e) {
             if ($value !== null) {
-                throw $e;
+                // Not rethrown as is: the setter / PropertyAccessor / ReflectionProperty frames of $e carry the decrypted
+                // value as an argument. The new exception has no $previous and names the cause by class only.
+                throw PropertyWriteFailedException::forProperty($entity::class, $refProperty->getName(), $config, $e);
             }
 
             // on_decrypt_failure: null on a property that does not accept null: fail closed instead of keeping ciphertext.
