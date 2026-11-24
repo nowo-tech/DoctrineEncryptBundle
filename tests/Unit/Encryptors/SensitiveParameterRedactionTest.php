@@ -311,6 +311,7 @@ final class SensitiveParameterRedactionTest extends TestCase
             }
             $this->assertStringNotContainsString($secret, $t->getMessage());
             $this->assertStringNotContainsString($secret, $this->frameArguments($t, !$wholeTrace));
+            $this->assertStringNotContainsString($secret, $this->bundleFrameArgumentsDeep($t));
             if ($wholeTrace) {
                 $this->assertStringNotContainsString($secret, $t->getTraceAsString());
             }
@@ -327,6 +328,7 @@ final class SensitiveParameterRedactionTest extends TestCase
         for ($t = $e; $t instanceof Throwable; $t = $t->getPrevious()) {
             $this->assertStringNotContainsString($secret, $this->frameArguments($t));
             $this->assertStringNotContainsString($secret, $t->getMessage());
+            $this->assertStringNotContainsString($secret, $this->bundleFrameArgumentsDeep($t));
         }
         $this->assertStringNotContainsString($secret, (string) $e);
     }
@@ -336,6 +338,24 @@ final class SensitiveParameterRedactionTest extends TestCase
      * value), or of the bundle's own frames only when $bundleOnly is true, as text. Objects are named by class only: dumping the runner's objects would be huge, and a leaked
      * plaintext is a string (or an array of strings) argument.
      */
+    /**
+     * Full print_r() dump of the arguments of the bundle's own frames, objects included: an exception passed as an
+     * argument carries its own trace (with the value), and print_r() walks into it (audit ZBC-D-L1). Limited to the
+     * bundle's frames because the runner's objects would make the dump huge.
+     */
+    private function bundleFrameArgumentsDeep(Throwable $t): string
+    {
+        $out = '';
+        foreach ($t->getTrace() as $frame) {
+            $class = $frame['class'] ?? '';
+            if (str_starts_with($class, 'Nowo\\DoctrineEncryptBundle\\') && !str_starts_with($class, 'Nowo\\DoctrineEncryptBundle\\Tests\\')) {
+                $out .= $class . '::' . $frame['function'] . ' ' . print_r($frame['args'] ?? [], true) . "\n";
+            }
+        }
+
+        return $out;
+    }
+
     private function frameArguments(Throwable $t, bool $bundleOnly = false): string
     {
         $out = '';

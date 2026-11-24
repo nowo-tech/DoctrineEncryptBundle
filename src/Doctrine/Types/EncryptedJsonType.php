@@ -36,7 +36,7 @@ class EncryptedJsonType extends AbstractEncryptedType
         try {
             return json_encode($value, JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
-            throw $this->withoutValue($e);
+            throw $this->withoutValue($e->getMessage(), $e->getCode());
         }
     }
 
@@ -49,17 +49,19 @@ class EncryptedJsonType extends AbstractEncryptedType
         try {
             return json_decode($plaintext, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
-            throw $this->withoutValue($e);
+            throw $this->withoutValue($e->getMessage(), $e->getCode());
         }
     }
 
     /**
      * The trace of a JsonException holds the json_encode() / json_decode() frame, whose argument is the plaintext
      * (built-in functions cannot be marked #[\SensitiveParameter]). A fresh exception, without $previous, keeps the
-     * message and code but starts its trace in this class, where the argument is redacted.
+     * message and code but starts its trace in this class, where the argument is redacted. Only the message and the
+     * code are passed in: the original exception as an argument would put its own trace (with the plaintext) into this
+     * frame's arguments (audit ZBC-D-L1).
      */
-    private function withoutValue(JsonException $e): JsonException
+    private function withoutValue(string $message, int $code): JsonException
     {
-        return new JsonException($e->getMessage(), $e->getCode());
+        return new JsonException($message, $code);
     }
 }

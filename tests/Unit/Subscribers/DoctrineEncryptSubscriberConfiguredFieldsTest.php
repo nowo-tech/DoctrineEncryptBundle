@@ -55,7 +55,7 @@ final class DoctrineEncryptSubscriberConfiguredFieldsTest extends TestCase
         $subscriber = $this->subscriber(new EncryptedFieldMap([PlainProfile::class => ['properties' => ['taxId' => null]]]));
         $profile    = new PlainProfile('X123');
 
-        // Default behaviour: the one-argument setter receives the ciphertext and may reject it. Since 2.15.2 the listener
+        // Default behaviour: the one-argument setter receives the ciphertext and may reject it. Since 2.16.0 the listener
         // reports that as PropertyWriteFailedException (cause by class, no previous: the setter frames carry the value).
         $this->expectException(PropertyWriteFailedException::class);
         $this->expectExceptionMessage(InvalidArgumentException::class);

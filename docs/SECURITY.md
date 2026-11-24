@@ -99,7 +99,7 @@ are not known before `INSERT` for generated identifiers, so it needs a design th
 
 Avoid logging decrypted personal data, key paths with sensitive contents, or encryption exceptions that embed user data. Prefer generic error messages in production logs. The bundle's decrypt-failure warning and `DecryptionFailedException` contain the entity class, property, profile and the underlying exception class / message, never the stored value.
 
-Stack traces (since 2.15.2): the bundle's parameters that carry plaintext or key material are `#[\SensitiveParameter]`
+Stack traces (since 2.16.0): the bundle's parameters that carry plaintext or key material are `#[\SensitiveParameter]`
 (PHP 8.2+), so PHP replaces them with a `SensitiveParameterValue` in every trace frame and an exception logged or
 rendered with `zend.exception_ignore_args = Off` (the development `php.ini`) does not show them:
 

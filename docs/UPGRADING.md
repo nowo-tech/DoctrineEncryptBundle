@@ -2,7 +2,7 @@
 
 ## Table of contents
 
-- [To 2.15.2](#to-2152)
+- [To 2.16.0](#to-2160)
 - [To 2.15.0](#to-2150)
   - [Remediation: values stored in plaintext](#remediation-values-stored-in-plaintext)
 - [To 2.14.0](#to-2140)
@@ -70,7 +70,7 @@
 - [Upgrading to 1.0.0](#upgrading-to-100)
 - [Upgrading from ambta/doctrine-encrypt-bundle or hec-franco/doctrine-encrypt-bundle](#upgrading-from-ambtadoctrine-encrypt-bundle-or-hec-francodoctrine-encrypt-bundle)
 
-## To 2.15.2
+## To 2.16.0
 
 No configuration or schema change. Plaintext and key material passed to the bundle's encryptors are
 `#[\SensitiveParameter]`, so they never appear in exception stack traces (audit ZAW-I4). If you ship a custom
