@@ -72,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Code style: `@PER-CS` + `@PER-CS:risky` replace `@PSR12` (REQ-CS-009); the Flex-managed demo `config/bundles.php` and `config/reference.php` are excluded from the fixer. No file changed.
+- Dependencies (dev / demo locks only, REQ-SEC-004): `twig/twig` 3.31.1 in the root and demo locks, `symfony/yaml` 8.1.11 in the demo lock (`composer audit --locked` clean). No constraint change.
 - CI: new `release-gates` job in `.github/workflows/ci.yml` runs the `make release-check` gates (`rector-dry`, `validate-phpdoc`, `validate-translations`, `check-twig-extra`) on every full-mode push and PR, so they no longer fail only at release time. CI only, no bundle change.
 - `make rector-dry` passes again: `DbalTypeLookup::find()` tests the connection with `instanceof`, and two tests get a return type / drop a redundant cast. No behaviour change.
 - `rector.php` skips `ArrayToFirstClassCallableRector` for `DbalTypeLookup` and `tests/Support/DbalTypeFixtures.php`, with the reason written in the file: `is_callable([$configuration, 'getTypeProvider'])` is a method-exists check for DBAL 3, and the first-class callable form would throw there.

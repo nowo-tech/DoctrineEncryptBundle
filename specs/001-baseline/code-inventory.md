@@ -2,7 +2,7 @@
 
 **Baseline spec**: [`spec.md`](spec.md)  
 **Package**: `nowo-tech/doctrine-encrypt-bundle`  
-**Last audited**: 2026-11-22 (sweep: 2026-10-13 baseline + later sources; `DbalTypeLookup` added for 2.15.1)
+**Last audited**: 2026-11-24 (55/55; 2.15.2 adds no file: `#[\SensitiveParameter]` on existing encryptor / util / DBAL type parameters; previous: 2026-11-22 `DbalTypeLookup` for 2.15.1)
 
 Every production artifact under `src/` is listed below (including `src/.gitignore`, which excludes generated paths from VCS).
 
