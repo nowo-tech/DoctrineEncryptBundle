@@ -2,7 +2,7 @@
 
 **Baseline spec**: [`spec.md`](spec.md)  
 **Package**: `nowo-tech/doctrine-encrypt-bundle`  
-**Last audited**: 2026-11-24 (56/56; 2.15.2 adds `Exception/PropertyWriteFailedException.php` and `#[\SensitiveParameter]` on plaintext-carrying parameters; previous: 2026-11-22 `DbalTypeLookup` for 2.15.1)
+**Last audited**: 2026-11-24 (56/56; 2.16.0 adds `Exception/PropertyWriteFailedException.php` and `#[\SensitiveParameter]` on plaintext-carrying parameters; previous: 2026-11-22 `DbalTypeLookup` for 2.15.1)
 
 Every production artifact under `src/` is listed below (including `src/.gitignore`, which excludes generated paths from VCS).
 
@@ -69,7 +69,7 @@ These 21 `src/` files were added by releases after the last review. Each row map
 | `Encryptors/EncryptorRegistryInterface.php` | Port: registry of named encryptors (one per `encryptors` config alias, e.g. personal_data, financial_data). | FR-ENC-002 |
 | `EventListener/EncryptedMappingValidator.php` | Checks the encryption selection against Doctrine metadata when a class's metadata is loaded (first use, or cache:warm... | FR-ORM-001 |
 | `Exception/DecryptionFailedException.php` | A value carries the encryption marker but cannot be decrypted (wrong or rotated key, corrupted or foreign ciphertext). | FR-EXCEPTION-001 |
-| `Exception/PropertyWriteFailedException.php` | The listener could not write an encrypted property; message and trace never carry the value (2.15.2, ZBC-L1). | FR-EXCEPTION-001 |
+| `Exception/PropertyWriteFailedException.php` | The listener could not write an encrypted property; message and trace never carry the value (2.16.0, ZBC-L1). | FR-EXCEPTION-001 |
 | `Exception/ChunkLockConflictException.php` | A database-command chunk stayed in a lock conflict after its attempts (CONFLICT_001 / CONFLICT_002). | FR-EXCEPTION-001, FR-CLI-002 |
 | `Exception/ExceptionInterface.php` | Marker interface for the exceptions thrown by this bundle (catch it to handle every bundle failure at once). | FR-EXCEPTION-001 |
 | `Exception/MissingEncryptionKeyException.php` | The key file of a file-based profile does not exist and the bundle is not allowed to generate one (`generate_missing_... | FR-EXCEPTION-001 |
