@@ -1003,11 +1003,11 @@
         },
         {
             "name": "nowo-tech/doctrine-encrypt-bundle",
-            "version": "dev-chore/demo-platform-shell",
+            "version": "dev-fix/sensitive-parameter-zaw-i4",
             "dist": {
                 "type": "path",
                 "url": "/var/doctrine-encrypt-bundle",
-                "reference": "ad79a447803104d92a26d83bc7bded9efea25ea9"
+                "reference": "9d3dde87c4c3080cf2ad0e3d0e8450d52aa15a2c"
             },
             "require": {
                 "doctrine/doctrine-bundle": "^2.13 || ^3.0",
@@ -1031,7 +1031,7 @@
             "require-dev": {
                 "defuse/php-encryption": "^2.1",
                 "friendsofphp/php-cs-fixer": "^3.0",
-                "igor-php/igor-php": "^0.10.0",
+                "igor-php/igor-php": "^0.10.0 || ^0.11.0",
                 "nowo-tech/phpstan-frankenphp": "^1.0",
                 "phpstan/extension-installer": "^1.4",
                 "phpstan/phpstan": "^2.0",
@@ -5884,16 +5884,16 @@
         },
         {
             "name": "symfony/yaml",
-            "version": "v8.1.9",
+            "version": "v8.1.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/yaml.git",
-                "reference": "6107ee26a25215c3df3af0a3315e56bb4fd0b7db"
+                "reference": "e8266f55160f674f290a5f567cb55e11e21f921b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/6107ee26a25215c3df3af0a3315e56bb4fd0b7db",
-                "reference": "6107ee26a25215c3df3af0a3315e56bb4fd0b7db",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/e8266f55160f674f290a5f567cb55e11e21f921b",
+                "reference": "e8266f55160f674f290a5f567cb55e11e21f921b",
                 "shasum": ""
             },
             "require": {
@@ -5936,7 +5936,7 @@
             "description": "Loads and dumps YAML files",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/yaml/tree/v8.1.9"
+                "source": "https://github.com/symfony/yaml/tree/v8.1.11"
             },
             "funding": [
                 {
@@ -5956,7 +5956,8 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-12T12:37:13+00:00"
+            "time": "2026-11-04T08:39:20+00:00",
+            "published-time": "2026-11-04T11:31:03+00:00"
         },
         {
             "name": "twig/extra-bundle",
@@ -6103,16 +6104,16 @@
         },
         {
             "name": "twig/twig",
-            "version": "v3.30.0",
+            "version": "v3.31.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/twigphp/Twig.git",
-                "reference": "8c737079b726af72ff8ef3c595be9f6a810ea1ef"
+                "reference": "6f6ec372231b53d1d564567a78beb8844cafa132"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/twigphp/Twig/zipball/8c737079b726af72ff8ef3c595be9f6a810ea1ef",
-                "reference": "8c737079b726af72ff8ef3c595be9f6a810ea1ef",
+                "url": "https://api.github.com/repos/twigphp/Twig/zipball/6f6ec372231b53d1d564567a78beb8844cafa132",
+                "reference": "6f6ec372231b53d1d564567a78beb8844cafa132",
                 "shasum": ""
             },
             "require": {
@@ -6167,7 +6168,7 @@
             ],
             "support": {
                 "issues": "https://github.com/twigphp/Twig/issues",
-                "source": "https://github.com/twigphp/Twig/tree/v3.30.0"
+                "source": "https://github.com/twigphp/Twig/tree/v3.31.1"
             },
             "funding": [
                 {
@@ -6179,8 +6180,8 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-25T13:20:01+00:00",
-            "published-time": "2026-09-25T13:20:14+00:00"
+            "time": "2026-11-24T12:48:40+00:00",
+            "published-time": "2026-11-24T12:48:53+00:00"
         }
     ],
     "packages-dev": [

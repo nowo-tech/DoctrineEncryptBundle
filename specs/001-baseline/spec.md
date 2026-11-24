@@ -60,7 +60,7 @@ Areas introduced by releases after the baseline review; each requirement names t
 
 ## Success Criteria
 
-- **SC-001**: **29/29** production files mapped in inventory.
+- **SC-001**: **55/55** production files mapped in inventory.
 - **SC-002**: Config keys in [`docs/CONFIGURATION.md`](../../docs/CONFIGURATION.md) match `Configuration.php`.
 - **SC-003**: `composer qa` passes; PHPUnit covers subscriber and encryptors.
 
