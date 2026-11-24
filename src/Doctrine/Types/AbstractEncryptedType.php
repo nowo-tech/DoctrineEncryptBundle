@@ -9,6 +9,7 @@ use Doctrine\DBAL\Types\Type;
 use Nowo\DoctrineEncryptBundle\Exception\DecryptionFailedException;
 use Nowo\DoctrineEncryptBundle\Subscribers\DoctrineEncryptSubscriber;
 use Nowo\DoctrineEncryptBundle\Util\EncryptedValue;
+use SensitiveParameter;
 use Throwable;
 
 use function is_resource;
@@ -40,14 +41,14 @@ abstract class AbstractEncryptedType extends Type
     /**
      * Turns the PHP value into the plaintext to encrypt (null = store NULL).
      */
-    abstract protected function toPlaintext(mixed $value): ?string;
+    abstract protected function toPlaintext(#[SensitiveParameter] mixed $value): ?string;
 
     /**
      * Turns the decrypted plaintext (or a stored value without the marker) back into the PHP value.
      */
     abstract protected function fromPlaintext(string $plaintext): mixed;
 
-    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): ?string
+    public function convertToDatabaseValue(#[SensitiveParameter] mixed $value, AbstractPlatform $platform): ?string
     {
         $plaintext = $this->toPlaintext($value);
         if ($plaintext === null || $plaintext === '') {

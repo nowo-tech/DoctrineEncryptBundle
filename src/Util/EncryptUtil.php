@@ -8,6 +8,7 @@ use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorInterface;
 use Nowo\DoctrineEncryptBundle\Encryptors\EncryptorRegistryInterface;
 use Nowo\DoctrineEncryptBundle\Exception\DecryptionFailedException;
 use Nowo\DoctrineEncryptBundle\Exception\ValueNotEncryptedException;
+use SensitiveParameter;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 use Throwable;
 
@@ -111,7 +112,7 @@ final readonly class EncryptUtil implements EncryptUtilInterface
      *
      * @return string|null Ciphertext + marker, or original value if null or empty
      */
-    public function encrypt(?string $value, ?string $config = null): ?string
+    public function encrypt(#[SensitiveParameter] ?string $value, ?string $config = null): ?string
     {
         if ($value === null) {
             return null;

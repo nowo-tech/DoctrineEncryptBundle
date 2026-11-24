@@ -6,6 +6,7 @@ namespace Nowo\DoctrineEncryptBundle\Util;
 
 use Nowo\DoctrineEncryptBundle\Exception\DecryptionFailedException;
 use Nowo\DoctrineEncryptBundle\Exception\ValueNotEncryptedException;
+use SensitiveParameter;
 
 /**
  * Port: encrypt and decrypt single values outside Doctrine (marker `<ENC>` appended to the ciphertext).
@@ -40,5 +41,5 @@ interface EncryptUtilInterface
      * @param string|null $value Plain text to encrypt
      * @param string|null $config Encryptor config name. Null = default config
      */
-    public function encrypt(?string $value, ?string $config = null): ?string;
+    public function encrypt(#[SensitiveParameter] ?string $value, ?string $config = null): ?string;
 }

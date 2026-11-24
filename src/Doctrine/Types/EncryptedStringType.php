@@ -6,6 +6,7 @@ namespace Nowo\DoctrineEncryptBundle\Doctrine\Types;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use InvalidArgumentException;
+use SensitiveParameter;
 use Stringable;
 
 use function get_debug_type;
@@ -25,7 +26,7 @@ class EncryptedStringType extends AbstractEncryptedType
         return $platform->getStringTypeDeclarationSQL($column);
     }
 
-    protected function toPlaintext(mixed $value): ?string
+    protected function toPlaintext(#[SensitiveParameter] mixed $value): ?string
     {
         if ($value === null || is_string($value)) {
             return $value;

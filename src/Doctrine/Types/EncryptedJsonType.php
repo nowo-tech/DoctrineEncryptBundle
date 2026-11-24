@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Doctrine\Types;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
+use SensitiveParameter;
 
 use function json_decode;
 use function json_encode;
@@ -25,7 +26,7 @@ class EncryptedJsonType extends AbstractEncryptedType
         return $platform->getClobTypeDeclarationSQL($column);
     }
 
-    protected function toPlaintext(mixed $value): ?string
+    protected function toPlaintext(#[SensitiveParameter] mixed $value): ?string
     {
         return $value === null ? null : json_encode($value, JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR);
     }

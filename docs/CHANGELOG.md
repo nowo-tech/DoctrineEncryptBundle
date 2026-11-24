@@ -66,6 +66,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Plaintext and key material no longer appear in exception stack traces (audit ZAW-I4). The parameters that carry them are `#[\SensitiveParameter]`: `encrypt()` of `HaliteEncryptor`, `DefuseEncryptor`, `MysqlAesEncryptor` and `EncryptorInterface`, the encryptors' `$keyContent` constructor argument, Halite's key import, `MysqlAesEncryptor::deriveKey()`, `EncryptUtil(Interface)::encrypt()` and the encrypted DBAL types' `convertToDatabaseValue()` / `toPlaintext()`. PHP 8.2+ shows them as `SensitiveParameterValue` in traces, also with `zend.exception_ignore_args = Off`. Custom `EncryptorInterface` implementations should add the attribute to their own `encrypt()` (attributes are not inherited). See [SECURITY.md](SECURITY.md#logging).
+
 ### Changed
 
 - CI: new `release-gates` job in `.github/workflows/ci.yml` runs the `make release-check` gates (`rector-dry`, `validate-phpdoc`, `validate-translations`, `check-twig-extra`) on every full-mode push and PR, so they no longer fail only at release time. CI only, no bundle change.

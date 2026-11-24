@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nowo\DoctrineEncryptBundle\Encryptors;
 
 use RuntimeException;
+use SensitiveParameter;
 
 use function file_exists;
 use function file_get_contents;
@@ -42,7 +43,7 @@ final class MysqlAesEncryptor implements EncryptorInterface
      * @param string $keyFile Path to a text file containing the passphrase (ignored when $keyContent is set)
      * @param string|null $keyContent Passphrase from env or inline config
      */
-    public function __construct(private readonly string $keyFile, ?string $keyContent = null)
+    public function __construct(private readonly string $keyFile, #[SensitiveParameter] ?string $keyContent = null)
     {
         trigger_deprecation(
             'nowo-tech/doctrine-encrypt-bundle',
@@ -60,7 +61,7 @@ final class MysqlAesEncryptor implements EncryptorInterface
      *
      * @return string Raw binary ciphertext
      */
-    public function encrypt(string $data): string
+    public function encrypt(#[SensitiveParameter] string $data): string
     {
         $encrypted = openssl_encrypt($data, self::CIPHER, $this->getDerivedKey(), OPENSSL_RAW_DATA);
         // @codeCoverageIgnoreStart
@@ -134,7 +135,7 @@ final class MysqlAesEncryptor implements EncryptorInterface
     /**
      * MySQL pads the key string to the cipher key length with zero bytes (AES-128 → 16 bytes).
      */
-    public static function deriveKey(string $passphrase): string
+    public static function deriveKey(#[SensitiveParameter] string $passphrase): string
     {
         return str_pad(substr($passphrase, 0, self::KEY_LENGTH), self::KEY_LENGTH, "\0");
     }

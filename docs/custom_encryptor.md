@@ -24,7 +24,8 @@ class MyEncryptor implements EncryptorInterface
         // Load or derive key from $secretKeyPath
     }
 
-    public function encrypt(string $data): string
+    // #[\SensitiveParameter] keeps the plaintext out of stack traces (attributes are not inherited from the interface).
+    public function encrypt(#[\SensitiveParameter] string $data): string
     {
         // Return encrypted string
     }
