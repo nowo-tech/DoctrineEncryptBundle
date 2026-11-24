@@ -8,6 +8,7 @@ use Defuse\Crypto\Crypto;
 use Nowo\DoctrineEncryptBundle\Exception\MissingEncryptionKeyException;
 use Nowo\DoctrineEncryptBundle\Security\SecretKeyPermissions;
 use RuntimeException;
+use SensitiveParameter;
 use Symfony\Component\Filesystem\Filesystem;
 
 use function dirname;
@@ -32,7 +33,7 @@ final class DefuseEncryptor implements EncryptorInterface
      *                                 `generate_missing_key` (default: kernel.debug); when false a missing key file throws
      *                                 {@see MissingEncryptionKeyException}. An existing key file is never replaced.
      */
-    public function __construct(private readonly string $keyFile, ?string $keyContent = null, private readonly bool $generateMissingKey = true)
+    public function __construct(private readonly string $keyFile, #[SensitiveParameter] ?string $keyContent = null, private readonly bool $generateMissingKey = true)
     {
         $this->keyContent = $keyContent !== null && $keyContent !== '' ? $keyContent : null;
         $this->fs         = new Filesystem();
@@ -45,7 +46,7 @@ final class DefuseEncryptor implements EncryptorInterface
      *
      * @return string Ciphertext
      */
-    public function encrypt(string $data): string
+    public function encrypt(#[SensitiveParameter] string $data): string
     {
         return Crypto::encryptWithPassword($data, $this->getKey());
     }

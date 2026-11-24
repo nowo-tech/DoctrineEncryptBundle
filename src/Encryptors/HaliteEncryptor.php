@@ -13,6 +13,7 @@ use ParagonIE\Halite\Symmetric\EncryptionKey;
 use ParagonIE\HiddenString\HiddenString;
 use RangeException;
 use RuntimeException;
+use SensitiveParameter;
 
 use function dirname;
 use function sprintf;
@@ -38,7 +39,7 @@ final class HaliteEncryptor implements EncryptorInterface
      *                                 `generate_missing_key` (default: kernel.debug); when false a missing key file throws
      *                                 {@see MissingEncryptionKeyException}. An existing key file is never replaced.
      */
-    public function __construct(private readonly string $keyFile, ?string $keyContent = null, private readonly bool $generateMissingKey = true)
+    public function __construct(private readonly string $keyFile, #[SensitiveParameter] ?string $keyContent = null, private readonly bool $generateMissingKey = true)
     {
         $this->keyContent = $keyContent !== null && $keyContent !== '' ? $keyContent : null;
     }
@@ -50,7 +51,7 @@ final class HaliteEncryptor implements EncryptorInterface
      *
      * @return string Ciphertext
      */
-    public function encrypt(string $data): string
+    public function encrypt(#[SensitiveParameter] string $data): string
     {
         return Crypto::encrypt(new HiddenString($data), $this->getKey());
     }
@@ -117,7 +118,7 @@ final class HaliteEncryptor implements EncryptorInterface
      *
      * @param string $content Hex-encoded key content
      */
-    private function loadKeyFromString(string $content): EncryptionKey
+    private function loadKeyFromString(#[SensitiveParameter] string $content): EncryptionKey
     {
         return KeyFactory::importEncryptionKey(new HiddenString($content));
     }

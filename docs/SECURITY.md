@@ -99,6 +99,16 @@ are not known before `INSERT` for generated identifiers, so it needs a design th
 
 Avoid logging decrypted personal data, key paths with sensitive contents, or encryption exceptions that embed user data. Prefer generic error messages in production logs. The bundle's decrypt-failure warning and `DecryptionFailedException` contain the entity class, property, profile and the underlying exception class / message, never the stored value.
 
+Stack traces (since 2.15.2): every bundle parameter that carries plaintext or key material is `#[\SensitiveParameter]`
+(PHP 8.2+): the encryptors' `encrypt()` (Halite, Defuse, MysqlAes and `EncryptorInterface`), their `$keyContent`
+constructor argument, Halite's key import, `MysqlAesEncryptor::deriveKey()`, `EncryptUtil::encrypt()` and the encrypted
+DBAL types' `convertToDatabaseValue()` / `toPlaintext()`. PHP replaces those arguments with a `SensitiveParameterValue`
+in every trace frame, so an exception logged or rendered with `zend.exception_ignore_args = Off` (the development
+`php.ini`) does not show them. `decrypt()` arguments are ciphertext and are not redacted. Frames inside the crypto
+libraries are outside the bundle's control: Halite wraps plaintext and keys in `HiddenString`, while
+`defuse/php-encryption` passes plaintext and the password as plain strings, so keep `zend.exception_ignore_args = On`
+in production (the production `php.ini` default).
+
 ## Dependencies and updates
 
 Run `composer audit` regularly. Pin or constrain versions per your policy; upgrade Halite, Defuse, Symfony, and Doctrine components when security advisories apply.

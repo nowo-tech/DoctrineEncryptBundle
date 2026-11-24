@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Nowo\DoctrineEncryptBundle\Encryptors;
 
+use SensitiveParameter;
+
 /**
  * Contract for encryption and decryption of string data.
  *
@@ -18,7 +20,7 @@ interface EncryptorInterface
      *
      * @return string Encrypted (ciphertext) string
      */
-    public function encrypt(string $data): string;
+    public function encrypt(#[SensitiveParameter] string $data): string;
 
     /**
      * Decrypts ciphertext and returns the plain text.
