@@ -2,7 +2,7 @@
 
 **Baseline spec**: [`spec.md`](spec.md)  
 **Package**: `nowo-tech/doctrine-encrypt-bundle`  
-**Last audited**: 2026-11-24 (56/56; 2.16.0 adds `Exception/PropertyWriteFailedException.php` and `#[\SensitiveParameter]` on plaintext-carrying parameters; previous: 2026-11-22 `DbalTypeLookup` for 2.15.1)
+**Last audited**: 2026-11-27 (56/56 re-verified, spec reviewed; 2026-11-24: 2.16.0 adds `Exception/PropertyWriteFailedException.php` and `#[\SensitiveParameter]` on plaintext-carrying parameters; previous: 2026-11-22 `DbalTypeLookup` for 2.15.1)
 
 Every production artifact under `src/` is listed below (including `src/.gitignore`, which excludes generated paths from VCS).
 
@@ -76,11 +76,11 @@ These 21 `src/` files were added by releases after the last review. Each row map
 | `Exception/ValueNotEncryptedException.php` | A value that must be ciphertext does not carry the encryption marker (or has an empty payload). | FR-EXCEPTION-001 |
 | `Mapping/EncryptedFieldMap.php` | Encrypted fields selected in the bundle configuration (`nowo_doctrine_encrypt.encrypted_fields`) instead of the `#[En... | FR-ATTR-002 |
 | `Mapping/ListenerFieldResolver.php` | Which mapped fields the listener encrypts, seen from Doctrine metadata: the same selection as DoctrineEncryptSubscrib... | FR-ATTR-002 |
-| `Resources/translations/NowoDoctrineEncryptBundle.de.yaml` | Configuration `NowoDoctrineEncryptBundle.de.yaml` | FR-FORM-005 |
-| `Resources/translations/NowoDoctrineEncryptBundle.fr.yaml` | Configuration `NowoDoctrineEncryptBundle.fr.yaml` | FR-FORM-005 |
-| `Resources/translations/NowoDoctrineEncryptBundle.it.yaml` | Configuration `NowoDoctrineEncryptBundle.it.yaml` | FR-FORM-005 |
-| `Resources/translations/NowoDoctrineEncryptBundle.nl.yaml` | Configuration `NowoDoctrineEncryptBundle.nl.yaml` | FR-FORM-005 |
-| `Resources/translations/NowoDoctrineEncryptBundle.pt.yaml` | Configuration `NowoDoctrineEncryptBundle.pt.yaml` | FR-FORM-005 |
+| `Resources/translations/NowoDoctrineEncryptBundle.de.yaml` | SecretType labels (de): value label, saved / empty help, placeholder, remove-saved-value label | FR-FORM-005 |
+| `Resources/translations/NowoDoctrineEncryptBundle.fr.yaml` | SecretType labels (fr): value label, saved / empty help, placeholder, remove-saved-value label | FR-FORM-005 |
+| `Resources/translations/NowoDoctrineEncryptBundle.it.yaml` | SecretType labels (it): value label, saved / empty help, placeholder, remove-saved-value label | FR-FORM-005 |
+| `Resources/translations/NowoDoctrineEncryptBundle.nl.yaml` | SecretType labels (nl): value label, saved / empty help, placeholder, remove-saved-value label | FR-FORM-005 |
+| `Resources/translations/NowoDoctrineEncryptBundle.pt.yaml` | SecretType labels (pt): value label, saved / empty help, placeholder, remove-saved-value label | FR-FORM-005 |
 | `Util/EncryptUtilInterface.php` | Port: encrypt and decrypt single values outside Doctrine (marker `<ENC>` appended to the ciphertext). | FR-ENC-003 |
 | `Util/EncryptedValue.php` | Helpers for stored values in the "ciphertext + EncryptUtil::ENCRYPTION_MARKER" format. | FR-ENC-003 |
 

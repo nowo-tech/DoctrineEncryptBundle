@@ -34,7 +34,7 @@ Hosts that edit encrypted secrets (API keys, webhook signing secrets, SMTP passw
 - **FR-FORM-002**: `Form\SecretFieldApplier::applyData(mixed $data, callable $setter): void` — reads keys `value` / `clear` (`KEY_VALUE`, `KEY_CLEAR`); non-array data, a missing or non-string `value` and a `clear` that is not exactly `true` keep the stored value.
 - **FR-FORM-003**: `Form\Type\SecretType` (block prefix `nowo_secret`) — compound, `mapped: false`, `required: false`, `data_class: null`. Child `value` (`PasswordType`, `always_empty`, `trim`, `autocomplete=new-password`, help `secret.value.help_saved` with `%hint%` or `secret.value.help_empty`, placeholder = hint). Child `clear` (`CheckboxType`, `secret.clear.label`) added when `allow_clear` is `true`, or when it is `null` (default) and `current_value` is non-empty.
 - **FR-FORM-004**: Options `current_value` (`?string`), `hint_visible_last` (`int`, default 4), `allow_clear` (`?bool`), `value_options` / `clear_options` (arrays merged recursively over the child defaults).
-- **FR-FORM-005**: Default labels in translation domain `NowoDoctrineEncryptBundle`, locales `en` and `es`, same keys in every locale.
+- **FR-FORM-005**: Default labels in translation domain `NowoDoctrineEncryptBundle`, seven locales (`en`, `es`, `de`, `fr`, `it`, `nl`, `pt`), same keys in every locale.
 - **FR-FORM-006**: `symfony/form` is listed in `suggest` and `require-dev`, not `require`. `MaskUtil` is unchanged.
 
 ---
