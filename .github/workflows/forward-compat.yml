@@ -53,23 +53,18 @@ jobs:
 
       - name: Install dependencies (Symfony ${{ matrix.symfony }})
         run: |
-          if [ "${{ matrix.symfony }}" != "none" ]; then
-            C='${{ matrix.symfony }}.*'
-            REQ=$(jq -r --arg c "$C" '(.require // {}) | keys[] | select(startswith("symfony/") and (startswith("symfony/polyfill-") | not) and (endswith("-contracts") | not)) | . + ":" + $c' composer.json)
-            DEV=$(jq -r --arg c "$C" '(."require-dev" // {}) | keys[] | select(startswith("symfony/") and (startswith("symfony/polyfill-") | not) and (endswith("-contracts") | not)) | . + ":" + $c' composer.json)
-            [ -z "$REQ" ] || composer require $REQ --no-interaction --no-update
-            [ -z "$DEV" ] || composer require --dev $DEV --no-interaction --no-update
-          fi
           composer update --with-all-dependencies --no-interaction --prefer-dist --no-progress
           if [ "${{ matrix.symfony }}" != "none" ]; then
-            # Transitive Symfony components follow the same minor.
-            EXTRA=$(composer show --format=json | jq -r --arg c "$C" '.installed[] | select(.name | startswith("symfony/")) | select(.version | test("^v?(7|8)\\.")) | .name + ":" + $c')
-            if [ -n "$EXTRA" ]; then
-              composer require $EXTRA --no-interaction --no-update
+            # Pin every installed Symfony package released with the framework (7.x / 8.x versions; not contracts,
+            # polyfills, UX or Mercure, which have their own numbering) to the cell's minor.
+            C='${{ matrix.symfony }}.*'
+            PIN=$(composer show --format=json | jq -r --arg c "$C" '.installed[] | select(.name | startswith("symfony/")) | select(.version | test("^v?(7|8)\\.")) | .name + ":" + $c')
+            if [ -n "$PIN" ]; then
+              composer require $PIN --no-interaction --no-update
               composer update --with-all-dependencies --no-interaction --prefer-dist --no-progress
             fi
           fi
-          composer show 'symfony/*' 2>/dev/null | head -5 || true
+          composer show 'symfony/framework-bundle' 2>/dev/null | grep -E '^versions' || composer show 'symfony/*' 2>/dev/null | head -3 || true
 
       - name: Tests
         run: composer test -- --no-coverage --display-deprecations
