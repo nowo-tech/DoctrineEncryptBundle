@@ -58,11 +58,16 @@ jobs:
             # Pin every installed Symfony package released with the framework (7.x / 8.x versions; not contracts,
             # polyfills, UX or Mercure, which have their own numbering) to the cell's minor.
             C='${{ matrix.symfony }}.*'
-            PIN=$(composer show --format=json | jq -r --arg c "$C" '.installed[] | select(.name | startswith("symfony/")) | select(.version | test("^v?(7|8)\\.")) | .name + ":" + $c')
-            if [ -n "$PIN" ]; then
-              composer require $PIN --no-interaction --no-update
-              composer update --with-all-dependencies --no-interaction --prefer-dist --no-progress
-            fi
+            # Packages of require-dev stay in require-dev (some suites assert the split).
+            FW=$(composer show --format=json | jq -r '.installed[] | select(.name | startswith("symfony/")) | select(.version | test("^v?(7|8)\\.")) | .name')
+            DEV=$(jq -r '(."require-dev" // {}) | keys[]' composer.json)
+            PIN=""; PIN_DEV=""
+            for p in $FW; do
+              if printf '%s\n' "$DEV" | grep -qx "$p"; then PIN_DEV="$PIN_DEV $p:$C"; else PIN="$PIN $p:$C"; fi
+            done
+            [ -z "$PIN" ] || composer require $PIN --no-interaction --no-update
+            [ -z "$PIN_DEV" ] || composer require --dev $PIN_DEV --no-interaction --no-update
+            composer update --with-all-dependencies --no-interaction --prefer-dist --no-progress
           fi
           composer show 'symfony/framework-bundle' 2>/dev/null | grep -E '^versions' || composer show 'symfony/*' 2>/dev/null | head -3 || true
 
