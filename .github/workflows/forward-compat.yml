@@ -1,0 +1,75 @@
+name: Forward compatibility
+
+# PHP 8.6 and Symfony 8.2 cells, kept apart from the main CI matrix until both are part of it.
+# - PHP 8.6 on the current Symfony: the nowo-tech packages this one requires may still cap PHP below 8.6 until their
+#   next releases, so only the dependencies' upper PHP bound is ignored (php+), never an extension requirement.
+# - Symfony 8.2 on PHP 8.5: release candidates until 8.2.0 is stable (minimum-stability RC, prefer-stable), so the cell
+#   may fail without failing the run (continue-on-error). Drop that once 8.2.0 is stable.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  forward:
+    name: Forward - PHP ${{ matrix.php }} - Symfony ${{ matrix.symfony }}
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.symfony == '8.2' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { php: '8.6', symfony: '8.1' }
+          - { php: '8.5', symfony: '8.2' }
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, intl, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Resolve for the runner's PHP
+        run: |
+          composer config --unset platform.php || true
+          echo "COMPOSER_IGNORE_PLATFORM_REQ=php+" >> "$GITHUB_ENV"
+
+      - name: Symfony 8.2 - allow release candidates
+        if: matrix.symfony == '8.2'
+        run: |
+          composer config minimum-stability RC
+          composer config prefer-stable true
+
+      - name: Install dependencies (Symfony ${{ matrix.symfony }})
+        run: |
+          if [ "${{ matrix.symfony }}" != "none" ]; then
+            C='${{ matrix.symfony }}.*'
+            REQ=$(jq -r --arg c "$C" '(.require // {}) | keys[] | select(startswith("symfony/") and (startswith("symfony/polyfill-") | not) and (endswith("-contracts") | not)) | . + ":" + $c' composer.json)
+            DEV=$(jq -r --arg c "$C" '(."require-dev" // {}) | keys[] | select(startswith("symfony/") and (startswith("symfony/polyfill-") | not) and (endswith("-contracts") | not)) | . + ":" + $c' composer.json)
+            [ -z "$REQ" ] || composer require $REQ --no-interaction --no-update
+            [ -z "$DEV" ] || composer require --dev $DEV --no-interaction --no-update
+          fi
+          composer update --with-all-dependencies --no-interaction --prefer-dist --no-progress
+          if [ "${{ matrix.symfony }}" != "none" ]; then
+            # Transitive Symfony components follow the same minor.
+            EXTRA=$(composer show --format=json | jq -r --arg c "$C" '.installed[] | select(.name | startswith("symfony/")) | select(.version | test("^v?(7|8)\\.")) | .name + ":" + $c')
+            if [ -n "$EXTRA" ]; then
+              composer require $EXTRA --no-interaction --no-update
+              composer update --with-all-dependencies --no-interaction --prefer-dist --no-progress
+            fi
+          fi
+          composer show 'symfony/*' 2>/dev/null | head -5 || true
+
+      - name: Tests
+        run: composer test
