@@ -72,4 +72,4 @@ jobs:
           composer show 'symfony/*' 2>/dev/null | head -5 || true
 
       - name: Tests
-        run: composer test -- --display-deprecations
+        run: composer test -- --no-coverage --display-deprecations
