@@ -3,8 +3,7 @@ name: Forward compatibility
 # PHP 8.6 and Symfony 8.2 cells, kept apart from the main CI matrix until both are part of it.
 # - PHP 8.6 on the current Symfony: the nowo-tech packages this one requires may still cap PHP below 8.6 until their
 #   next releases, so only the dependencies' upper PHP bound is ignored (php+), never an extension requirement.
-# - Symfony 8.2 on PHP 8.5: release candidates until 8.2.0 is stable (minimum-stability RC, prefer-stable), so the cell
-#   may fail without failing the run (continue-on-error). Drop that once 8.2.0 is stable.
+# - Symfony 8.2 on PHP 8.5: the stable 8.2 line (8.2.0 is released).
 
 on:
   push:
@@ -23,7 +22,6 @@ jobs:
   forward:
     name: Forward - PHP ${{ matrix.php }} - Symfony ${{ matrix.symfony }}
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.symfony == '8.2' }}
     strategy:
       fail-fast: false
       matrix:
@@ -44,12 +42,6 @@ jobs:
         run: |
           composer config --unset platform.php || true
           echo "COMPOSER_IGNORE_PLATFORM_REQ=php+" >> "$GITHUB_ENV"
-
-      - name: Symfony 8.2 - allow release candidates
-        if: matrix.symfony == '8.2'
-        run: |
-          composer config minimum-stability RC
-          composer config prefer-stable true
 
       - name: Install dependencies (Symfony ${{ matrix.symfony }})
         run: |
