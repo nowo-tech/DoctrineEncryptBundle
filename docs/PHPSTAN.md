@@ -21,4 +21,4 @@ make phpstan
 composer phpstan
 ```
 
-PHP floor for analysis matches `composer.json` (`>=8.2 <8.6`).
+PHP floor for analysis matches `composer.json` (`>=8.2 <8.7`).

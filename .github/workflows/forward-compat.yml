@@ -1,0 +1,67 @@
+name: Forward compatibility
+
+# PHP 8.6 and Symfony 8.2 cells, kept apart from the main CI matrix until both are part of it.
+# - PHP 8.6 on the current Symfony: the nowo-tech packages this one requires may still cap PHP below 8.6 until their
+#   next releases, so only the dependencies' upper PHP bound is ignored (php+), never an extension requirement.
+# - Symfony 8.2 on PHP 8.5: the stable 8.2 line (8.2.0 is released).
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  forward:
+    name: Forward - PHP ${{ matrix.php }} - Symfony ${{ matrix.symfony }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { php: '8.6', symfony: '8.1' }
+          - { php: '8.5', symfony: '8.2' }
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, intl, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Resolve for the runner's PHP
+        run: |
+          composer config --unset platform.php || true
+          echo "COMPOSER_IGNORE_PLATFORM_REQ=php+" >> "$GITHUB_ENV"
+
+      - name: Install dependencies (Symfony ${{ matrix.symfony }})
+        run: |
+          composer update --with-all-dependencies --no-interaction --prefer-dist --no-progress
+          if [ "${{ matrix.symfony }}" != "none" ]; then
+            # Pin every installed Symfony package released with the framework (7.x / 8.x versions; not contracts,
+            # polyfills, UX or Mercure, which have their own numbering) to the cell's minor.
+            C='${{ matrix.symfony }}.*'
+            # Packages of require-dev stay in require-dev (some suites assert the split).
+            FW=$(composer show --format=json | jq -r '.installed[] | select(.name | startswith("symfony/")) | select(.version | test("^v?(7|8)\\.")) | .name')
+            DEV=$(jq -r '(."require-dev" // {}) | keys[]' composer.json)
+            PIN=""; PIN_DEV=""
+            for p in $FW; do
+              if printf '%s\n' "$DEV" | grep -qx "$p"; then PIN_DEV="$PIN_DEV $p:$C"; else PIN="$PIN $p:$C"; fi
+            done
+            [ -z "$PIN" ] || composer require $PIN --no-interaction --no-update
+            [ -z "$PIN_DEV" ] || composer require --dev $PIN_DEV --no-interaction --no-update
+            composer update --with-all-dependencies --no-interaction --prefer-dist --no-progress
+          fi
+          composer show 'symfony/framework-bundle' 2>/dev/null | grep -E '^versions' || composer show 'symfony/*' 2>/dev/null | head -3 || true
+
+      - name: Tests
+        run: composer test -- --no-coverage --display-deprecations
